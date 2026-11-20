@@ -105,3 +105,45 @@ main{padding:12px 16px 32px}
 }
 .dr{background:var(--bg)}.drh{border-radius:0}
 .dtabs .tab.on{color:var(--nv);border-bottom-color:var(--nv)}.card{border-radius:3px;border-color:var(--bd)}
+
+/* ===== Login, aspecto y configuración (estilo REPORTEADOR) ===== */
+.lg{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;background:linear-gradient(135deg,#1e3a8a 0%,#4338ca 55%,#0e7490 100%)}
+.lg-c{background:#fff;color:#0f172a;padding:32px;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);max-width:448px;width:100%;text-align:center;margin:auto}
+.lg-logo{height:40px;background:#fff;border-radius:8px;padding:2px 8px}
+.lg-c h1{margin:12px 0 0;font:900 24px "Fira Sans",sans-serif;text-transform:uppercase}
+.lg-s{margin:2px 0 24px;font:700 12px "Fira Sans",sans-serif;color:#2563eb;text-transform:uppercase;letter-spacing:.05em}
+.lg-t{font-size:14px;color:#64748b;margin:0 0 24px}
+.lg-c form{text-align:left}
+.lg-c label{display:block;font:700 12px "Fira Sans",sans-serif;color:#64748b;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+.lg-c input[type=text],.lg-c input[type=password]{box-sizing:border-box;width:100%;height:50px;padding:12px 16px;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;color:#0f172a;font:500 16px/24px "Fira Sans",sans-serif;margin-bottom:16px}
+.lg-w{position:relative}.lg-w input{padding-right:44px!important}.lg-w button{position:absolute;right:0;top:0;height:50px;width:44px;border:0;background:none;color:#94a3b8;cursor:pointer}
+.lg-r{display:flex;align-items:center;gap:8px;margin-bottom:16px}.lg-r input{width:16px;height:16px;accent-color:#2563eb}.lg-c .lg-r label{margin:0;text-transform:none;letter-spacing:0;font-weight:600;cursor:pointer}
+.lg-m{min-height:0;margin:0 0 16px;font-size:14px;text-align:center;color:#64748b}.lg-m:empty{display:none}.lg-m.err{color:#dc2626}
+.lg-go{width:100%;min-height:48px;border:0;border-radius:12px;background:#2563eb;color:#fff;font:700 16px "Fira Sans",sans-serif;cursor:pointer;box-shadow:0 10px 15px -3px rgba(30,58,138,.3)}.lg-go:hover{background:#1d4ed8}.lg-go[disabled]{opacity:.6;cursor:wait}
+.cfg-g{font:700 12px "Fira Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#64748b;padding:6px 0;border-bottom:1px solid var(--bd);margin-top:6px}
+.cfg-c{display:flex;flex-direction:column;gap:2px}.cfg-c b{font-size:16px}
+.ver{background:#EEF2F7;border-radius:12px;padding:14px;text-align:center;font:500 15px "Fira Sans",sans-serif;color:#2563eb}
+.cfg-d summary{cursor:pointer;font-weight:600;padding:10px 0;color:var(--nv)}.cfg-d>*:not(summary){margin-top:8px}
+.tema-op.on{background:var(--nv)!important;color:#fff!important;border-color:var(--nv)!important}
+/* ===== Modo oscuro ===== */
+html.dark{--bg:#0b1220;--tx:#e2e8f0;--bd:#2b3a52;--mut:#94a3b8;--p:#60a5fa;color-scheme:dark}
+html.dark body{background:#0b1220}
+html.dark .hd,html.dark .drh,html.dark .dtabs,html.dark .dft,html.dark .tabs{background:#0f172a;border-color:var(--bd)}
+html.dark .card,html.dark #modal .sh,html.dark .ch{background:#162032;border-color:var(--bd);color:var(--tx)}
+html.dark .k>.row:first-child{background:#162032}
+html.dark .btn{background:#162032;color:#93c5fd;border-color:#334155}
+html.dark .btn.pri{background:var(--nv);color:#fff;border-color:var(--nv)}html.dark .btn.red{background:var(--r);color:#fff;border-color:var(--r)}html.dark .btn.amb{background:var(--a);color:#000;border-color:var(--a)}
+html.dark .btn[disabled]{background:#1e293b;color:#64748b;border-color:#334155}
+html.dark .f input,html.dark .f select,html.dark .f textarea,html.dark .ir input,html.dark .tg,html.dark .seg button,html.dark .slot,html.dark #sig,html.dark .pic{background:#0f172a;color:var(--tx);border-color:#334155}
+html.dark .tg.on{background:#052e1b;color:#6ee7b7;border-color:var(--g)}
+html.dark .seg .s-nr{background:#1e293b;border-color:#475569}
+html.dark .slot.occ{background:#0f2542;color:#93c5fd}html.dark .slot.dim{background:#1e293b}
+html.dark .chip{background:#1e3a5f;color:#bfdbfe}html.dark .chip.w{background:#3a2a0c;color:#fcd34d}html.dark .chip.r{background:#3b1111;color:#fca5a5}html.dark .chip.g{background:#052e1b;color:#6ee7b7}html.dark .chip.n{background:#1e293b;color:#cbd5e1}
+html.dark .cnt{background:#1e293b;color:var(--tx)}
+html.dark .tab.on,html.dark .hd .vn button.on{color:#93c5fd;border-bottom-color:#93c5fd}
+html.dark .hd .vn button{color:#94a3b8}html.dark .hd .ib,html.dark .drh .ib{background:#1e293b;color:#93c5fd}
+html.dark .hd .logo img{background:#fff;padding:3px 8px;border-radius:6px}
+html.dark .dr{background:#0b1220}
+html.dark .cfg-g{color:#94a3b8}html.dark .ver{background:#1e293b;color:#93c5fd}html.dark .cfg-d summary{color:#93c5fd}
+html.dark .lg-c{background:#162032;color:#e2e8f0}html.dark .lg-c h1{color:#e2e8f0}html.dark .lg-s{color:#93c5fd}html.dark .lg-t,html.dark .lg-c label{color:#94a3b8}
+html.dark .lg-c input[type=text],html.dark .lg-c input[type=password]{background:#0f172a;color:#e2e8f0;border-color:#334155}

@@ -6,6 +6,6 @@ async function post(url,body){const r=await fetch(url,{method:'POST',mode:'cors'
 const api={
   taller:b=>{const u=tallerUrl();if(!u)throw new Error('Sin URL de API');return post(u,Object.assign({clave:localStorage.getItem('taller_clave')||''},b))},
   // Catálogo existente (mismas acciones que CATALOGO-DE-INVENTARIO)
-  login:(correo,pin)=>post(CATALOGO_API,{action:'login',app:'catalogo',correo,codigoAcceso:pin,dispositivo:navigator.userAgent.slice(0,180),recordarme:true}),
+  login:(correo,pin,rec=true)=>post(CATALOGO_API,{action:'login',app:'catalogo',correo,codigoAcceso:pin,dispositivo:navigator.userAgent.slice(0,180),recordarme:rec}),
   inventario:(correo,token)=>post(CATALOGO_API,{action:'obtenerInventario',correo,token})
 };

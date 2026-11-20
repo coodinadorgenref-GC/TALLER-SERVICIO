@@ -4,8 +4,19 @@
 <meta name="theme-color" content="#154B94"><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
 <title>Taller Carabela</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Fira+Sans:wght@400;500;600;700&display=swap">
+<script>(function(){try{var t=localStorage.getItem("taller_tema")||"sistema";document.documentElement.classList.toggle("dark",t==="oscuro"||(t==="sistema"&&matchMedia("(prefers-color-scheme: dark)").matches))}catch(e){}})();</script>
 <link rel="stylesheet" href="css/styles.css"></head>
 <body>
+<div id="login" class="lg"><div class="lg-c">
+<img class="lg-logo" src="https://coodinadorgenref-gc.github.io/CATALOGO-DE-INVENTARIO/logo-carabela.png" alt="Carabela">
+<h1>Taller Carabela</h1><p class="lg-s">Órdenes de servicio</p>
+<p class="lg-t">Ingresa tu correo o número telefónico autorizado para acceder.</p>
+<form id="lg-f" novalidate>
+<label for="lg-u">Usuario:</label><input id="lg-u" type="text" name="username" placeholder="ejemplo@gmail.com o 5512345678" autocomplete="username" autocapitalize="off" spellcheck="false">
+<label for="lg-p">Contraseña</label><div class="lg-w"><input id="lg-p" type="password" name="password" placeholder="Contraseña personal" autocomplete="current-password" autocapitalize="off" spellcheck="false"><button type="button" data-a="ojo" tabindex="-1" aria-label="Mostrar u ocultar contraseña"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+<div class="lg-r"><input type="checkbox" id="lg-r"><label for="lg-r">Recuérdame</label></div>
+<p id="lg-m" class="lg-m" role="status"></p>
+<button id="lg-b" class="lg-go" type="submit">Acceder al Taller</button></form></div></div>
 <header class="hd"><span class="logo"><img src="https://coodinadorgenref-gc.github.io/CATALOGO-DE-INVENTARIO/logo-carabela.png" alt="Carabela"></span><nav class="vn" aria-label="Vistas"><button data-a="view" data-v="board">Trabajos de hoy</button><button data-a="view" data-v="ag">Agenda</button><button data-a="view" data-v="seg">Seguimientos</button></nav><button class="ib" data-a="cfg" aria-label="Configuración"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></button></header>
 <div class="sb"><div class="srch"><label for="gq" class="sr">Buscar orden</label><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="gq" type="search" placeholder="Buscar folio, cliente, modelo, VIN o teléfono" autocomplete="off"></div><label class="f sc"><span class="sr">Sucursal</span><select id="suc"><option>Valladolid</option><option>Tizimín</option><option>Kantunilkin</option></select></label><button class="btn amb nw" data-a="nueva"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Nueva orden</span></button></div>
 <main id="app"></main><div id="drawer"></div><div id="modal"></div><div id="toast" role="status"></div><div id="print" aria-hidden="true"></div>

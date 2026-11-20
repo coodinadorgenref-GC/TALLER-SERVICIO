@@ -3,7 +3,7 @@ const IC={ok:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke
 const CI={nr:'',ok:IC.ok,px:IC.at,ur:IC.fa};
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch{return d}};
 let S=load('taller_v2',{orders:[],seq:{},dirty:[],inv:[],suc:'Valladolid'});
-let tab='recepcion',view='board',D=null,dt='u',q='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
+let sesion=null,tab='recepcion',view='board',D=null,dt='u',q='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
 const save=()=>{try{localStorage.setItem('taller_v2',JSON.stringify(S))}catch{toast('Memoria llena: sincroniza para liberar fotos')}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>'$'+Number(n||0).toLocaleString('es-MX',{maximumFractionDigits:2});
@@ -164,10 +164,27 @@ const acts={
  sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
  sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,ref:o.folio})},
  sgx:d=>{const o=O(d.f);if(d.k==='l')o.lineas[+d.i].cerr=true;else o.prox.cerr=true;touch(o);renderMain()},
- cfg:()=>sheet(`<div class="h">Configuración</div><label class="f">URL de la API del taller (Apps Script)<input id="c-u" value="${esc(tallerUrl())}"></label><label class="f">Clave compartida (opcional)<input id="c-k" value="${esc(localStorage.getItem('taller_clave')||'')}"></label><div class="mut">Pendientes de sincronizar: ${S.dirty.length}</div><div class="h">Catálogo de refacciones</div><label class="f">Correo<input id="c-m" type="email"></label><label class="f">PIN<input id="c-p" type="password" inputmode="numeric"></label><div class="mut">${S.inv.length?S.inv.length+' productos cargados':'Sin catálogo cargado'}</div><button class="btn" data-a="cat">Conectar catálogo</button><button class="btn pri" data-a="cfgok">Guardar y sincronizar</button>`),
+ cfg:()=>{const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG();
+  sheet(`<div class="h">Configuración</div>
+<div class="cfg-g">Perfil</div>
+<div class="cfg-c"><b>${esc(sesion?.nombre||sesion?.correo||'—')}</b><span class="mut">${esc(sesion?.correo||'')}${rol?' · '+rol:''}</span><span class="mut">Sucursal: ${esc(S.suc)}</span></div>
+<div class="cfg-g">Aspecto</div><div class="mut">Elige cómo se ve el Taller.</div>
+<div class="seg">${[['claro','Claro'],['oscuro','Oscuro'],['sistema','Igual que el sistema']].map(([k,n])=>`<button class="tema-op ${k===t?'on':''}" data-a="tema" data-tm="${k}">${n}</button>`).join('')}</div>
+<div class="cfg-g">Cuenta y versión</div>
+<div class="mut">Pendientes de sincronizar: ${S.dirty.length}</div><div class="mut">${S.inv.length?S.inv.length+' productos en el catálogo':'Sin catálogo cargado'}</div>
+<div class="mut">Identificador de versión</div><div class="ver">${esc(APP_BUILD)}</div>
+<button class="btn" data-a="catup">Actualizar catálogo</button>
+<button class="btn" data-a="recarga">Forzar recarga (limpiar caché de esta pestaña)</button>
+<details class="cfg-d"><summary>Conexión (avanzado)</summary><label class="f">URL de la API del taller (Apps Script)<input id="c-u" value="${esc(tallerUrl())}"></label><label class="f">Clave compartida (opcional)<input id="c-k" value="${esc(localStorage.getItem('taller_clave')||'')}"></label><button class="btn pri" data-a="cfgok">Guardar y sincronizar</button></details>
+<button class="btn red" data-a="salir">Cerrar sesión</button>`)},
  cfgok:()=>{localStorage.setItem('taller_api',$('#c-u').value.trim());localStorage.setItem('taller_clave',$('#c-k').value.trim());$('#modal').innerHTML='';sync();toast('Sincronizando…')},
- cat:async()=>{try{const c=$('#c-m').value.trim(),l=await api.login(c,$('#c-p').value.trim());if(!l.success)return toast(l.message||'Login rechazado');const r=await api.inventario(c,l.token);if(!r.success)return toast('Inventario no disponible');
-  S.inv=(r.data||[]).map(i=>({sku:String(i.sku||i.SKU||i.Sku||i.Codigo||''),nombre:String(i.nombre||i.Nombre||i.Descripcion||i.Producto||''),precio:Number(i.precio||i.Precio||i.precioPublico||i.PrecioPublico||0)})).filter(i=>i.sku);save();toast(S.inv.length+' productos cargados')}catch{toast('Sin conexión al catálogo')}}
+ tema:d=>{try{localStorage.setItem('taller_tema',d.tm)}catch{}aplicarTema()},
+ catup:()=>cargaCat(false),recarga:()=>recarga(),
+ ojo:()=>{const i=$('#lg-p');i.type=i.type==='password'?'text':'password'},
+ salir:()=>sheet('<div class="h">¿Cerrar sesión?</div><div class="mut">Tendrás que volver a iniciar sesión para entrar al Taller. Las órdenes pendientes de sincronizar se conservan en este dispositivo.</div><div class="row"><button class="btn" data-a="salirno">Cancelar</button><button class="btn red" data-a="salirsi">Cerrar sesión</button></div>'),
+ salirno:()=>{$('#modal').innerHTML=''},
+ salirsi:()=>{const s=sesion;if(s){try{fetch(CATALOGO_API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'cerrarSesionServidor',correo:s.correo,token:s.token})}).catch(()=>{})}catch{}}
+  sesion=null;borrarSes();S.inv=[];save();$('#modal').innerHTML='';D=null;render();pintaLogin()}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&acts[b.dataset.a])acts[b.dataset.a](b.dataset,e)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches&&e.target.matches('article[data-a]'))acts.abrir(e.target.dataset);
@@ -194,11 +211,36 @@ document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.clo
 document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('.col');if(!c||!dragF)return;e.preventDefault();const o=O(dragF);dragF=null;document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));if(o&&c.dataset.drop!==o.etapa)mover(o,c.dataset.drop)});
 
 function aplicarUrls(o,u){for(const k in u){const[a,b]=k.split('.');if(a==='fotos'&&o.fotos[b])o.fotos[b]={u:u[k]};else if(a==='firmas'&&o.firmas[b])o.firmas[b]={n:o.firmas[b].n,u:u[k]};else if(a==='chk'&&o.chk[b])o.chk[b].f=u[k];else if(a==='lineas'&&o.lineas[b])o.lineas[b].f=u[k]}}
-async function sync(){if(syncing||!tallerUrl()||!navigator.onLine)return;syncing=true;
+async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine)return;syncing=true;
   try{for(const f of [...S.dirty]){const o=O(f);if(!o)continue;const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success)break;aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==f)}
    const r=await api.taller({action:'listarOrdenes'});if(r.success){let ch=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio)return;const l=O(ro.folio);if(!l){S.orders.push(ro);ch=true}else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}});if(ch)renderMain()}
    save()}catch{}syncing=false}
 setInterval(()=>{const c=$('#crono'),o=D&&O(D);if(c&&o)c.textContent=hms(ms(o))},1000);
 setInterval(sync,30000);addEventListener('online',sync);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-render();sync();
+/* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v3 k2120 · 20-11-26';
+const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
+const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
+const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
+async function iniciarSesion(){
+  const c=$('#lg-u').value.trim(),p=$('#lg-p').value.trim(),rec=$('#lg-r').checked,m=$('#lg-m'),b=$('#lg-b');
+  if(!c||!p){m.className='lg-m err';m.textContent='Escribe tu correo/teléfono y tu contraseña.';return}
+  b.disabled=true;m.className='lg-m';m.textContent='Validando...';
+  try{const r=await api.login(c,p,rec);
+    if(!r.success){m.className='lg-m err';m.textContent=r.message||'No se pudo iniciar sesión.';return}
+    sesion={correo:r.correo||c,token:r.token,nombre:r.nombre||'',esAdmin:!!r.esAdmin,esGerente:!!r.esGerente,esVendedor:!!r.esVendedor,duracionSesionMs:r.duracionSesionMs,loginTime:Date.now()};
+    try{sessionStorage.setItem(SK,JSON.stringify(sesion));if(rec)localStorage.setItem(SK,JSON.stringify(sesion))}catch{}
+    $('#lg-p').value='';m.textContent='';pintaLogin();render();sync();cargaCat(true)
+  }catch{m.className='lg-m err';m.textContent='Error de conexión. Intenta de nuevo.'}
+  finally{b.disabled=false}}
+async function cargaCat(quiet){if(!sesion)return;
+  try{const r=await api.inventario(sesion.correo,sesion.token);if(!r.success){if(!quiet)toast(r.message||'Catálogo no disponible: vuelve a iniciar sesión');return}
+    S.inv=(r.data||[]).map(i=>({sku:String(i.sku||i.SKU||i.Sku||i.Codigo||''),nombre:String(i.nombre||i.Nombre||i.Descripcion||i.Producto||''),precio:Number(i.precio||i.Precio||i.precioPublico||i.PrecioPublico||0)})).filter(i=>i.sku);save();if(!quiet)toast(S.inv.length+' productos cargados')}
+  catch{if(!quiet)toast('Sin conexión al catálogo')}}
+const temaG=()=>{try{return localStorage.getItem('taller_tema')||'sistema'}catch{return'sistema'}};
+function aplicarTema(){const t=temaG(),o=t==='oscuro'||(t==='sistema'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',o);document.querySelectorAll('.tema-op').forEach(b=>b.classList.toggle('on',b.dataset.tm===t))}
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(temaG()==='sistema')aplicarTema()})}catch{}
+async function recarga(){toast('Actualizando…');try{if(window.caches){const k=await caches.keys();await Promise.all(k.map(x=>caches.delete(x)))}if(navigator.serviceWorker){const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(x=>x.unregister()))}}catch{}location.reload()}
+document.addEventListener('submit',e=>{if(e.target.id==='lg-f'){e.preventDefault();iniciarSesion()}});
+sesion=leerSes();aplicarTema();pintaLogin();render();sync();if(sesion)cargaCat(true);
