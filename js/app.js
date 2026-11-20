@@ -2,7 +2,8 @@ const $=s=>document.querySelector(s);
 const IC={ok:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',at:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M12 4l9 16H3zM12 10v4M12 17v1"/></svg>',fa:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',cam:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',back:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',clock:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',pr:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z"/></svg>'};
 const CI={nr:'',ok:IC.ok,px:IC.at,ur:IC.fa};
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch{return d}};
-let S=load('taller_v2',{orders:[],seq:{},dirty:[],inv:[],suc:'Valladolid'});
+let S=load('taller_v2',{orders:[],seq:{},dirty:[],inv:[],suc:''});
+const migEt=o=>{if(o&&ETMIG[o.etapa])o.etapa=ETMIG[o.etapa];return o};S.orders.forEach(migEt);
 let sesion=null,tab='recepcion',view='board',D=null,dt='u',q='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
 const save=()=>{try{localStorage.setItem('taller_v2',JSON.stringify(S))}catch{toast('Memoria llena: sincroniza para liberar fotos')}};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -26,18 +27,20 @@ async function folio(t){try{const r=await api.taller({action:'siguienteFolio',ti
   S.seq[t]=(S.seq[t]||0)+1;return t+'-'+String(S.seq[t]).padStart(4,'0')+'L'}
 async function crear(t,x={}){
   const base=t==='SP'||t==='SB',st=t==='G'?'gar':'pend';
-  const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',anio:'',motor:'',vin:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
+  const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,lav:false,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',anio:'',motor:'',vin:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
    inv:INV32.map(()=>({p:false,c:1})),chk:CATS.map(()=>({e:'nr',n:'',f:null})),fotos:{},firmas:{},recibe:'',diag:'',leg:false,
    lineas:base?BASE.map(b=>({t:'ref',sku:b[0],desc:b[1],cant:1,precio:b[2],min:0,st})).concat([{t:'mo',sku:'MO',desc:t==='SP'?'Servicio preventivo':'Servicio básico',cant:1,precio:200,min:60,st}]):[],
    t:{acum:0,ini:null},cita:null,ref:'',prox:{f:'',km:''},fing:Date.now(),cre:Date.now(),listo:false},x);
   S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
 
 function puede(o,dest){const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
-  if(i===0&&(!o.fotos.bayoneta||!o.fotos.tanque))return'Faltan las 2 fotos obligatorias (inspección)';
-  if(i===0&&(!o.cliente||!o.modelo))return'Captura cliente y modelo (unidad)';
+  if(i===0){const f=FOTOS_GRAL.filter(x=>x[2]&&!(o.fotos[x[0]]&&src(o.fotos[x[0]])));if(f.length)return'Faltan fotos generales de la moto: '+f.map(x=>x[1]).join(', ');
+    if(!o.cliente||!o.modelo)return'Captura cliente y modelo (unidad)'}
+  if(j>=1&&!o.mec)return'Asigna el técnico (mecánico) en Unidad';
+  if(j>=2&&(!o.fotos.bayoneta||!o.fotos.tanque))return'Faltan las 2 fotos de inspección (bayoneta y tanque)';
   const L=o.lineas;
-  if(j>=3){if(!L.length)return'Agrega la cotización';if(L.some(l=>l.st==='pend'))return'Hay conceptos pendientes de autorización';if(j===3&&!L.some(l=>l.st==='aut'||l.st==='gar'))return'Nada autorizado: pasa directo a Entregado'}
-  if(j===4&&!(o.firmas.cli&&src(o.firmas.cli)))return'Falta la firma del cliente en Cierre';
+  if(j>=3){if(!L.length)return'Agrega la cotización';if(L.some(l=>l.st==='pend'))return'Hay conceptos pendientes de autorización'}
+  if(j===4){if(!o.lav)return'Marca que la moto fue lavada (Cierre)';if(!(o.firmas.cli&&src(o.firmas.cli)))return'Falta la firma del cliente en Cierre'}
   return''}
 function mover(o,dest){const e=puede(o,dest);if(e)return toast(e);
   if(idx(o.etapa)===0&&idx(dest)>0&&!o.firmas.entrega)return abrirFirma(u=>{o.firmas.entrega={d:u};touch(o);mover(o,dest)});
@@ -46,7 +49,7 @@ function mover(o,dest){const e=puede(o,dest);if(e)return toast(e);
 
 /* ---------- render ---------- */
 function render(){
-  document.querySelectorAll('.vn button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));$('#suc').value=S.suc;
+  document.querySelectorAll('.vn button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));pintaHd();
   renderMain();renderDrawer()}
 function renderMain(){$('#app').innerHTML=view==='ag'?agenda():view==='seg'?seguimientos():board()}
 function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.dbody')?.scrollTop||0;
@@ -55,7 +58,7 @@ function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.db
   lastD=D;keepSc=true}
 const match=o=>{if(!q)return true;const s=[o.folio,o.cliente,o.modelo,o.vin,o.tel,o.motor].join(' ').toLowerCase();return q.toLowerCase().split(/\s+/).every(w=>s.includes(w))};
 function board(){const L=mine().filter(match);
-  return`<div class="tabs" role="tablist" aria-label="Etapas">${ETAPAS.map(([k,n])=>`<button class="tab ${k===tab?'on':''}" role="tab" aria-selected="${k===tab}" data-a="tab" data-k="${k}">${n} <span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button>`).join('')}</div>
+  return`<ol class="pm" aria-label="Mapa de procesos">${ETAPAS.map(([k,n,c,d],i)=>`<li class="${k===tab?'on':''}" style="--c:${c}"><button type="button" data-a="tab" data-k="${k}" aria-current="${k===tab}"><span class="pmn">${i+1}</span><span class="pmt"><b>${n}</b><small>${d}</small></span><span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button></li>`).join('')}</ol>
   ${q?`<p class="mut">${L.length} resultado(s) para «${esc(q)}»</p>`:''}
   <div class="kan">${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')||'<p class="mut">Sin órdenes en esta etapa.</p>'}</div></section>`}).join('')}</div>`}
 function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length;
@@ -64,6 +67,7 @@ function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==
   <div class="ttl">${esc(o.modelo||'Sin modelo')}</div><div class="mut">${esc(o.cliente||'Sin cliente')} · ${esc(o.mec||'Sin mecánico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   <div class="row wrap">${ur?`<span class="chip r">${IC.fa} ${ur} urgente${ur>1?'s':''}</span>`:''}${pend?`<span class="chip n">${pend} por autorizar</span>`:''}${o.etapa==='recepcion'?`<span class="chip ${np===32?'g':'n'}">Inventario ${np}/32</span>`:''}<span class="chip n">${IC.clock} ${hms(ms(o))}${est(o)?' / '+est(o)+' min':''}</span></div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
+  <div class="pg5" aria-hidden="true">${ETAPAS.map((e,i)=>`<i class="${i<=idx(o.etapa)?'d':''}"></i>`).join('')}</div>
   <div class="row"><button class="btn sm" style="flex:1" data-a="mv" data-f="${o.folio}">Mover a…</button>${n?`<button class="btn sm pri" style="flex:1" data-a="sig" data-f="${o.folio}">Siguiente: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn sm" style="flex:1" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div></article>`}
 
 const inp=(l,p,v,x='')=>`<label class="f">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
@@ -71,6 +75,7 @@ function drawer(o){const bad=o.chk.filter(c=>c.e==='px'||c.e==='ur').length,pend
   const T=[['u','Unidad',''],['i','Inspección',bad?`<span class="cnt">${bad}</span>`:''],['c','Cotización',pend?`<span class="cnt">${pend}</span>`:''],['z','Cierre','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
   <header class="drh"><button class="ib" data-a="cerrard" aria-label="Cerrar orden">${IC.back}</button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span><span style="flex:1"></span><button class="btn sm" data-a="print">${IC.pr} Imprimir</button><button class="btn sm" data-a="mv" data-f="${o.folio}">Mover a…</button></header>
+  <div class="dstep" aria-label="Proceso">${ETAPAS.map((x,i)=>`<span class="${i<idx(o.etapa)?'d':i===idx(o.etapa)?'c':''}" ${i===idx(o.etapa)?`style="--c:${x[2]}" aria-current="step"`:''}>${i+1}. ${x[1]}</span>`).join('')}</div>
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
   <div class="dbody">${{u:tU,i:tI,c:tC,z:tZ}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
 function foot(o){const n=sig(o),b=n?puede(o,n):'',m=est(o);
@@ -78,7 +83,10 @@ function foot(o){const n=sig(o),b=n?puede(o,n):'',m=est(o);
   <div class="row">${o.etapa!=='entregado'?`<span class="big" id="crono">${hms(ms(o))}</span>${m?`<span class="mut">est. ${m} min</span>`:''}<span style="flex:1"></span><button class="btn sm ${o.t.ini?'amb':'pri'}" data-a="cr">${o.t.ini?'Pausar':'Iniciar'}</button><button class="btn sm" data-a="fin">Terminar</button>`:`<span class="mut">Tiempo real: ${hms(o.t.acum)}${m?' · estándar '+m+' min':''}</span>`}</div>
   <div class="row">${n?`<button class="btn pri" data-a="sig" data-f="${o.folio}" ${b?'disabled':''}>Siguiente etapa: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div>`}
 
-function tU(o){return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
+const gfotos=o=>{const n=FOTOS_GRAL.filter(x=>x[2]&&o.fotos[x[0]]&&src(o.fotos[x[0]])).length,r=FOTOS_GRAL.filter(x=>x[2]).length;
+  return`<div class="card"><div class="row sp"><div class="h">Fotos generales de la moto</div><span class="chip ${n===r?'g':'w'}">${n}/${r} lados</span></div><div class="mut">Toma las fotos al recibir la unidad: sirven de evidencia de cómo llegó.</div>
+  <div class="gfo">${FOTOS_GRAL.map(([k,t,rq])=>{const u=o.fotos[k]&&src(o.fotos[k]);return`<label class="gf ${u?'on':''}">${u?`<img alt="${t}" src="${u}">`:IC.cam}<span class="gt">${t}${rq?'':' (opcional)'}</span><input type="file" accept="image/*" capture="environment" data-foto="${k}" aria-label="Foto ${t}"></label>`}).join('')}</div></div>`};
+function tU(o){return gfotos(o)+`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
   <div class="card"><div class="h">Unidad</div><div class="g2">${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin)}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}${inp('Fecha de compra','fcompra',o.fcompra,'type="date"')}</div>
   <div class="g2"><label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label>${inp('Mecánico asignado','mec',o.mec,'list="mecs"')}<label class="f">Bahía<select data-p="bahia"><option value="">—</option>${BAHIAS.map(b=>`<option ${String(o.bahia)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div>
   <datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>
@@ -109,7 +117,8 @@ function tC(o){return`${o.lineas.map(lineaH).join('')||'<p class="mut">Sin conce
   <div class="card"><div class="h">Hallazgo adicional con foto</div><label class="f">Descripción<input id="hl"></label><div class="row"><label class="btn file">${IC.cam} Foto<input type="file" accept="image/*" capture="environment" id="hf"></label><button class="btn" data-a="hall">Agregar a cotización</button></div></div>
   <div class="card" id="tot">${totH(o)}</div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>`}
-function tZ(o){return`<div class="card"><div class="h">Diagnóstico del técnico</div><label class="f"><span class="sr">Diagnóstico</span><textarea data-p="diag" style="min-height:110px">${esc(o.diag)}</textarea></label></div>
+function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><button class="btn ${o.lav?'':'pri'}" data-a="lav" aria-pressed="${!!o.lav}">${o.lav?IC.ok+' Moto lavada (tocar para revertir)':'Marcar moto lavada'}</button><div class="mut">Requisito para pasar a Entregado.</div></div>
+  <div class="card"><div class="h">Diagnóstico del técnico</div><label class="f"><span class="sr">Diagnóstico</span><textarea data-p="diag" style="min-height:110px">${esc(o.diag)}</textarea></label></div>
   <div class="card"><div class="h">Aviso legal</div><p style="margin:0;font-size:14px">${LEYENDA}</p><button class="btn ${o.leg?'':'pri'}" data-a="leg" aria-pressed="${!!o.leg}">${o.leg?IC.ok+' Cliente informado (tocar para revertir)':'El cliente fue informado'}</button></div>
   <div class="card"><div class="h">Quien recibe la unidad</div>${inp('Nombre del asesor','recibe',o.recibe)}</div>
   <div class="card"><div class="h">Próximo servicio</div><div class="g2">${inp('Fecha','prox.f',o.prox.f,'type="date"')}${inp('Kilometraje','prox.km',o.prox.km,'inputmode="numeric"')}</div></div>
@@ -133,7 +142,10 @@ function setPath(o,p,v){const a=p.split('.');let r=o;for(let i=0;i<a.length-1;i+
 const acts={
  tab:d=>{tab=d.k;renderMain()},view:d=>{view=d.v;render()},abrir:d=>{D=d.f;dt='u';keepSc=false;render()},cerrard:()=>{D=null;render()},dtab:d=>{dt=d.k;keepSc=false;renderDrawer()},
  cerrar:(d,e)=>{if(e.target.classList.contains('ov'))$('#modal').innerHTML=''},
- nueva:()=>sheet('<div class="h">Tipo de orden</div>'+tipoBtns('crear')),crear:d=>{$('#modal').innerHTML='';crear(d.t)},
+ nueva:()=>{if(!S.suc)return acts.agpick();sheet('<div class="h">Tipo de orden</div>'+tipoBtns('crear'))},
+ lav:()=>{const o=O(D);o.lav=!o.lav;touch(o);renderDrawer()},
+ agpick:()=>{if(!sesion||!multi(sesion.agencia))return;sheet('<div class="h">Agencia de trabajo</div><div class="mut">Elige la agencia en la que vas a trabajar.</div>'+permitidas(sesion.agencia).map(a=>`<button class="btn ${a===S.suc?'pri':''}" data-a="agset" data-k="${esc(a)}">${esc(a)}</button>`).join(''))},
+ agset:d=>{S.suc=d.k;migrarLeg();$('#modal').innerHTML='';D=null;render()},crear:d=>{$('#modal').innerHTML='';crear(d.t)},
  cita:d=>sheet(`<div class="h">Nueva cita ${d.h}:00 · Bahía ${d.b}</div>`+tipoBtns('crearc',`data-h="${d.h}" data-b="${d.b}"`)),
  crearc:d=>{$('#modal').innerHTML='';crear(d.t,{bahia:d.b,cita:{f:iso(),h:+d.h,b:+d.b}})},
  mv:d=>sheet('<div class="h">Mover a…</div>'+ETAPAS.map(([k,n])=>`<button class="btn ${O(d.f).etapa===k?'pri':''}" data-a="mvto" data-f="${d.f}" data-k="${k}">${n}</button>`).join('')),
@@ -154,12 +166,12 @@ const acts={
  wa:()=>{const o=O(D),L=o.lineas.filter(l=>l.st!=='rech');if(!L.length)return toast('No hay conceptos que enviar');
   if(L.some(l=>!Number(l.precio)&&l.st!=='gar')&&!confirm('Hay conceptos sin precio. ¿Enviar de todos modos?'))return;
   wa(o.tel,`Hola ${o.cliente}, cotización ${o.folio} (${o.modelo}):\n`+L.map(l=>`• ${l.desc}${l.t==='mo'?'':' x'+l.cant}: ${l.st==='gar'?'garantía':money(imp(l))}`).join('\n')+`\n*Total: ${money(L.filter(l=>l.st!=='gar').reduce((a,l)=>a+imp(l),0))}*\nResponde "SÍ" para autorizar todo o indícanos qué conceptos autorizas.`)},
- walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en Carabela ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
+ walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
  fin:()=>{const o=O(D);o.t.acum=ms(o);o.t.ini=null;touch(o);renderDrawer();renderMain();toast('Tiempo real: '+hms(o.t.acum)+(est(o)?' · estándar '+est(o)+' min':''))},
  clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
  print:()=>imprimir(O(D)),
- sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de Carabela ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+o.prox.km+' km)':''}. ¿Te agendamos una cita en Carabela ${o.suc}?`)},
+ sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+o.prox.km+' km)':''}. ¿Te agendamos una cita en ${o.suc}?`)},
  sgre:d=>{const o=O(d.f),l=o.lineas[+d.i],v=prompt('Nueva fecha de seguimiento (AAAA-MM-DD)',l.seg||addD(15));if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
  sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
  sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,ref:o.folio})},
@@ -167,7 +179,7 @@ const acts={
  cfg:()=>{const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG();
   sheet(`<div class="h">Configuración</div>
 <div class="cfg-g">Perfil</div>
-<div class="cfg-c"><b>${esc(sesion?.nombre||sesion?.correo||'—')}</b><span class="mut">${esc(sesion?.correo||'')}${rol?' · '+rol:''}</span><span class="mut">Sucursal: ${esc(S.suc)}</span></div>
+<div class="cfg-c"><b>${esc(sesion?.nombre||sesion?.correo||'—')}</b><span class="mut">${esc(sesion?.correo||'')}${rol?' · '+rol:''}</span><span class="mut">Agencia: ${esc(S.suc||sesion?.agencia||'—')}</span></div>
 <div class="cfg-g">Aspecto</div><div class="mut">Elige cómo se ve el Taller.</div>
 <div class="seg">${[['claro','Claro'],['oscuro','Oscuro'],['sistema','Igual que el sistema']].map(([k,n])=>`<button class="tema-op ${k===t?'on':''}" data-a="tema" data-tm="${k}">${n}</button>`).join('')}</div>
 <div class="cfg-g">Cuenta y versión</div>
@@ -184,7 +196,7 @@ const acts={
  salir:()=>sheet('<div class="h">¿Cerrar sesión?</div><div class="mut">Tendrás que volver a iniciar sesión para entrar al Taller. Las órdenes pendientes de sincronizar se conservan en este dispositivo.</div><div class="row"><button class="btn" data-a="salirno">Cancelar</button><button class="btn red" data-a="salirsi">Cerrar sesión</button></div>'),
  salirno:()=>{$('#modal').innerHTML=''},
  salirsi:()=>{const s=sesion;if(s){try{fetch(CATALOGO_API,{method:'POST',keepalive:true,headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'cerrarSesionServidor',correo:s.correo,token:s.token})}).catch(()=>{})}catch{}}
-  sesion=null;borrarSes();S.inv=[];save();$('#modal').innerHTML='';D=null;render();pintaLogin()}
+  sesion=null;borrarSes();S.inv=[];S.suc='';save();$('#modal').innerHTML='';D=null;pintaHd();render();pintaLogin()}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&acts[b.dataset.a])acts[b.dataset.a](b.dataset,e)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches&&e.target.matches('article[data-a]'))acts.abrir(e.target.dataset);
@@ -198,7 +210,6 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.id==='q2'){const s=t.value.toLowerCase();sug=s.length<2?[]:S.inv.filter(i=>(i.sku+' '+i.nombre).toLowerCase().includes(s)).slice(0,6);
    $('#sug').innerHTML=sug.map((i,k)=>`<button class="btn" style="justify-content:space-between" data-a="add" data-i="${k}"><span>${esc(i.nombre)}<br><small class="fol">${esc(i.sku)}</small></span><span class="fol">${money(i.precio)}</span></button>`).join('')||(s.length>1?'<div class="mut">Sin resultados. Conecta el catálogo en Configuración o agrega un concepto manual.</div>':'')}});
 document.addEventListener('change',async e=>{const t=e.target;
-  if(t.id==='suc'){S.suc=t.value;save();D=null;render();return}
   if(t.dataset.ag){agf[t.dataset.ag]=t.value;renderMain();return}
   const o=D&&O(D);if(!o||t.type!=='file'||!t.files[0])return;const d=await comprimir(t.files[0]);
   if(t.dataset.foto){o.fotos[t.dataset.foto]={d};touch(o);renderDrawer()}else if(t.dataset.ffoto){o.chk[+t.dataset.ffoto].f=d;touch(o);renderDrawer()}else if(t.id==='hf'){window._hf=d;toast('Foto lista: toca "Agregar a cotización"')}});
@@ -213,14 +224,14 @@ document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest(
 function aplicarUrls(o,u){for(const k in u){const[a,b]=k.split('.');if(a==='fotos'&&o.fotos[b])o.fotos[b]={u:u[k]};else if(a==='firmas'&&o.firmas[b])o.firmas[b]={n:o.firmas[b].n,u:u[k]};else if(a==='chk'&&o.chk[b])o.chk[b].f=u[k];else if(a==='lineas'&&o.lineas[b])o.lineas[b].f=u[k]}}
 async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine)return;syncing=true;
   try{for(const f of [...S.dirty]){const o=O(f);if(!o)continue;const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success)break;aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==f)}
-   const r=await api.taller({action:'listarOrdenes'});if(r.success){let ch=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio)return;const l=O(ro.folio);if(!l){S.orders.push(ro);ch=true}else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}});if(ch)renderMain()}
+   const r=await api.taller({action:'listarOrdenes'});if(r.success){let ch=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio)return;migEt(ro);const l=O(ro.folio);if(!l){S.orders.push(ro);ch=true}else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}});if(ch)renderMain()}
    save()}catch{}syncing=false}
 setInterval(()=>{const c=$('#crono'),o=D&&O(D);if(c&&o)c.textContent=hms(ms(o))},1000);
 setInterval(sync,30000);addEventListener('online',sync);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v3 k2120 · 20-11-26';
-const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v4 · 20-11-26';
+const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
 async function iniciarSesion(){
@@ -229,18 +240,32 @@ async function iniciarSesion(){
   b.disabled=true;m.className='lg-m';m.textContent='Validando...';
   try{const r=await api.login(c,p,rec);
     if(!r.success){m.className='lg-m err';m.textContent=r.message||'No se pudo iniciar sesión.';return}
-    sesion={correo:r.correo||c,token:r.token,nombre:r.nombre||'',esAdmin:!!r.esAdmin,esGerente:!!r.esGerente,esVendedor:!!r.esVendedor,duracionSesionMs:r.duracionSesionMs,loginTime:Date.now()};
+    if(!r.esAdmin&&!r.esVendedor&&!r.esGerente){   // las cuentas de clientes no entran al taller
+      m.className='lg-m err';m.textContent='Tu cuenta no tiene acceso al Taller. Contacta al administrador.';
+      try{fetch(CATALOGO_API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'cerrarSesionServidor',correo:r.correo||c,token:r.token})}).catch(()=>{})}catch{}
+      return}
+    const ag=String(r.almacenAdmin||'').replace(/\s+/g,' ').trim().toUpperCase(),agencia=ag||(r.esAdmin&&!r.esVendedor?'TODAS':'');
+    if(!agencia){m.className='lg-m err';m.textContent='Tu cuenta no tiene agencia asignada. Contacta al administrador.';
+      try{fetch(CATALOGO_API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'cerrarSesionServidor',correo:r.correo||c,token:r.token})}).catch(()=>{})}catch{}
+      return}
+    sesion={correo:r.correo||c,token:r.token,nombre:r.nombre||'',esAdmin:!!r.esAdmin,esGerente:!!r.esGerente,esVendedor:!!r.esVendedor,agencia,duracionSesionMs:r.duracionSesionMs,loginTime:Date.now()};
     try{sessionStorage.setItem(SK,JSON.stringify(sesion));if(rec)localStorage.setItem(SK,JSON.stringify(sesion))}catch{}
-    $('#lg-p').value='';m.textContent='';pintaLogin();render();sync();cargaCat(true)
+    $('#lg-p').value='';m.textContent='';pintaLogin();aplicaAg();render();sync();cargaCat(true)
   }catch{m.className='lg-m err';m.textContent='Error de conexión. Intenta de nuevo.'}
   finally{b.disabled=false}}
 async function cargaCat(quiet){if(!sesion)return;
   try{const r=await api.inventario(sesion.correo,sesion.token);if(!r.success){if(!quiet)toast(r.message||'Catálogo no disponible: vuelve a iniciar sesión');return}
     S.inv=(r.data||[]).map(i=>({sku:String(i.sku||i.SKU||i.Sku||i.Codigo||''),nombre:String(i.nombre||i.Nombre||i.Descripcion||i.Producto||''),precio:Number(i.precio||i.Precio||i.precioPublico||i.PrecioPublico||0)})).filter(i=>i.sku);save();if(!quiet)toast(S.inv.length+' productos cargados')}
   catch{if(!quiet)toast('Sin conexión al catálogo')}}
+function migrarLeg(){if(S.suc)S.orders.forEach(o=>{if(LEG.includes(o.suc)){o.suc=S.suc;touch(o)}});save()}
+function pintaHd(){const a=sesion?.agencia||'',el=$('#agn'),lg=$('#hlogo'),m=multi(a);
+  if(el){el.hidden=!sesion;el.textContent=sesion?(S.suc||(m?'Elegir agencia':a)):'';el.className='agn'+(m?' pk':'');el.disabled=!m;if(m)el.dataset.a='agpick';else delete el.dataset.a}
+  if(lg){const u=LOGO_BASE+logoDe(S.suc||a)+'.png';if(lg.getAttribute('src')!==u)lg.setAttribute('src',u)}}
+function aplicaAg(){if(!sesion)return;const a=sesion.agencia,p=permitidas(a);
+  S.suc=multi(a)?(p.includes(S.suc)?S.suc:''):a;migrarLeg();pintaHd();if(!S.suc)acts.agpick()}
 const temaG=()=>{try{return localStorage.getItem('taller_tema')||'sistema'}catch{return'sistema'}};
 function aplicarTema(){const t=temaG(),o=t==='oscuro'||(t==='sistema'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',o);document.querySelectorAll('.tema-op').forEach(b=>b.classList.toggle('on',b.dataset.tm===t))}
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(temaG()==='sistema')aplicarTema()})}catch{}
 async function recarga(){toast('Actualizando…');try{if(window.caches){const k=await caches.keys();await Promise.all(k.map(x=>caches.delete(x)))}if(navigator.serviceWorker){const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(x=>x.unregister()))}}catch{}location.reload()}
 document.addEventListener('submit',e=>{if(e.target.id==='lg-f'){e.preventDefault();iniciarSesion()}});
-sesion=leerSes();aplicarTema();pintaLogin();render();sync();if(sesion)cargaCat(true);
+sesion=leerSes();aplicarTema();pintaLogin();aplicaAg();render();sync();if(sesion)cargaCat(true);

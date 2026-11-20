@@ -147,3 +147,31 @@ html.dark .dr{background:#0b1220}
 html.dark .cfg-g{color:#94a3b8}html.dark .ver{background:#1e293b;color:#93c5fd}html.dark .cfg-d summary{color:#93c5fd}
 html.dark .lg-c{background:#162032;color:#e2e8f0}html.dark .lg-c h1{color:#e2e8f0}html.dark .lg-s{color:#93c5fd}html.dark .lg-t,html.dark .lg-c label{color:#94a3b8}
 html.dark .lg-c input[type=text],html.dark .lg-c input[type=password]{background:#0f172a;color:#e2e8f0;border-color:#334155}
+
+/* ===== Agencia en el encabezado, mapa de procesos y fotos generales (estilo Superservice Triage) ===== */
+.lg-c h1{margin-top:0}
+.hd .logo img{width:auto;max-width:160px;object-fit:contain}
+.agn{flex:none;max-width:38vw;min-height:48px;padding:0 14px;border:0;border-radius:3px;background:#EEF2F7;color:var(--nv);font:600 14px "Fira Sans",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+.agn[hidden]{display:none}.agn:disabled{color:var(--nv);opacity:1;cursor:default}.agn.pk{cursor:pointer}.agn.pk::after{content:"▾"}
+@media(max-width:560px){.hd{gap:8px}.agn{font-size:12px;padding:0 8px;min-height:44px}}
+.pm{list-style:none;margin:0 0 12px;padding:0;display:flex;overflow-x:auto;scrollbar-width:none;background:#fff;border:1px solid var(--bd);border-radius:3px}
+.pm li{flex:1 0 170px;position:relative}.pm li+li{border-left:1px solid var(--bd)}
+.pm li+li::before{content:"›";position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:15px;text-align:center;background:#fff;color:#94A3B8;font-size:22px;line-height:1;z-index:1}
+.pm button{width:100%;min-height:62px;display:flex;align-items:center;gap:10px;padding:8px 12px;border:0;border-bottom:4px solid transparent;background:none;text-align:left;cursor:pointer;font-family:inherit;color:var(--tx)}
+.pm li.on button{border-bottom-color:var(--c);background:rgba(148,163,184,.12)}
+.pmn{flex:none;width:28px;height:28px;border-radius:50%;background:var(--c);color:#fff;font:700 14px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center}
+.pmt{display:flex;flex-direction:column;min-width:0;flex:1}.pmt b{font-weight:600;font-size:14px}.pmt small{font-size:11px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(min-width:900px){.pm li.on button{border-bottom-color:transparent;background:none}.pm li{flex:1 1 0}}
+.pg5{display:flex;gap:3px}.pg5 i{flex:1;height:5px;border-radius:2px;background:#CBD5E1}.pg5 i.d{background:var(--c,#154B94)}
+.dstep{display:flex;gap:4px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--bd);overflow-x:auto;scrollbar-width:none}
+.dstep span{flex:1 0 auto;padding:6px 10px;border-radius:3px;background:#E9EEF6;color:var(--mut);font:600 12px "Fira Sans",sans-serif;white-space:nowrap;text-align:center}
+.dstep .d{background:#DBEAFE;color:#1E3A8A}.dstep .c{background:var(--c);color:#fff}
+.gfo{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.gf{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:112px;border:2px dashed #94A3B8;border-radius:8px;background:#fff;color:var(--mut);cursor:pointer;overflow:hidden;font-size:12px;font-weight:600;text-align:center;padding:6px}
+.gf.on{border-style:solid;border-color:var(--g);padding:0}.gf img{width:100%;height:96px;object-fit:cover;display:block}.gf .gt{padding:2px 6px}
+.gf input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+html.dark .pm,html.dark .dstep{background:#162032;border-color:var(--bd)}html.dark .pm li+li{border-color:var(--bd)}html.dark .pm li+li::before{background:#162032}
+html.dark .pm button{color:var(--tx)}html.dark .pg5 i{background:#334155}html.dark .pg5 i.d{background:var(--c,#60a5fa)}
+html.dark .dstep span{background:#1e293b}html.dark .dstep .d{background:#1e3a5f;color:#bfdbfe}html.dark .dstep .c{background:var(--c);color:#fff}
+html.dark .gf{background:#0f172a;border-color:#475569}html.dark .gf.on{border-color:var(--g)}
+html.dark .agn,html.dark .agn:disabled{background:#1e293b;color:#93c5fd}

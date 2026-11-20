@@ -1,6 +1,6 @@
 // Vista de impresión / PDF con la estructura del formato en papel
 function imprimir(o){
-  const s=SUC[o.suc]||{n:'CARABELA '+o.suc,d:'',t:''},t=tot(o),im=x=>src(x)?`<img src="${src(x)}" style="max-height:48px">`:'';
+  const s=datosAg(o.suc),t=tot(o),im=x=>src(x)?`<img src="${src(x)}" style="max-height:48px">`:'';
   const col=(a,b)=>`<table><tr><th>NO</th><th>DESCRIPCIÓN</th><th>CANT</th></tr>${INV32.slice(a,b).map((n,i)=>{const x=o.inv[a+i];return`<tr><td>${a+i+1}</td><td>${esc(n)}</td><td style="text-align:center">${x.p?x.c:''}</td></tr>`}).join('')}</table>`;
   const rows=o.lineas.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.sku)}</td><td>${esc(l.desc)} <i>(${AUT.find(a=>a[0]===l.st)[1]})</i></td><td>${l.t==='mo'?(l.min||'')+' min':l.cant}</td><td>${money(l.precio)}</td><td>${l.st==='gar'?'GARANTÍA':money(imp(l))}</td></tr>`);
   while(rows.length<7)rows.push(`<tr><td>${rows.length+1}</td><td></td><td></td><td></td><td></td><td></td></tr>`);
