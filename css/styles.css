@@ -175,3 +175,9 @@ html.dark .pm button{color:var(--tx)}html.dark .pg5 i{background:#334155}html.da
 html.dark .dstep span{background:#1e293b}html.dark .dstep .d{background:#1e3a5f;color:#bfdbfe}html.dark .dstep .c{background:var(--c);color:#fff}
 html.dark .gf{background:#0f172a;border-color:#475569}html.dark .gf.on{border-color:var(--g)}
 html.dark .agn,html.dark .agn:disabled{background:#1e293b;color:#93c5fd}
+
+/* ===== Ajustes: textos largos dentro de la tarjeta y sin numeración ===== */
+.chip.w,.chip.r{white-space:normal;line-height:1.3;padding:4px 8px;max-width:100%;overflow-wrap:anywhere}
+.k,.k>*{min-width:0;max-width:100%}
+.dft .chip{max-width:100%}
+.pmn{width:14px;height:14px}

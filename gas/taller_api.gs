@@ -27,6 +27,7 @@ function doPost(e) {
     if (b.action === 'siguienteFolio') return out_({ success: true, folio: siguienteFolio_(b.tipo) });
     if (b.action === 'guardarOrden') return out_(guardarOrden_(b.orden));
     if (b.action === 'listarOrdenes') return out_({ success: true, ordenes: listar_() });
+    if (b.action === 'eliminarOrden') return out_(eliminarOrden_(b.folio));
     return out_({ success: false, message: 'Acción desconocida' });
   } catch (err) { return out_({ success: false, message: String(err) }); }
   finally { lock.releaseLock(); }
@@ -85,4 +86,14 @@ function guardarOrden_(o) {
 function listar_() {
   var s = sheet_('ORDENES_TALLER');
   return s.getDataRange().getValues().slice(1).map(function (r) { try { return JSON.parse(r[19] || '{}'); } catch (e) { return {}; } });
+}
+
+// Borra la orden, su cotización y su cita (las fotos y firmas de Drive no se tocan).
+function eliminarOrden_(folio) {
+  if (!folio) return { success: false, message: 'Falta el folio' };
+  ['ORDENES_TALLER', 'COTIZACIONES_TALLER', 'AGENDA_TALLER'].forEach(function (n) {
+    var s = sheet_(n), v = s.getDataRange().getValues();
+    for (var r = v.length; r > 1; r--) if (v[r - 1][0] === folio) s.deleteRow(r);
+  });
+  return { success: true };
 }

@@ -5,7 +5,13 @@ const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch{retur
 let S=load('taller_v2',{orders:[],seq:{},dirty:[],inv:[],suc:''});
 const migEt=o=>{if(o&&ETMIG[o.etapa])o.etapa=ETMIG[o.etapa];return o};S.orders.forEach(migEt);
 let sesion=null,tab='recepcion',view='board',D=null,dt='u',q='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
-const save=()=>{try{localStorage.setItem('taller_v2',JSON.stringify(S))}catch{toast('Memoria llena: sincroniza para liberar fotos')}};
+const IDB={db:null,open(){return new Promise(r=>{try{const q=indexedDB.open('taller',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>{IDB.db=q.result;r(true)};q.onerror=()=>r(false)}catch{r(false)}})},
+  get(k){return new Promise(r=>{try{const t=IDB.db.transaction('kv').objectStore('kv').get(k);t.onsuccess=()=>r(t.result);t.onerror=()=>r(undefined)}catch{r(undefined)}})},
+  set(k,v){return new Promise((ok,no)=>{try{const tx=IDB.db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>ok(true);tx.onerror=()=>no(tx.error)}catch(e){no(e)}})}};
+let svT=0,svErr=false;
+const flush=()=>{clearTimeout(svT);if(IDB.db)IDB.set('S',S).then(()=>{svErr=false}).catch(()=>{if(!svErr)toast('No se pudo guardar en este dispositivo: sincroniza y libera espacio');svErr=true})};
+const save=()=>{if(IDB.db){clearTimeout(svT);svT=setTimeout(flush,120)}else{try{localStorage.setItem('taller_v2',JSON.stringify(S))}catch{toast('Memoria llena: sincroniza para liberar fotos')}}};
+addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>'$'+Number(n||0).toLocaleString('es-MX',{maximumFractionDigits:2});
 const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3200)};
@@ -13,6 +19,7 @@ const iso=(d=new Date())=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOS
 const addD=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
 const src=x=>typeof x==='string'?x:(x&&(x.d||x.u))||'';
 const idx=e=>ETAPAS.findIndex(x=>x[0]===e),O=f=>S.orders.find(o=>o.folio===f),mine=()=>S.orders.filter(o=>o.suc===S.suc);
+const adminReal=()=>!!(sesion&&sesion.esAdmin&&!sesion.esVendedor&&!sesion.esGerente);
 const imp=l=>(Number(l.cant)||0)*(Number(l.precio)||0);
 const ms=o=>o.t.acum+(o.t.ini?Date.now()-o.t.ini:0);
 const hms=m=>{const s=Math.floor(m/1000);return[s/3600|0,s/60%60|0,s%60].map(x=>String(x).padStart(2,'0')).join(':')};
@@ -58,7 +65,7 @@ function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.db
   lastD=D;keepSc=true}
 const match=o=>{if(!q)return true;const s=[o.folio,o.cliente,o.modelo,o.vin,o.tel,o.motor].join(' ').toLowerCase();return q.toLowerCase().split(/\s+/).every(w=>s.includes(w))};
 function board(){const L=mine().filter(match);
-  return`<ol class="pm" aria-label="Mapa de procesos">${ETAPAS.map(([k,n,c,d],i)=>`<li class="${k===tab?'on':''}" style="--c:${c}"><button type="button" data-a="tab" data-k="${k}" aria-current="${k===tab}"><span class="pmn">${i+1}</span><span class="pmt"><b>${n}</b><small>${d}</small></span><span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button></li>`).join('')}</ol>
+  return`<ol class="pm" aria-label="Mapa de procesos">${ETAPAS.map(([k,n,c,d],i)=>`<li class="${k===tab?'on':''}" style="--c:${c}"><button type="button" data-a="tab" data-k="${k}" aria-current="${k===tab}"><span class="pmn"></span><span class="pmt"><b>${n}</b><small>${d}</small></span><span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button></li>`).join('')}</ol>
   ${q?`<p class="mut">${L.length} resultado(s) para «${esc(q)}»</p>`:''}
   <div class="kan">${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')||'<p class="mut">Sin órdenes en esta etapa.</p>'}</div></section>`}).join('')}</div>`}
 function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length;
@@ -74,8 +81,8 @@ const inp=(l,p,v,x='')=>`<label class="f">${l}<input data-p="${p}" value="${esc(
 function drawer(o){const bad=o.chk.filter(c=>c.e==='px'||c.e==='ur').length,pend=o.lineas.filter(l=>l.st==='pend').length,e=ETAPAS[idx(o.etapa)];
   const T=[['u','Unidad',''],['i','Inspección',bad?`<span class="cnt">${bad}</span>`:''],['c','Cotización',pend?`<span class="cnt">${pend}</span>`:''],['z','Cierre','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
-  <header class="drh"><button class="ib" data-a="cerrard" aria-label="Cerrar orden">${IC.back}</button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span><span style="flex:1"></span><button class="btn sm" data-a="print">${IC.pr} Imprimir</button><button class="btn sm" data-a="mv" data-f="${o.folio}">Mover a…</button></header>
-  <div class="dstep" aria-label="Proceso">${ETAPAS.map((x,i)=>`<span class="${i<idx(o.etapa)?'d':i===idx(o.etapa)?'c':''}" ${i===idx(o.etapa)?`style="--c:${x[2]}" aria-current="step"`:''}>${i+1}. ${x[1]}</span>`).join('')}</div>
+  <header class="drh"><button class="ib" data-a="cerrard" aria-label="Cerrar orden">${IC.back}</button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span><span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print">${IC.pr} Imprimir</button><button class="btn sm" data-a="mv" data-f="${o.folio}">Mover a…</button></header>
+  <div class="dstep" aria-label="Proceso">${ETAPAS.map((x,i)=>`<span class="${i<idx(o.etapa)?'d':i===idx(o.etapa)?'c':''}" ${i===idx(o.etapa)?`style="--c:${x[2]}" aria-current="step"`:''}>${x[1]}</span>`).join('')}</div>
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
   <div class="dbody">${{u:tU,i:tI,c:tC,z:tZ}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
 function foot(o){const n=sig(o),b=n?puede(o,n):'',m=est(o);
@@ -143,6 +150,9 @@ const acts={
  tab:d=>{tab=d.k;renderMain()},view:d=>{view=d.v;render()},abrir:d=>{D=d.f;dt='u';keepSc=false;render()},cerrard:()=>{D=null;render()},dtab:d=>{dt=d.k;keepSc=false;renderDrawer()},
  cerrar:(d,e)=>{if(e.target.classList.contains('ov'))$('#modal').innerHTML=''},
  nueva:()=>{if(!S.suc)return acts.agpick();sheet('<div class="h">Tipo de orden</div>'+tipoBtns('crear'))},
+ elim:()=>{if(!adminReal()||!D)return;sheet(`<div class="h">¿Eliminar la orden ${esc(D)}?</div><div class="mut">Se borra la orden y su cotización de la hoja del taller. Esta acción no se puede deshacer.</div><div class="row"><button class="btn" data-a="cmod">Cancelar</button><button class="btn red" data-a="elimok">Eliminar</button></div>`)},
+ cmod:()=>{$('#modal').innerHTML=''},
+ elimok:()=>{if(!adminReal()||!D)return;const f=D;S.orders=S.orders.filter(o=>o.folio!==f);S.dirty=S.dirty.filter(x=>x!==f);(S.del=S.del||[]).push(f);D=null;save();$('#modal').innerHTML='';render();sync();toast('Orden eliminada')},
  lav:()=>{const o=O(D);o.lav=!o.lav;touch(o);renderDrawer()},
  agpick:()=>{if(!sesion||!multi(sesion.agencia))return;sheet('<div class="h">Agencia de trabajo</div><div class="mut">Elige la agencia en la que vas a trabajar.</div>'+permitidas(sesion.agencia).map(a=>`<button class="btn ${a===S.suc?'pri':''}" data-a="agset" data-k="${esc(a)}">${esc(a)}</button>`).join(''))},
  agset:d=>{S.suc=d.k;migrarLeg();$('#modal').innerHTML='';D=null;render()},crear:d=>{$('#modal').innerHTML='';crear(d.t)},
@@ -223,14 +233,15 @@ document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest(
 
 function aplicarUrls(o,u){for(const k in u){const[a,b]=k.split('.');if(a==='fotos'&&o.fotos[b])o.fotos[b]={u:u[k]};else if(a==='firmas'&&o.firmas[b])o.firmas[b]={n:o.firmas[b].n,u:u[k]};else if(a==='chk'&&o.chk[b])o.chk[b].f=u[k];else if(a==='lineas'&&o.lineas[b])o.lineas[b].f=u[k]}}
 async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine)return;syncing=true;
-  try{for(const f of [...S.dirty]){const o=O(f);if(!o)continue;const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success)break;aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==f)}
-   const r=await api.taller({action:'listarOrdenes'});if(r.success){let ch=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio)return;migEt(ro);const l=O(ro.folio);if(!l){S.orders.push(ro);ch=true}else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}});if(ch)renderMain()}
+  try{for(const f of [...(S.del||[])]){const r=await api.taller({action:'eliminarOrden',folio:f});if(r.success)S.del=S.del.filter(x=>x!==f)}
+   for(const f of [...S.dirty]){const o=O(f);if(!o)continue;const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success)break;aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==f)}
+   const r=await api.taller({action:'listarOrdenes'});if(r.success){let ch=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio||(S.del||[]).includes(ro.folio))return;migEt(ro);const l=O(ro.folio);if(!l){S.orders.push(ro);ch=true}else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}});if(ch)renderMain()}
    save()}catch{}syncing=false}
 setInterval(()=>{const c=$('#crono'),o=D&&O(D);if(c&&o)c.textContent=hms(ms(o))},1000);
 setInterval(sync,30000);addEventListener('online',sync);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v4 · 20-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v5 · 20-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
@@ -268,4 +279,9 @@ function aplicarTema(){const t=temaG(),o=t==='oscuro'||(t==='sistema'&&matchMedi
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(temaG()==='sistema')aplicarTema()})}catch{}
 async function recarga(){toast('Actualizando…');try{if(window.caches){const k=await caches.keys();await Promise.all(k.map(x=>caches.delete(x)))}if(navigator.serviceWorker){const r=await navigator.serviceWorker.getRegistrations();await Promise.all(r.map(x=>x.unregister()))}}catch{}location.reload()}
 document.addEventListener('submit',e=>{if(e.target.id==='lg-f'){e.preventDefault();iniciarSesion()}});
-sesion=leerSes();aplicarTema();pintaLogin();aplicaAg();render();sync();if(sesion)cargaCat(true);
+IDB.open().then(async ok=>{
+  if(ok){const v=await IDB.get('S');
+    if(v&&v.orders){S=v}else{try{await IDB.set('S',S)}catch{}}
+    try{localStorage.removeItem('taller_v2')}catch{}}
+  S.orders=S.orders||[];S.dirty=S.dirty||[];S.inv=S.inv||[];S.seq=S.seq||{};S.del=S.del||[];S.orders.forEach(migEt);
+  sesion=leerSes();aplicarTema();pintaLogin();aplicaAg();render();sync();if(sesion)cargaCat(true)});
