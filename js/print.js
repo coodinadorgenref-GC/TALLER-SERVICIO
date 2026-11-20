@@ -1,0 +1,16 @@
+// Vista de impresión / PDF con la estructura del formato en papel
+function imprimir(o){
+  const s=SUC[o.suc]||{n:'CARABELA '+o.suc,d:'',t:''},t=tot(o),im=x=>src(x)?`<img src="${src(x)}" style="max-height:48px">`:'';
+  const col=(a,b)=>`<table><tr><th>NO</th><th>DESCRIPCIÓN</th><th>CANT</th></tr>${INV32.slice(a,b).map((n,i)=>{const x=o.inv[a+i];return`<tr><td>${a+i+1}</td><td>${esc(n)}</td><td style="text-align:center">${x.p?x.c:''}</td></tr>`}).join('')}</table>`;
+  const rows=o.lineas.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.sku)}</td><td>${esc(l.desc)} <i>(${AUT.find(a=>a[0]===l.st)[1]})</i></td><td>${l.t==='mo'?(l.min||'')+' min':l.cant}</td><td>${money(l.precio)}</td><td>${l.st==='gar'?'GARANTÍA':money(imp(l))}</td></tr>`);
+  while(rows.length<7)rows.push(`<tr><td>${rows.length+1}</td><td></td><td></td><td></td><td></td><td></td></tr>`);
+  $('#print').innerHTML=`<h1>LA BARATA DEL HOGAR · AGENCIA: ${esc(s.n)}</h1><div style="text-align:center">${esc(s.d)} ${esc(s.t)}</div><h1 style="margin-top:6px">ORDEN DE SERVICIO ${esc(o.folio)}</h1>
+  <table><tr><td colspan="2"><b>CLIENTE:</b> ${esc(o.cliente)}</td><td><b>FECHA COMPRA:</b> ${esc(o.fcompra)}</td></tr><tr><td colspan="2"><b>DIRECCIÓN:</b> ${esc(o.dir)}</td><td><b>TELÉFONO:</b> ${esc(o.tel)}</td></tr>
+  <tr><td><b>MODELO:</b> ${esc(o.modelo)} ${esc(o.anio)}</td><td><b>SERIE:</b> ${esc(o.vin)}</td><td><b>MOTOR:</b> ${esc(o.motor)}</td></tr><tr><td><b>KM:</b> ${esc(o.km)}</td><td><b>FECHA INGRESO:</b> ${new Date(o.fing).toLocaleDateString('es-MX')}</td><td><b>¿ES GARANTÍA?</b> SÍ [${o.gar?'X':' '}] NO [${o.gar?' ':'X'}]</td></tr></table>
+  <div class="pg">${col(0,16)}${col(16,32)}</div>
+  <table><tr><td><b>CONDICIONES EN LAS QUE SE RECIBE LA UNIDAD:</b> ${esc(o.cond)}</td></tr><tr><td><b>TRABAJO SOLICITADO:</b> ${Object.entries(TIPOS).map(([k,v])=>`${k} ${v} [${k===o.tipo?'X':' '}]`).join(' &nbsp; ')}<br>${esc(o.motivo)}</td></tr>
+  <tr><td><b>CONDICIÓN TÉCNICA:</b> ${CATS.map((c,i)=>`${c[0]}: ${COND.find(x=>x[0]===o.chk[i].e)[2]}${o.chk[i].n?' ('+esc(o.chk[i].n)+')':''}`).join(' · ')}</td></tr><tr><td><b>DIAGNÓSTICO DEL TÉCNICO:</b> ${esc(o.diag)}</td></tr></table>
+  <table><tr><td style="width:50%"><b>NOMBRE Y FIRMA DEL CLIENTE (ENTREGA)</b><br>${im(o.firmas.entrega)}</td><td><b>NOMBRE Y FIRMA DEL QUE RECIBE LA UNIDAD</b><br>${esc(o.recibe)}</td></tr><tr><td colspan="2" style="font-size:9px">${LEYENDA}</td></tr></table>
+  <table><tr><th colspan="6">PRESUPUESTO DE INSUMOS Y MANO DE OBRA</th></tr><tr><th>NO.</th><th>SKU</th><th>DESCRIPCIÓN</th><th>CANT.</th><th>PRECIO UNI ($)</th><th>IMPORTE ($)</th></tr>${rows.join('')}<tr><td colspan="5" style="text-align:right"><b>TOTAL A COBRAR: $</b></td><td><b>${money(t.aut)}</b></td></tr></table>
+  <p style="font-size:9px">${CERT}</p><table><tr>${FIRMAS.map(([k,n])=>`<td style="text-align:center;height:70px;vertical-align:bottom">${im(o.firmas[k])}<br>${esc(o.firmas[k]?.n||'')}<br><b>${n}</b></td>`).join('')}</tr></table>`;
+  setTimeout(()=>print(),150)}
