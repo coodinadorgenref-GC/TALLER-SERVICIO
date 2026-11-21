@@ -15,6 +15,12 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v25
+- **Marca / fabricante obligatoria** para pasar de Recepción (en órdenes anteriores se rellena sola si la serie la permite).
+- Series `3MU…` reconocidas como Vento; Suzuki `MB8…`, `LC6PCJ…`, `LC6PCH…`; Haojue `LC6PCKGM…`.
+- Series `LC6PCKAW…` y `LC6JCK4P…` (Haojue Suzuki) se venden como Suzuki y como Haojue: la app pide elegir la marca con un botón.
+- Si la marca capturada no coincide con la de la serie, se avisa y se ofrece usar la de la serie.
+
 ## Novedades v24
 - Datos del vehículo: nuevo campo **Marca / fabricante** que se llena solo con el Serie / VIN (Bajaj MD2, Vento 3EF/LFF, Haojue LC6PCK, Suzuki LC6PCJ/MB8/JS1/RFD/MLC, Hercules H93, Honda, Yamaha). Se puede corregir a mano y sugiere las marcas conocidas.
 - Series de e-bike (BIC-… bicicleta, TRI-… triciclo) se reconocen como marca *E-Bike*; no traen año.
