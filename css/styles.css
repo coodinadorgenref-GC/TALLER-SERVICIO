@@ -230,3 +230,16 @@ html.dark .k>.row:first-child{background:#162032}
 .zl button.sel{outline:3px solid var(--p);outline-offset:1px}.zl i{flex:none;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font:700 12px "Fira Sans",sans-serif}
 .zl .z-nr{background:#1E5FD1}.zl .z-ok{background:#15803D}.zl .z-px{background:#FACC15;color:#000}.zl .z-ur{background:#DC2626}
 html.dark .zl button{background:#0f172a;border-color:#334155}html.dark .seg .s-nr{background:#1E5FD1;border-color:#1E5FD1}
+
+/* Lista de verificación (estilo Superservice): cuadros siempre de color, el elegido lleva palomita y borde */
+.sbar{background:#4B5563;color:#fff;font:600 14px "Fira Sans",sans-serif;padding:9px 12px;border-radius:3px;margin-top:10px}
+.ckr{background:#fff;border:1px solid var(--bd);border-radius:3px;padding:8px 10px;margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}.ckt{flex:1 1 140px;display:flex;flex-direction:column;min-width:0}.ckt .mut{font-size:12px}
+.cqs{display:flex;gap:6px;margin-left:auto}.cq{width:44px;height:44px;border-radius:6px;border:3px solid transparent;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;color:#fff}.cq svg{width:22px;height:22px}
+.cq-nr{background:#1E5FD1}.cq-ok{background:#15803D}.cq-px{background:#FACC15;color:#000}.cq-ur{background:#DC2626}.cq.on{border-color:var(--tx);box-shadow:0 0 0 2px #fff inset}
+.ckx,.pf{flex:1 1 100%}.pf summary{cursor:pointer;min-height:36px;display:flex;align-items:center;font-size:13px;color:var(--mut)}
+html.dark .ckr{background:#162032}html.dark .cq.on{border-color:#fff;box-shadow:0 0 0 2px #0f172a inset}
+/* Diagrama de daños en Recepción */
+.mw{position:relative;max-width:520px;margin:8px auto;border:1px solid var(--bd2);border-radius:8px;background:#fff;cursor:crosshair;touch-action:manipulation;overflow:hidden}.mw img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.mk{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#DC2626;color:#fff;border:2px solid #fff;font:700 14px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.mk::after{content:"";position:absolute;inset:-7px}.mk.sel{outline:3px solid #0F172A}
+.dr{display:flex;gap:6px;align-items:center;margin-top:6px}.dn{flex:none;width:28px;height:28px;border-radius:50%;background:#DC2626;color:#fff;font:700 13px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center}
+.dr select,.dr input{min-height:44px;border:1px solid #94A3B8;border-radius:8px;padding:0 8px;font:500 14px "Fira Sans",sans-serif;background:#fff;color:var(--tx)}.dr input{flex:1;min-width:0}html.dark .dr select,html.dark .dr input{background:#0f172a;border-color:#334155}
