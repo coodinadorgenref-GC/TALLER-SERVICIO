@@ -4,9 +4,10 @@ const CATALOGO_API="https://catalogo-labarata-proxy.catalogo-labarata.workers.de
 const TALLER_API='https://script.google.com/macros/s/AKfycbzqs6XP-omE1_5ZG40VrCtCM1tgKK163YoexD6qHYYU36Lx6vZQfV12trsxse8I6GQK/exec';
 const TALLER_CLAVE='';
 const tallerUrl=()=>TALLER_API;
+const claveT=()=>{try{return localStorage.getItem('taller_clave')||TALLER_CLAVE}catch{return TALLER_CLAVE}};
 async function post(url,body){const r=await fetch(url,{method:'POST',mode:'cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)});return r.json()}
 const api={
-  taller:b=>{const u=tallerUrl();if(!u)throw new Error('Sin URL de API');return post(u,Object.assign({clave:TALLER_CLAVE},b))},
+  taller:b=>{const u=tallerUrl();if(!u)throw new Error('Sin URL de API');return post(u,Object.assign({clave:claveT()},b))},
   // Catálogo existente (mismas acciones que CATALOGO-DE-INVENTARIO)
   login:(correo,pin,rec=true)=>post(CATALOGO_API,{action:'login',app:'catalogo',correo,codigoAcceso:pin,dispositivo:navigator.userAgent.slice(0,180),recordarme:rec}),
   inventario:(correo,token)=>post(CATALOGO_API,{action:'obtenerInventario',correo,token})
