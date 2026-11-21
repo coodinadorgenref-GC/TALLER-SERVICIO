@@ -220,3 +220,13 @@ html.dark .qr{border-color:#243247}html.dark .qr .qx{background:#1b283c}html.dar
 html.dark .qb.del{background:#1e293b;color:#fca5a5}html.dark .bd{background:#1e293b;border-color:#475569;color:#94a3b8}
 html.dark .bd.ok{background:#052e1b;border-color:#15803d;color:#6ee7b7}html.dark .bd.al{background:#D92D20;color:#fff;border-color:#D92D20}html.dark .bd.wa{background:#78350f;color:#fde68a;border-color:#b45309}
 html.dark .k>.row:first-child{background:#162032}
+
+/* Hoja multipuntos: azul = sin revisar, verde = OK, amarillo = próximo, rojo = urgente */
+.seg .s-nr{background:#1E5FD1;color:#fff;border-color:#1E5FD1}.seg .s-px{background:#FACC15;color:#000;border-color:#FACC15}
+.lg-nr i{background:#1E5FD1;border:0;width:20px;height:20px}.lg-px i{background:#FACC15;color:#000}.lg-ur i{background:#DC2626;color:#fff}.lg-ok i{background:#15803D;color:#fff}
+.moto{display:block;width:100%;max-width:460px;margin:6px auto;color:var(--tx)}.hz{cursor:pointer}.hz text{pointer-events:none}
+.pts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;margin:8px 0}
+.zl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-top:8px}.zl button{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 8px;border-radius:8px;border:1px solid #94A3B8;background:#fff;color:var(--tx);font:500 13px "Fira Sans",sans-serif;text-align:left;cursor:pointer}
+.zl button.sel{outline:3px solid var(--p);outline-offset:1px}.zl i{flex:none;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font:700 12px "Fira Sans",sans-serif}
+.zl .z-nr{background:#1E5FD1}.zl .z-ok{background:#15803D}.zl .z-px{background:#FACC15;color:#000}.zl .z-ur{background:#DC2626}
+html.dark .zl button{background:#0f172a;border-color:#334155}html.dark .seg .s-nr{background:#1E5FD1;border-color:#1E5FD1}
