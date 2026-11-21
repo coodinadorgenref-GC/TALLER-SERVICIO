@@ -15,6 +15,12 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v26
+- Tabla de marcas del Serie / VIN rehecha con el reporte de ventas 2023-2026 (~10,300 motos): **98 % se llena sola y correcta**, 2 % pide elegir y 0.06 % se equivoca.
+- Corrección: `3EF…` y varias series `LFF…` son **Carabela** (no Vento); Vento es `3MU…`. Nuevas marcas: Carabela, Veloci, Islo, Motomel, Kurazai, Atul, Benelli, Hercules.
+- La marca ahora también se llena sola en órdenes que ya tenían el VIN capturado (antes solo al teclear la serie).
+- Fábricas que arman la misma moto para varias marcas (`3EE`, `LFF`, `LHJ`, `LNG`, `LC6`): la app muestra botones con las marcas posibles para elegir.
+
 ## Novedades v25
 - **Marca / fabricante obligatoria** para pasar de Recepción (en órdenes anteriores se rellena sola si la serie la permite).
 - Series `3MU…` reconocidas como Vento; Suzuki `MB8…`, `LC6PCJ…`, `LC6PCH…`; Haojue `LC6PCKGM…`.

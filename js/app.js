@@ -63,7 +63,7 @@ async function crear(t,x={}){
   S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
 
 function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
-  if(i===0){if(!String(o.marca||'').trim()){const f=vinInfo(o.vin).fab;if(f){o.marca=f;o.marcaAuto=true}}
+  if(i===0){autoMarca(o);
     const fv=[['marca','Marca / fabricante'],['modelo','Modelo'],['anio','Año'],['vin','Serie / VIN'],['motor','Motor'],['km','Kilometraje'],['comb','Combustible']].filter(([k])=>!String(o[k]||'').trim()).map(x=>x[1]);
     if(!String(o.cliente||'').trim())return'Captura el cliente (Unidad)';
     if(fv.length)return'Faltan datos del vehículo: '+fv.join(', ');
@@ -121,7 +121,7 @@ function foot(o){const n=sig(o),b=n?puede(o,n):'';
   <div class="row">${n?`<button class="btn pri" data-a="sig" data-f="${o.folio}" ${b?'disabled':''}>Siguiente etapa: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div>`}
 
 const gfotos=o=>{const n=nRecep(o);return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n?'g':'w'}">${n?n+(n>1?' fotos':' foto')+' de ingreso':'Faltan fotos de ingreso'}</span></div>${danosH(o)}</div>`};
-function tU(o){return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
+function tU(o){autoMarca(o);return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
   <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Marca / fabricante','marca',o.marca,'list="marcas" autocomplete="off"')}<datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist>${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${inp('Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
   <div class="mut" id="vinh">${vinH(o)}</div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
@@ -151,17 +151,22 @@ function reporte(){const t=tarifa(),L=mine();let n=0,hc=0,mc=0,ha=0,ma=0;
 async function subeTarifas(){let r='ok';for(const ag of Object.keys(S.tarPend||{})){
   try{const x=await api.taller({action:'guardarConfig',cfgK:'tarifa_mo|'+ag,cfgV:(S.tarifas||{})[ag]||0});if(x&&x.success)delete S.tarPend[ag];else r=/desconocida/i.test((x&&x.message)||'')?'viejo':'error'}catch{r='error'}}
   save();return r}
-// VIN de 17 caracteres: la posición 10 es el año modelo (A=2010 … Y=2030; 1-9 = 2001-2009). El fabricante sale de los 3 primeros caracteres (WMI), buscando de lo más específico a lo más general (8, 6, 3). LC6 es Haojue Suzuki (empresa conjunta): LC6PCKGM = Haojue, LC6PCJ/LC6PCH = Suzuki, pero LC6PCKAW y LC6JCK4P se venden con ambas marcas, así que ahí el usuario elige. El modelo no viene en el VIN de forma pública.
-const VINY='ABCDEFGHJKLMNPRSTVWXY',WMI={MD2:'Bajaj','3MU':'Vento','3EF':'Vento',LFF:'Vento',LC6PCKGM:'Haojue',LC6PCJ:'Suzuki',LC6PCH:'Suzuki',MB8:'Suzuki',JS1:'Suzuki',RFD:'Suzuki',MLC:'Suzuki',H93:'Hercules',JH2:'Honda',LAL:'Honda',JYA:'Yamaha'},LC6AMB=['Suzuki','Haojue'];
-const MARCAS=['Bajaj','Vento','Haojue','Suzuki','Hercules','Honda','Yamaha','E-Bike'];
+// VIN de 17 caracteres: la posición 10 es el año modelo (A=2010 … Y=2030; 1-9 = 2001-2009). La marca sale de los primeros caracteres (WMI + descriptor), buscando de lo más específico a lo más general (8, 6, 3).
+// Tabla armada con el reporte de ventas GCVEN02 2023-2026 (~10,300 motos con serie, columna MARCA). Hay fábricas que arman la misma moto para varias marcas (3EE, LFF, LHJ, LNG, LC6): ahí la serie no decide y VINA da las marcas posibles para que el usuario elija con un botón.
+const VINY='ABCDEFGHJKLMNPRSTVWXY',
+WMI={'3MU':'Vento',MD2:'Bajaj','3EF':'Carabela',LB4:'Carabela',LRY:'Carabela',LX8:'Carabela',L98:'Carabela',LY4:'Carabela',MB8:'Suzuki',MH8:'Suzuki','5SA':'Suzuki',JS1:'Suzuki',RFD:'Suzuki',MLC:'Suzuki','3VM':'Veloci',LD3:'Islo',LZS:'Islo',H93:'Hercules',MCG:'Atul',LBB:'Benelli',ZBN:'Benelli','3K3':'Kurazai',HS7:'E-Bike',HC4:'E-Bike',JH2:'Honda',LAL:'Honda',JYA:'Yamaha',
+ LC6PCJ:'Suzuki',LC6PCH:'Suzuki',LC6PCKGM:'Haojue','3EETAKBC':'Islo','3EECAN':'Carabela',LFFW1V:'Carabela',LFFWJT:'Kurazai',LFFWKT41:'Carabela',LFFWKT42:'Islo',LFFWKT43:'Carabela',LHJXJH:'Carabela',LHJYJJ:'Carabela',LHJYJM:'Carabela',LNGPCJ:'Kurazai',LNGPCK13:'Motomel'},
+VINA={LC6:['Suzuki','Haojue'],'3EE':['Carabela','Islo'],LFF:['Carabela','Motomel','Islo','Kurazai'],LHJ:['Carabela','Kurazai','Islo'],LNG:['Motomel','Kurazai','Carabela']};
+const MARCAS=['Bajaj','Vento','Carabela','Suzuki','Veloci','Islo','Haojue','Hercules','Motomel','Kurazai','Atul','Benelli','Honda','Yamaha','E-Bike'];
 // E-bikes: serie con guiones tipo BIC-A04NA-7220 / TRI-P05NA-7220 (BIC = bicicleta, TRI = triciclo). No es VIN: no trae año; el bloque final (7220, 4812, 6020) es voltaje+Ah de la batería.
 const EBIKE=/^(BIC|TRI)-[A-Z0-9-]+$/;
 function vinInfo(v){v=String(v||'').toUpperCase().replace(/\s+/g,'');const r={n:v.length,ok:false,anio:0,fab:'',amb:null,mal:false,ebike:false,tipo:''};
   if(EBIKE.test(v)){r.ebike=true;r.fab='E-Bike';r.tipo=v.startsWith('TRI')?'triciclo':'bicicleta';return r}
   if(v.length!==17)return r;
   if(/[IOQ]/.test(v)||!/^[A-Z0-9]+$/.test(v)){r.mal=true;return r}
-  const c=v[9],y=/[1-9]/.test(c)?2000+ +c:VINY.indexOf(c)<0?0:2010+VINY.indexOf(c);r.ok=true;r.anio=y;r.fab=WMI[v.slice(0,8)]||WMI[v.slice(0,6)]||WMI[v.slice(0,3)]||'';if(!r.fab&&v.startsWith('LC6'))r.amb=LC6AMB;
+  const c=v[9],y=/[1-9]/.test(c)?2000+ +c:VINY.indexOf(c)<0?0:2010+VINY.indexOf(c);r.ok=true;r.anio=y;r.fab=WMI[v.slice(0,8)]||WMI[v.slice(0,6)]||WMI[v.slice(0,3)]||'';if(!r.fab)r.amb=VINA[v.slice(0,3)]||null;
   if(!y||y>new Date().getFullYear()+1)r.anio=0;return r}
+function autoMarca(o){if(String(o.marca||'').trim())return;const f=vinInfo(o.vin).fab;if(f){o.marca=f;o.marcaAuto=true}}
 function vinH(o){const r=vinInfo(o.vin);if(!r.n)return'';
   if(r.ebike)return`Serie de e-bike (${r.tipo}): no incluye año · marca <b>E-Bike</b>.`;
   if(r.n<17)return`Serie de ${r.n}/17 caracteres: al completarla se detectan año y marca.`;
@@ -169,7 +174,7 @@ function vinH(o){const r=vinInfo(o.vin);if(!r.n)return'';
   if(!r.anio)return`${IC.at} No se pudo leer el año en la posición 10 de la serie: revísala o captura el año a mano.`;
   const dif=Number(o.anio)!==r.anio,mc=String(o.marca||'').trim();
   const btn=m=>`<button type="button" class="btn sm" data-a="vinmarca" data-m="${m}">Usar ${m}</button>`;
-  const fb=r.fab?' · fabricante <b>'+esc(r.fab)+'</b>'+(mc&&mc!==r.fab?` · la marca capturada (${esc(mc)}) no coincide. ${btn(r.fab)}`:''):r.amb?(mc&&r.amb.includes(mc)?' · serie LC6 (Haojue Suzuki): marca <b>'+esc(mc)+'</b>':' · serie LC6 (Haojue Suzuki), se vende como Suzuki o Haojue: elige la marca '+r.amb.map(btn).join(' ')):' · fabricante no reconocido (captura la marca a mano)';
+  const fb=r.fab?' · fabricante <b>'+esc(r.fab)+'</b>'+(mc&&mc!==r.fab?` · la marca capturada (${esc(mc)}) no coincide. ${btn(r.fab)}`:''):r.amb?(mc&&r.amb.includes(mc)?' · marca <b>'+esc(mc)+'</b>':' · esta fábrica arma motos de varias marcas ('+r.amb.join(', ')+'): elige la marca '+r.amb.map(btn).join(' ')):' · fabricante no reconocido (captura la marca a mano)';
   return`Según la serie: año <b>${r.anio}</b>${fb}${dif?` ${o.anio?'· el año capturado ('+esc(o.anio)+') no coincide. ':''}<button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:' · coincide con el año capturado.'}`}
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico se asigna al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div>${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor)}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
@@ -425,7 +430,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v25 · 21-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v26 · 21-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
