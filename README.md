@@ -9,7 +9,7 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
   Las cuentas TODAS o ZONA … eligen la agencia con el botón junto al engranaje.
 
 ## Mapa de procesos
-1. **Recepción**: captura de la orden y fotos generales de la moto (frente, trasera, lados; tablero opcional).
+1. **Recepción**: captura de la orden y Carrocería: fotos generales de la moto (frente, trasera, lados; tablero opcional) y daños numerados sobre el dibujo de la moto, cada uno con su foto.
 2. **Taller**: la moto entra y se asigna el técnico.
 3. **Cotización**: presupuesto de los trabajos y de los adicionales detectados.
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.

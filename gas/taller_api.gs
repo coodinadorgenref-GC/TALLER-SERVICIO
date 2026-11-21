@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v3 (fotos múltiples por zona/llanta, eliminar orden).
+ * API del taller (Google Apps Script) — v4 (foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -18,12 +18,15 @@ function sheet_(n) {
   return s;
 }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function doGet() { return out_({ success: true, servicio: 'taller', version: 3 }); }
+function doGet() { return out_({ success: true, servicio: 'taller', version: 4 }); }
 function doPost(e) {
+  var b;
+  try { b = JSON.parse(e.postData.contents); } catch (err) { return out_({ success: false, message: String(err) }); }
+  if (TALLER_CLAVE && b.clave !== TALLER_CLAVE) return out_({ success: false, message: 'Clave inválida' });
+  // Las fotos se piden sin bloqueo para poder bajar varias a la vez.
+  if (b.action === 'foto') { try { return out_(foto_(b.id)); } catch (err) { return out_({ success: false, message: String(err) }); } }
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    var b = JSON.parse(e.postData.contents);
-    if (TALLER_CLAVE && b.clave !== TALLER_CLAVE) return out_({ success: false, message: 'Clave inválida' });
     if (b.action === 'siguienteFolio') return out_({ success: true, folio: siguienteFolio_(b.tipo) });
     if (b.action === 'guardarOrden') return out_(guardarOrden_(b.orden));
     if (b.action === 'listarOrdenes') return out_({ success: true, ordenes: listar_() });
@@ -31,6 +34,17 @@ function doPost(e) {
     return out_({ success: false, message: 'Acción desconocida' });
   } catch (err) { return out_({ success: false, message: String(err) }); }
   finally { lock.releaseLock(); }
+}
+// Devuelve una foto de TALLER_FOTOS como data URL (solo archivos dentro de esa carpeta). La app la usa cuando el navegador no puede mostrar el enlace de Drive.
+function foto_(id) {
+  if (!/^[\w-]{10,}$/.test(String(id || ''))) return { success: false, message: 'Id inválido' };
+  var it = DriveApp.getFoldersByName('TALLER_FOTOS');
+  if (!it.hasNext()) return { success: false, message: 'Sin carpeta TALLER_FOTOS' };
+  var raiz = it.next().getId(), f = DriveApp.getFileById(id), ok = false, ps = f.getParents();
+  while (ps.hasNext() && !ok) { var up = ps.next().getParents(); while (up.hasNext()) if (up.next().getId() === raiz) { ok = true; break; } }
+  if (!ok) return { success: false, message: 'Archivo fuera de TALLER_FOTOS' };
+  var bl = f.getBlob();
+  return { success: true, d: 'data:' + bl.getContentType() + ';base64,' + Utilities.base64Encode(bl.getBytes()) };
 }
 function siguienteFolio_(tipo) {
   if (!/^(SC|SP|SB|SM|SR|G|SD)$/.test(tipo)) throw new Error('Tipo inválido');
@@ -66,6 +80,8 @@ function aplicar_(o, u) {
     else if (a === 'chkx' && o.chk[b] && o.chk[b].fx) o.chk[b].fx[p[2]] = u[k];
     else if (a === 'll' && o.llantas && o.llantas[b]) o.llantas[b].f = u[k];
     else if (a === 'llx' && o.llantas && o.llantas[b] && o.llantas[b].fx) o.llantas[b].fx[p[2]] = u[k];
+    else if (a === 'dan' && o.danos && o.danos[b]) o.danos[b].f = u[k];
+    else if (a === 'danx' && o.danos && o.danos[b] && o.danos[b].fx) o.danos[b].fx[p[2]] = u[k];
     else if (a === 'lineas' && o.lineas[b]) o.lineas[b].f = u[k];
   });
 }
@@ -80,6 +96,10 @@ function guardarOrden_(o) {
   (o.llantas || []).forEach(function (l, i) {
     if (l.f && l.f.indexOf('data:') === 0) urls['ll.' + i] = subir_(o.folio, 'llanta-' + (i + 1), l.f);
     (l.fx || []).forEach(function (x, j) { if (x && x.indexOf('data:') === 0) urls['llx.' + i + '.' + j] = subir_(o.folio, 'llanta-' + (i + 1) + '-' + (j + 2), x); });
+  });
+  (o.danos || []).forEach(function (d, i) {
+    if (d.f && d.f.indexOf('data:') === 0) urls['dan.' + i] = subir_(o.folio, 'dano-' + (i + 1), d.f);
+    (d.fx || []).forEach(function (x, j) { if (x && x.indexOf('data:') === 0) urls['danx.' + i + '.' + j] = subir_(o.folio, 'dano-' + (i + 1) + '-' + (j + 2), x); });
   });
   (o.lineas || []).forEach(function (l, i) { if (l.f && l.f.indexOf('data:') === 0) urls['lineas.' + i] = subir_(o.folio, 'hallazgo-' + (i + 1), l.f); });
   var copia = JSON.parse(JSON.stringify(o)); aplicar_(copia, urls);
