@@ -3,7 +3,7 @@ const danoP=o=>{const d=o.danos||[];return`<div style="position:relative;display
 function imprimir(o){
   const s=datosAg(o.suc),t=tot(o),im=x=>src(x)?`<img src="${src(x)}" style="max-height:48px">`:'';
   const col=(a,b)=>`<table><tr><th>NO</th><th>DESCRIPCIÓN</th><th>CANT</th></tr>${INV32.slice(a,b).map((n,i)=>{const x=o.inv[a+i];return`<tr><td>${a+i+1}</td><td>${esc(n)}</td><td style="text-align:center">${x.p?x.c:''}</td></tr>`}).join('')}</table>`;
-  const rows=o.lineas.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.sku)}</td><td>${esc(l.desc)} <i>(${AUT.find(a=>a[0]===l.st)[1]})</i></td><td>${l.t==='mo'?(hrsTxt(l)?hrsTxt(l)+' h':''):l.cant}</td><td>${money(l.precio)}</td><td>${l.st==='gar'?'GARANTÍA':money(imp(l))}</td></tr>`);
+  const rows=o.lineas.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.sku)}</td><td>${esc(l.desc)} <i>(${AUT.find(a=>a[0]===l.st)[1]})</i></td><td>${l.t==='mo'?(tarifa()>0?hrsTxt(l)+' h':''):l.cant}</td><td>${money(l.precio)}</td><td>${l.st==='gar'?'GARANTÍA':money(imp(l))}</td></tr>`);
   while(rows.length<7)rows.push(`<tr><td>${rows.length+1}</td><td></td><td></td><td></td><td></td><td></td></tr>`);
   $('#print').innerHTML=`<h1>LA BARATA DEL HOGAR · AGENCIA: ${esc(s.n)}</h1><div style="text-align:center">${esc(s.d)} ${esc(s.t)}</div><h1 style="margin-top:6px">ORDEN DE SERVICIO ${esc(o.folio)}</h1>
   <table><tr><td colspan="3"><b>CLIENTE:</b> ${esc(o.cliente)}</td></tr><tr><td colspan="2"><b>DIRECCIÓN:</b> ${esc(o.dir)}</td><td><b>TELÉFONO:</b> ${esc(o.tel)}</td></tr>

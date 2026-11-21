@@ -322,3 +322,8 @@ button.gf{font-family:inherit;line-height:1.25;width:100%}
 /* v19: rechazo guardado, Reporte y 4 pestañas en el encabezado */
 .qr .qx.rgs{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 @media(max-width:699px){.hd .vn button{font-size:13px;padding:0 3px;white-space:nowrap}}
+
+/* v20: agregar conceptos dentro de la tabla de cotización */
+.qt .qe{padding:14px 12px;border-top:1px solid #E3E8EE}
+.qt .qadd{border-top:2px solid #B6C0CE;background:#F4F6F9;padding:12px 10px;display:flex;flex-direction:column;gap:8px}
+html.dark .qt .qadd{background:#1b283c;border-color:#475569}html.dark .qt .qe{border-color:#243247}

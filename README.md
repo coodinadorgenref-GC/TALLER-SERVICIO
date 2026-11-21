@@ -15,6 +15,9 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v20
+- Cotización: agregar SKU, mano de obra y conceptos manuales dentro de la tabla (al pie); la mano de obra se captura solo en pesos; se quitó "Hallazgo adicional con foto" (los hallazgos viven en Inspección). Las horas se calculan en Reporte con la tarifa por hora.
+
 ## Novedades v19
 - **Rechazo de cotización**: al rechazar un concepto se elige el motivo y la fecha de seguimiento y se confirma con *Guardar rechazo*; queda en Seguimientos.
 - **Reporte** (solo admin y gerente, junto a Seguimientos): tarifa de mano de obra por hora de cada agencia. En la cotización la mano de obra lleva horas (.5, 1, 1.25…) y el monto se calcula, o se captura el monto y se calculan las horas.

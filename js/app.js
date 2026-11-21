@@ -42,12 +42,12 @@ const idx=e=>ETAPAS.findIndex(x=>x[0]===e),O=f=>S.orders.find(o=>o.folio===f),mi
 const adminReal=()=>!!(sesion&&sesion.esAdmin&&!sesion.esVendedor&&!sesion.esGerente);
 const imp=l=>(Number(l.cant)||0)*(Number(l.precio)||0);
 // Mano de obra por tiempo: la tarifa por hora se captura en Reporte (admin y gerente), una por agencia. Las horas se guardan en l.h (y l.min = minutos, como antes).
-const tarifa=()=>Number((S.tarifas||{})[S.suc])||0,hrs=l=>l.h!=null?(Number(l.h)||0):(Number(l.min)||0)/60,hrsTxt=l=>{const h=hrs(l);return h?String(+h.toFixed(2)):''};
+const tarifa=()=>Number((S.tarifas||{})[S.suc])||0,hrs=l=>l.t==='mo'&&tarifa()>0?imp(l)/tarifa():l.h!=null?(Number(l.h)||0):(Number(l.min)||0)/60,hrsTxt=l=>{const h=hrs(l);return h?String(+h.toFixed(2)):''};
 const puedeRep=()=>!!(sesion&&(sesion.esAdmin||sesion.esGerente));
 const ms=o=>o.t.acum+(o.t.ini?Date.now()-o.t.ini:0);
 const hms=m=>{const s=Math.floor(m/1000);return[s/3600|0,s/60%60|0,s%60].map(x=>String(x).padStart(2,'0')).join(':')};
 const touch=o=>{if(!S.dirty.includes(o.folio))S.dirty.push(o.folio);o.upd=Date.now();save();syncSoon(4000)};
-const est=o=>o.lineas.filter(l=>l.t==='mo'&&l.st!=='rech').reduce((a,l)=>a+(Number(l.min)||0),0);
+const est=o=>Math.round(o.lineas.filter(l=>l.t==='mo'&&l.st!=='rech').reduce((a,l)=>a+hrs(l)*60,0));
 const tot=o=>{const t={cot:0,aut:0,gar:0,rech:0,pend:0};o.lineas.forEach(l=>{const v=imp(l);t.cot+=v;t[l.st]+=v});return t};
 const desk=()=>matchMedia('(min-width:700px)').matches;
 const sig=o=>ETAPAS[idx(o.etapa)+1]?.[0];
@@ -180,17 +180,14 @@ function lineaH(l,i){const mo=l.t==='mo',ic={pend:IC.at,aut:IC.ok,gar:IC.ok,rech
   return`<div class="qr st-${l.st}"><span class="qi" aria-hidden="true">${ic}</span>
   <div class="qo"><b>${mo?'Mano de obra':'Refacción'}</b><span class="fol sm">${esc(l.sku)}</span></div>
   <div class="qd"><div class="qdesc">${esc(l.desc)}</div>${l.f?`<img class="th" data-a="zoom" alt="Evidencia" src="${src(l.f)}">`:''}
-   <div class="row wrap">${mo?`<label class="f" style="max-width:110px">Horas<input data-mo="h" data-i="${i}" list="hrs" inputmode="decimal" value="${hrsTxt(l)}" placeholder="1"></label>`:`<label class="f" style="max-width:90px">Cant.<input data-n data-p="lineas.${i}.cant" inputmode="numeric" value="${l.cant}"></label>`}<label class="f" style="max-width:130px">${mo?'Monto $':'Precio $'}${mo?`<input data-mo="m" data-i="${i}" inputmode="decimal" value="${l.precio||''}">`:`<input data-n data-p="lineas.${i}.precio" inputmode="decimal" value="${l.precio}">`}</label></div>
-   ${mo?`<div class="mut">${tarifa()?'Tarifa: '+money(tarifa())+' por hora. Pon las horas (.5, 1, 1.25…) o el monto: el otro se calcula.':'Sin tarifa por hora: captura el monto. Un admin o gerente la define en Reporte.'}</div>`:''}
+   <div class="row wrap">${mo?'':`<label class="f" style="max-width:90px">Cant.<input data-n data-p="lineas.${i}.cant" inputmode="numeric" value="${l.cant}"></label>`}<label class="f" style="max-width:130px">${mo?'Monto $':'Precio $'}<input data-n data-p="lineas.${i}.precio" inputmode="decimal" value="${l.precio||''}"></label></div>
    ${!Number(l.precio)&&l.st!=='gar'?`<span class="chip w">${IC.at} Sin precio</span>`:''}</div>
   <div class="qp"><b class="fol" id="imp-${i}">${money(imp(l))}</b></div>
   <div class="qa"><button class="qb ok ${l.st==='aut'?'on':''}" data-a="aut" data-i="${i}" data-k="aut" aria-pressed="${l.st==='aut'}">${IC.ok} Aceptar</button><button class="qb no ${l.st==='rech'?'on':''}" data-a="aut" data-i="${i}" data-k="rech" aria-pressed="${l.st==='rech'}">${IC.fa} Rechazar</button><button class="qb gr ${l.st==='gar'?'on':''}" data-a="aut" data-i="${i}" data-k="gar" aria-pressed="${l.st==='gar'}">Garantía</button><button class="qb del" data-a="dl" data-i="${i}" aria-label="Quitar ${esc(l.desc)}">${IC.fa}</button></div>
   ${l.st==='rech'?(l.rg?`<div class="qx rgs"><span class="chip g">${IC.ok} Rechazo guardado</span><span>Motivo: <b>${esc(l.mot)}</b> · Seguimiento: <b>${esc(fechaMx(l.seg))}</b></span><button class="btn sm" data-a="redit" data-i="${i}">Editar</button></div>`:`<div class="qx g2"><label class="f">Motivo del rechazo<select data-p="lineas.${i}.mot"><option value="">Selecciona…</option>${MOTIVOS.map(m=>`<option ${l.mot===m?'selected':''}>${m}</option>`).join('')}</select></label><label class="f">Dar seguimiento el<input type="date" data-p="lineas.${i}.seg" value="${esc(l.seg||'')}"></label><div class="row" style="grid-column:1/-1"><button class="btn pri" data-a="rguardar" data-i="${i}">Guardar rechazo</button></div></div>`):''}</div>`}
 const totH=o=>{const t=tot(o);return`<div class="row sp"><span>Cotizado</span><span class="fol">${money(t.cot)}</span></div><div class="row sp h"><span>Autorizado (a cobrar)</span><span class="fol">${money(t.aut)}</span></div><div class="row sp"><span>Garantía (sin cargo)</span><span class="fol">${money(t.gar)}</span></div><div class="row sp"><span>Pendiente de autorizar</span><span class="fol">${money(t.pend)}</span></div><div class="row sp"><span>Rechazado / diferido</span><span class="fol">${money(t.rech)}</span></div>`};
-function tC(o){return`${o.lineas.length?`<div class="qt"><div class="qh"><span></span><span>Operación</span><span>Descripción</span><span>Precio</span><span>Autorización</span></div>${o.lineas.map(lineaH).join('')}</div>`:'<p class="mut">Sin conceptos. Agrega refacciones, mano de obra o pasa hallazgos desde Inspección.</p>'}
-  <div class="card"><div class="h">Agregar</div><label class="f">Buscar SKU o refacción (catálogo)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" style="display:flex;flex-direction:column;gap:6px"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div>
-  <div class="card"><div class="h">Hallazgo adicional con foto</div><label class="f">Descripción<input id="hl"></label><div class="row"><button type="button" class="btn" data-a="fpick" data-hf="1">${IC.cam} Foto${window._hf?' ✓':''}</button><button class="btn" data-a="hall">Agregar a cotización</button></div></div>
-  <datalist id="hrs"><option value="0.5"><option value="0.75"><option value="1"><option value="1.25"><option value="1.5"><option value="2"></datalist>
+function tC(o){return`<div class="qt"><div class="qh"><span></span><span>Operación</span><span>Descripción</span><span>Precio</span><span>Autorización</span></div>${o.lineas.map(lineaH).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
+  <div class="qadd"><label class="f">Agregar a la cotización: busca SKU o refacción (catálogo)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" style="display:flex;flex-direction:column;gap:6px"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div></div>
   <div class="card" id="tot">${totH(o)}</div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>
   <div class="cfg-g">Autorización del cliente</div>${firmaCard(o,'entrega','Firma del cliente (entrega la unidad)')}`}
@@ -228,7 +225,7 @@ const acts={
  cmod:()=>{$('#modal').innerHTML=''},
  fpick:d=>{fpT={};for(const k in d)if(k!=='a')fpT[k]=d[k];sheet('<div class="h">Agregar foto</div><div class="mut">Toma la foto con la cámara o elige una que ya tengas en la galería.</div><button class="btn pri" data-a="fcam">'+IC.cam+' Tomar foto con la cámara</button><button class="btn" data-a="fgal">'+IC.gal+' Elegir de la galería</button><button class="btn" data-a="cmod">Cancelar</button>')},
  fcam:()=>{$('#modal').innerHTML='';const i=$('#fin-cam');i.value='';i.click()},
- fgal:()=>{$('#modal').innerHTML='';const i=$('#fin-gal');i.value='';i.multiple=!(fpT&&(fpT.foto||fpT.hf!=null));i.click()},
+ fgal:()=>{$('#modal').innerHTML='';const i=$('#fin-gal');i.value='';i.multiple=!(fpT&&fpT.foto);i.click()},
  fver:d=>{const o=D&&O(D),u=o&&o.fotos[d.foto]&&src(o.fotos[d.foto]);if(!u)return acts.fpick(d);abrirVisor([u],0,{foto:d.foto})},
  zoom:(d,e)=>{const im=e.target.closest('img'),g=im.closest('.fgal'),L=g?[...g.querySelectorAll('img[data-a="zoom"]')]:[im];abrirVisor(L.map(x=>x.currentSrc||x.src),Math.max(0,L.indexOf(im)),null)},
  vzcerrar:()=>cerrarVisor(),vzprev:()=>{VW.i=(VW.i+VW.L.length-1)%VW.L.length;vzMuestra()},vznext:()=>{VW.i=(VW.i+1)%VW.L.length;vzMuestra()},
@@ -259,9 +256,8 @@ const acts={
  redit:d=>{const o=O(D);delete o.lineas[+d.i].rg;touch(o);renderDrawer()},
  autall:()=>{const o=O(D);o.lineas.forEach(l=>{if(l.st==='pend')l.st=o.tipo==='G'?'gar':'aut'});touch(o);renderDrawer()},
  manual:async()=>{const s=await ask({t:'Agregar concepto',input:'Concepto',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'ref',sku:'MANUAL',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
- mo:async()=>{const s=await ask({t:'Agregar mano de obra',input:'Operación',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'mo',sku:'MO',desc:s,cant:1,precio:0,h:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
+ mo:async()=>{const s=await ask({t:'Agregar mano de obra',input:'Operación',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'mo',sku:'MO',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
  add:d=>{const o=O(D),i=sug[+d.i];o.lineas.push({t:'ref',sku:i.sku,desc:i.nombre,cant:1,precio:i.precio,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
- hall:()=>{const o=O(D),t=$('#hl').value.trim();if(!t)return toast('Describe el hallazgo');o.lineas.push({t:'ref',sku:'HALLAZGO',desc:t,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:window._hf||null});window._hf=null;touch(o);renderDrawer()},
  leg:()=>{const o=O(D);o.leg=!o.leg;touch(o);renderDrawer()},
  wa:async()=>{const o=O(D),L=o.lineas.filter(l=>l.st!=='rech');if(!L.length)return toast('No hay conceptos que enviar');
   if(L.some(l=>!Number(l.precio)&&l.st!=='gar')&&!(await ask({t:'Conceptos sin precio',m:'Hay conceptos sin precio. ¿Enviar de todos modos?',ok:'Enviar',tipo:'err'})))return;
@@ -303,10 +299,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches&&e.
 document.addEventListener('input',e=>{const t=e.target;
   if(t.id==='gq'){q=t.value.trim();renderMain();return}
   const o=D&&O(D);if(!o)return;
-  if(t.dataset.mo){const i=+t.dataset.i,l=o.lineas[i],tar=tarifa(),v=parseFloat(String(t.value).replace(',','.'))||0;
-   if(t.dataset.mo==='h'){l.h=v;l.min=Math.round(v*60);if(tar>0){l.precio=Math.round(v*tar*100)/100;const m=document.querySelector('[data-mo="m"][data-i="'+i+'"]');if(m)m.value=l.precio||''}}
-   else{l.precio=v;if(tar>0){l.h=Math.round(v/tar*100)/100;l.min=Math.round(l.h*60);const h=document.querySelector('[data-mo="h"][data-i="'+i+'"]');if(h)h.value=l.h||''}}
-   touch(o);const el=$('#imp-'+i);if(el)el.textContent=money(imp(l));const tt=$('#tot');if(tt)tt.innerHTML=totH(o);return}
   if(t.dataset.p==='placas'){const p=t.selectionStart;t.value=t.value.toUpperCase();try{t.setSelectionRange(p,p)}catch{}}
   if(t.dataset.p){setPath(o,t.dataset.p,t.hasAttribute('data-n')?(parseFloat(String(t.value).replace(',','.'))||0):t.value);touch(o);
    if(t.dataset.p.startsWith('lineas.')){const i=t.dataset.p.split('.')[1],el=$('#imp-'+i);if(el&&o.lineas[i])el.textContent=money(imp(o.lineas[i]));const tt=$('#tot');if(tt)tt.innerHTML=totH(o)}}
@@ -325,12 +317,10 @@ async function subirFotos(fs,T){const o=D&&O(D);if(!o)return;let n=0,bad=0;
   for(const f of fs){let d;try{d=await comprimir(f)}catch{bad++;continue}
     if(T.foto){o.fotos[T.foto]={d};n++;break}
     if(T.bay){o.fotos[bayNext(o)]={d};n++;continue}
-    if(T.hf!=null){window._hf=d;n++;break}
     const k=T.ffoto!=null?o.chk[+T.ffoto]:T.fll!=null?o.llantas[+T.fll]:o.danos[+T.fdano];if(!k){bad++;continue}
     if(!k.f)k.f=d;else(k.fx=k.fx||[]).push(d);n++}
   if(bad)toast('No se pudo leer '+(bad>1?'alguna de las fotos':'la foto')+': prueba con otra imagen (JPG o PNG)');
   if(!n)return;
-  if(T.hf!=null){renderDrawer();toast('Foto lista: toca "Agregar a cotización"');return}
   touch(o);fotoPend=true;fotoErr=false;renderDrawer();if(!bad)toast('Foto agregada · subiendo para que se vea en la PC…');syncSoon(1200)}
 /* ---------- visor de fotos con zoom (pellizco, rueda, doble toque, arrastrar) ---------- */
 const VW={L:[],i:0,s:1,x:0,y:0,T:null,P:new Map(),d0:1,s0:1,lt:0,lx:0,ly:0,mv:0};
@@ -396,7 +386,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v19 · 21-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v20 · 21-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
