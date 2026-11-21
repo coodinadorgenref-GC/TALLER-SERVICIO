@@ -56,21 +56,21 @@ const wa=(tel,m)=>{let t=String(tel||'').replace(/\D/g,'');if(!t){toast('Captura
 async function folio(t){try{const r=await api.taller({action:'siguienteFolio',tipo:t});if(r.folio)return r.folio}catch{}
   S.seq[t]=(S.seq[t]||0)+1;return t+'-'+String(S.seq[t]).padStart(4,'0')+'L'}
 async function crear(t,x={}){
-    const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,lav:false,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',anio:'',motor:'',vin:'',placas:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
+    const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,lav:false,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',anio:'',motor:'',vin:'',placas:'',asesor:sesion?(sesion.nombre||sesion.correo||''):'',asesorRef:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
    inv:INV32.map(()=>({p:false,c:1})),chk:CATS.map(()=>({e:'nr',n:'',f:null})),fotos:{},firmas:{},recibe:'',diag:'',leg:false,
    lineas:[],
    t:{acum:0,ini:null},cita:null,ref:'',prox:{f:'',km:''},fing:Date.now(),cre:Date.now(),listo:false},x);
-  S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
+  S.orders.unshift(o);touch(o);D=o.folio;dt='u';dm=null;tab='recepcion';view='board';keepSc=false;render();sync()}
 
 function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
-  if(i===0){const f=FOTOS_GRAL.filter(x=>x[2]&&!(o.fotos[x[0]]&&src(o.fotos[x[0]])));if(f.length)return'Faltan fotos generales de la moto: '+f.map(x=>x[1]).join(', ');
+  if(i===0){const f=FOTOS_GRAL.filter(x=>x[2]&&!(o.fotos[x[0]]&&src(o.fotos[x[0]])));if(f.length)return'Faltan fotos de recepción (Unidad › Daños y detalles › Recepción): '+f.map(x=>x[1]).join(', ');
     if(!o.cliente||!o.modelo)return'Captura cliente y modelo (unidad)'}
-  if(j>=2&&!o.mec)return'Asigna el técnico (mecánico) en Taller';
+  if(j>=2&&!o.mec)return'Asigna el técnico en Unidad › Asignación en taller';
   if(j>=2&&!bayK(o).length)return'Falta la foto de la bayoneta / drenado de aceite';
   if(j>=2){const f=[];o.chk.forEach((c,k)=>{if(c.e==='nr')f.push(k+1)});o.llantas.forEach(l=>{if(l.e==='nr'||!l.med||!l.des||!l.psi)f.push('llanta '+l.p.toLowerCase())});if(f.length)return'Falta clasificar (azul) o capturar en Inspección: '+f.join(', ')}
   const L=o.lineas;
   if(j>=3){if(!L.length)return'Agrega la cotización';if(L.some(l=>l.st==='pend'))return'Hay conceptos pendientes de autorización'}
-  if(j===4){if(!o.lav)return'Marca que la moto fue lavada (Cierre)';if(!(o.firmas.cli&&src(o.firmas.cli)))return'Falta la firma del cliente en Cierre'}
+  if(j===4){if(!o.lav)return'Marca que la moto fue lavada (Cierre)'}
   return''}
 function mover(o,dest){const e=puede(o,dest);if(e)return toast(e);
   if(idx(o.etapa)===0&&idx(dest)>0&&!o.firmas.entrega)return abrirFirma(u=>{o.firmas.entrega={d:u};touch(o);mover(o,dest)});
@@ -98,7 +98,7 @@ function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==
   gf=FOTOS_GRAL.filter(x=>x[2]).every(x=>o.fotos[x[0]]&&src(o.fotos[x[0]]));
   return`<article class="card k" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
   <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span></div>
-  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos generales completas':'Faltan fotos generales')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}</div>
+  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de recepción completas':'Faltan fotos de recepción')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}</div>
   <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc(o.modelo||'Sin modelo')}${o.vin?' · '+esc(o.vin):''}</div><div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
   <div class="pg5" aria-hidden="true">${ETAPAS.map((e,i)=>`<i class="${i<=idx(o.etapa)?'d':''}"></i>`).join('')}</div>
@@ -117,14 +117,15 @@ function foot(o){const n=sig(o),b=n?puede(o,n):'';
   return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}
   <div class="row">${n?`<button class="btn pri" data-a="sig" data-f="${o.folio}" ${b?'disabled':''}>Siguiente etapa: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div>`}
 
+const recepH=o=>`<div class="mut">Fotos de ingreso: cómo llega la moto (sirven de evidencia). Las de lado izquierdo, trasera, lado derecho y frente son obligatorias.</div><div class="gfo">${FOTOS_GRAL.map(([k,t,rq])=>{const u=o.fotos[k]&&src(o.fotos[k]);return`<button type="button" class="gf ${u?'on':''}" data-a="${u?'fver':'fpick'}" data-foto="${k}" aria-label="${u?'Ver foto':'Agregar foto'}: ${t}">${u?`<img alt="${t}" src="${u}">`:IC.cam}<span class="gt">${t}${rq?'':' (opcional)'}</span></button>`}).join('')}</div>`;
 const gfotos=o=>{const n=FOTOS_GRAL.filter(x=>x[2]&&o.fotos[x[0]]&&src(o.fotos[x[0]])).length,r=FOTOS_GRAL.filter(x=>x[2]).length;
-  return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n===r?'g':'w'}">${n}/${r} lados</span></div><div class="mut">Toma las fotos al recibir la unidad (sirven de evidencia de cómo llegó) y marca en la moto cada daño o detalle: se numera y puedes subirle su foto.</div>
-  <div class="sh">Fotos generales de la moto</div><div class="gfo">${FOTOS_GRAL.map(([k,t,rq])=>{const u=o.fotos[k]&&src(o.fotos[k]);return`<button type="button" class="gf ${u?'on':''}" data-a="${u?'fver':'fpick'}" data-foto="${k}" aria-label="${u?'Ver foto':'Agregar foto'}: ${t}">${u?`<img alt="${t}" src="${u}">`:IC.cam}<span class="gt">${t}${rq?'':' (opcional)'}</span></button>`}).join('')}</div>${danosH(o)}</div>`};
+  return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n===r?'g':'w'}">${n}/${r} fotos de recepción</span></div><div class="mut">Toma las fotos de ingreso en Recepción y marca en la moto cada daño o detalle: se numera y puedes subirle su foto.</div>${danosH(o)}</div>`};
 function tU(o){return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
   <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin)}${inp('Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
   <label class="f">Motivo de ingreso<textarea data-p="motivo">${esc(o.motivo)}</textarea></label><label class="f">Condiciones en las que se recibe la unidad<textarea data-p="cond">${esc(o.cond)}</textarea></label>
   <div class="mut">Ingreso: ${new Date(o.fing).toLocaleString('es-MX')}${o.ref?' · Orden original: '+esc(o.ref):''}</div></div>
+  ${asesH(o)}${asigH(o)}
   ${gfotos(o)}`}
 
 function firmaCard(o,k,t){const f=o.firmas[k],s=f&&src(f);
@@ -148,8 +149,9 @@ function reporte(){const t=tarifa(),L=mine();let n=0,hc=0,mc=0,ha=0,ma=0;
 async function subeTarifas(){let r='ok';for(const ag of Object.keys(S.tarPend||{})){
   try{const x=await api.taller({action:'guardarConfig',cfgK:'tarifa_mo|'+ag,cfgV:(S.tarifas||{})[ag]||0});if(x&&x.success)delete S.tarPend[ag];else r=/desconocida/i.test((x&&x.message)||'')?'viejo':'error'}catch{r='error'}}
   save();return r}
-const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico y la bahía se asignan al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div><div class="g2">${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<label class="f">Bahía<select data-p="bahia"><option value="">—</option>${BAHIAS.map(b=>`<option ${String(o.bahia)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div><datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
-const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro'],pfo=new Set();let ds=-1;
+const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico se asigna al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div>${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
+const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor)}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
+const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro'],pfo=new Set();let ds=-1,dm=null;
 const ptsH=(o,i)=>CATS[i][2].map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('');
 const fotosK=k=>[k.f,...(k.fx||[])].filter(Boolean),OPL=['Cambiar llanta','Reparar ponchadura','Ajustar presión de aire','Balancear llanta','Cambiar válvula o cámara'];
 const camB=(k,att,i)=>{const n=fotosK(k).length;return`<button type="button" class="cq fcam" data-a="fpick" ${att}="${i}" aria-label="Agregar foto${n?' ('+n+')':''}" title="Agregar foto">${IC.cam}${n?`<span class="fcn">${n}</span>`:''}</button>`};
@@ -161,14 +163,16 @@ function llH(o){return`<div class="sbar">Llantas</div><div class="card llc">`+o.
 function ckRow(o,i){const c=CATS[i],k=o.chk[i],bad=k.e==='px'||k.e==='ur';
   return`<div class="ckr"><div class="ckt"><b>${i+1}. ${c[0]}</b><span class="mut">${c[1]}</span></div>${sqH(k,'cond',i,c[0])}${galH(k,'c',i)}
   ${bad?`<div class="ckx"><label class="f">Operación recomendada<input data-p="chk.${i}.op" list="op${i}" value="${esc(k.op||'')}" placeholder="Elige o escribe la operación"></label><datalist id="op${i}">${OPS[i].map(x=>`<option value="${x}">`).join('')}</datalist><label class="f">Nota técnica<textarea data-c="${i}">${esc(k.n)}</textarea></label><button class="btn" data-a="pc" data-i="${i}">Pasar a cotización</button></div>`:''}</div>`}
-function danosH(o){const d=o.danos||[];
-  return`<div class="sh" style="margin-top:14px">Daños y detalles</div><div class="mut">Toca la moto donde haya un daño (lateral, frente o arriba): se numera, lo describes abajo y le subes su foto.</div>
+function danosH(o){const d=o.danos||[],n=FOTOS_GRAL.filter(x=>x[2]&&o.fotos[x[0]]&&src(o.fotos[x[0]])).length,r=FOTOS_GRAL.filter(x=>x[2]).length;if(!dm)dm=n<r?'recep':'danos';
+  const sg=`<div class="seg" role="group" aria-label="Daños y detalles"><button type="button" class="dm-op ${dm==='danos'?'on':''}" data-a="dmode" data-m="danos" aria-pressed="${dm==='danos'}">Daños${d.length?' ('+d.length+')':''}</button><button type="button" class="dm-op ${dm==='recep'?'on':''}" data-a="dmode" data-m="recep" aria-pressed="${dm==='recep'}">Recepción ${n}/${r}</button></div>`;
+  if(dm==='recep')return`<div class="sh" style="margin-top:14px">Daños y detalles</div>${sg}${recepH(o)}`;
+  return`<div class="sh" style="margin-top:14px">Daños y detalles</div>${sg}<div class="mut">Toca la moto donde haya un daño (lateral, frente o arriba): se numera, lo describes abajo y le subes su foto.</div>
   <div class="mw" data-a="dmark"><img src="img/moto.png" alt="Moto: vistas lateral, frontal y superior" draggable="false">${d.map((m,i)=>`<button class="mk${i===ds?' sel':''}" style="left:${m.x}%;top:${m.y}%" data-a="dsel" data-i="${i}" aria-label="Daño ${i+1}: ${esc(m.t)}">${i+1}</button>`).join('')}</div>
   ${d.length?d.map((m,i)=>`<div class="dmw"><div class="dmr"><span class="dmn">${i+1}</span><select data-p="danos.${i}.t" aria-label="Tipo de daño ${i+1}">${DANOS.map(x=>`<option ${m.t===x?'selected':''}>${x}</option>`).join('')}</select><input data-p="danos.${i}.n" placeholder="Detalle (opcional)" value="${esc(m.n)}" aria-label="Detalle del daño ${i+1}">${camB(m,'data-fdano',i)}<button class="btn" data-a="ddel" data-i="${i}" aria-label="Quitar daño ${i+1}">✕</button></div>${galH(m,'d',i)}</div>`).join(''):'<p class="mut" style="margin:6px 0 0">Sin daños marcados.</p>'}`}
 
 function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${o.fotos[k]?'g':'w'}">${o.fotos[k]?IC.ok+' Cargada':'Obligatoria'}</span></div>${o.fotos[k]?`<img class="pic" data-a="zoom" alt="${t}" src="${src(o.fotos[k])}">`:''}<button type="button" class="btn" data-a="fpick" data-foto="${k}">${IC.cam} ${o.fotos[k]?'Reemplazar foto':'Tomar o elegir foto'}</button></div>`;
   normChk(o);const cnt=x=>o.chk.filter(c=>c.e===x).length,rev=o.chk.length-cnt('nr');
-  return asigH(o)+`<div class="card"><div class="row sp"><div class="h">Hoja multipuntos</div><span class="chip ${rev===CATS.length?'g':'n'}">${rev}/${CATS.length} revisados</span></div>
+  return`<div class="card"><div class="row sp"><div class="h">Hoja multipuntos</div><span class="chip ${rev===CATS.length?'g':'n'}">${rev}/${CATS.length} revisados</span></div>
   <button class="btn" data-a="okall">${IC.ok} Todo OK (marca los que siguen en azul)</button>
   <div class="lgd">${[['nr','Azul · No revisado'],['ok','Verde · OK'],['px','Amarillo · Próximo'],['ur','Rojo · Urgente']].map(([e,t])=>`<span class="lgi lg-${e}"><i>${CI[e]}</i>${t} <b>${cnt(e)}</b></span>`).join('')}</div></div>
   ${SECC.map(([t,ix],si)=>`<div class="sbar">${t}</div>${ix.map(i=>ckRow(o,i)).join('')}`).join('')}
@@ -196,7 +200,6 @@ function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><
   <div class="card"><div class="h">Aviso legal</div><p style="margin:0;font-size:14px">${LEYENDA}</p><button class="btn ${o.leg?'':'pri'}" data-a="leg" aria-pressed="${!!o.leg}">${o.leg?IC.ok+' Cliente informado (tocar para revertir)':'El cliente fue informado'}</button></div>
   <div class="card"><div class="h">Quien recibe la unidad</div>${inp('Nombre del asesor','recibe',o.recibe)}</div>
   <div class="card"><div class="h">Próximo servicio</div><div class="g2">${inp('Fecha','prox.f',o.prox.f,'type="date"')}${inp('Kilometraje','prox.km',o.prox.km,'inputmode="numeric"')}</div></div>
-  <div class="mut">${CERT}</div>${FIRMAS.map(([k,n])=>firmaCard(o,k,n)).join('')}
   <div class="row wrap"><button class="btn amb" data-a="walisto">Avisar por WhatsApp: unidad lista</button><button class="btn" data-a="print">${IC.pr} Imprimir / PDF</button></div>`}
 
 function agenda(){const hoy=iso(),L=mine(),mecs=[...new Set(L.map(o=>o.mec).filter(Boolean))],bs=BAHIAS.filter(b=>!agf.b||String(b)===agf.b);
@@ -218,7 +221,8 @@ const acts={
  tarsave:async()=>{if(!puedeRep()||!S.suc)return;const v=parseFloat(String($('#tar').value).replace(',','.'));if(!(v>=0))return toast('Escribe un monto válido por hora','err');
   S.tarifas=S.tarifas||{};S.tarifas[S.suc]=Math.round(v*100)/100;(S.tarPend=S.tarPend||{})[S.suc]=true;save();renderMain();
   const r=await subeTarifas();if(r==='ok')toast('Tarifa guardada para '+S.suc);else if(r==='viejo')toast('Tarifa guardada en este dispositivo. Falta actualizar el Apps Script (v5) para compartirla con los demás.','err');else toast('Tarifa guardada en este dispositivo; se subirá al sincronizar','inf')},
- tab:d=>{tab=d.k;renderMain()},view:d=>{view=d.v;render()},abrir:d=>{D=d.f;dt='u';keepSc=false;render()},cerrard:()=>{D=null;render()},dtab:d=>{dt=d.k;keepSc=false;renderDrawer()},
+ dmode:d=>{dm=d.m;renderDrawer()},
+ tab:d=>{tab=d.k;renderMain()},view:d=>{view=d.v;render()},abrir:d=>{D=d.f;dt='u';dm=null;keepSc=false;render()},cerrard:()=>{D=null;render()},dtab:d=>{dt=d.k;keepSc=false;renderDrawer()},
  cerrar:(d,e)=>{if(e.target.classList.contains('ov'))$('#modal').innerHTML=''},
  nueva:()=>{if(!S.suc)return acts.agpick();sheet('<div class="h">Tipo de orden</div>'+tipoBtns('crear'))},
  elim:()=>{if(!adminReal()||!D)return;sheet(`<div class="h">¿Eliminar la orden ${esc(D)}?</div><div class="mut">Se borra la orden y su cotización de la hoja del taller. Esta acción no se puede deshacer.</div><div class="row"><button class="btn" data-a="cmod">Cancelar</button><button class="btn red" data-a="elimok">Eliminar</button></div>`)},
@@ -386,7 +390,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v20 · 21-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v21 · 21-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};

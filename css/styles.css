@@ -327,3 +327,7 @@ button.gf{font-family:inherit;line-height:1.25;width:100%}
 .qt .qe{padding:14px 12px;border-top:1px solid #E3E8EE}
 .qt .qadd{border-top:2px solid #B6C0CE;background:#F4F6F9;padding:12px 10px;display:flex;flex-direction:column;gap:8px}
 html.dark .qt .qadd{background:#1b283c;border-color:#475569}html.dark .qt .qe{border-color:#243247}
+
+/* v21: opción Recepción dentro de Daños y detalles */
+.dm-op.on{background:var(--nv)!important;color:#fff!important;border-color:var(--nv)!important}
+.seg+.mut{margin-top:8px}
