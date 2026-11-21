@@ -4,7 +4,7 @@ const CI={nr:'',ok:IC.ok,px:IC.at,ur:IC.fa};
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch{return d}};
 let S=load('taller_v2',{orders:[],seq:{},dirty:[],inv:[],suc:''});
 const migEt=o=>{if(o&&ETMIG[o.etapa])o.etapa=ETMIG[o.etapa];return o};S.orders.forEach(migEt);
-let sesion=null,tab='recepcion',view='board',D=null,dt='u',q='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
+let sesion=null,tab='recepcion',view='board',D=null,dt='u',q='',ft='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
 const IDB={db:null,open(){return new Promise(r=>{try{const q=indexedDB.open('taller',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>{IDB.db=q.result;r(true)};q.onerror=()=>r(false)}catch{r(false)}})},
   get(k){return new Promise(r=>{try{const t=IDB.db.transaction('kv').objectStore('kv').get(k);t.onsuccess=()=>r(t.result);t.onerror=()=>r(undefined)}catch{r(undefined)}})},
   set(k,v){return new Promise((ok,no)=>{try{const tx=IDB.db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>ok(true);tx.onerror=()=>no(tx.error)}catch(e){no(e)}})}};
@@ -63,28 +63,33 @@ function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.db
   el.innerHTML=o?drawer(o):'';document.body.classList.toggle('lock',!!o);
   if(o){const b=el.querySelector('.dbody');if(b&&keepSc)b.scrollTop=sc;if(lastD!==D)el.querySelector('.drh .ib')?.focus()}
   lastD=D;keepSc=true}
-const match=o=>{if(!q)return true;const s=[o.folio,o.cliente,o.modelo,o.vin,o.tel,o.motor].join(' ').toLowerCase();return q.toLowerCase().split(/\s+/).every(w=>s.includes(w))};
+const match=o=>{if(ft&&o.tipo!==ft)return false;if(!q)return true;const s=[o.folio,o.cliente,o.modelo,o.vin,o.tel,o.motor].join(' ').toLowerCase();return q.toLowerCase().split(/\s+/).every(w=>s.includes(w))};
 function board(){const L=mine().filter(match);
   return`<div class="tabs" role="tablist" aria-label="Etapas">${ETAPAS.map(([k,n])=>`<button class="tab ${k===tab?'on':''}" role="tab" aria-selected="${k===tab}" data-a="tab" data-k="${k}">${n} <span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button>`).join('')}</div>
   ${q?`<p class="mut">${L.length} resultado(s) para «${esc(q)}»</p>`:''}
   <div class="kan">${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')||'<p class="mut">Sin órdenes en esta etapa.</p>'}</div></section>`}).join('')}</div>`}
-function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length;
+const ICU='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',ICC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4h6v3H9zM6 6h12v15H6zM9 12h6M9 16h6"/></svg>';
+const bd=(c,i,t,n)=>`<span class="bd ${c}" title="${t}" role="img" aria-label="${t}">${i}${n?`<b>${n}</b>`:''}</span>`;
+function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length,
+  gf=FOTOS_GRAL.filter(x=>x[2]).every(x=>o.fotos[x[0]]&&src(o.fotos[x[0]]));
   return`<article class="card k" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
-  <div class="row sp wrap"><span class="row"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span></span>${o.t.ini?`<span class="chip w">${IC.clock} En curso</span>`:''}</div>
-  <div class="ttl">${esc(o.modelo||'Sin modelo')}</div><div class="mut">${esc(o.cliente||'Sin cliente')} · ${esc(o.mec||'Sin mecánico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
-  <div class="row wrap">${ur?`<span class="chip r">${IC.fa} ${ur} urgente${ur>1?'s':''}</span>`:''}${pend?`<span class="chip n">${pend} por autorizar</span>`:''}${o.etapa==='recepcion'?`<span class="chip ${np===32?'g':'n'}">Inventario ${np}/32</span>`:''}<span class="chip n">${IC.clock} ${hms(ms(o))}${est(o)?' / '+est(o)+' min':''}</span></div>
+  <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span></div>
+  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos generales completas':'Faltan fotos generales')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}<span class="kt${o.t.ini?' on':''}">${IC.clock} ${hms(ms(o))}${est(o)?' / '+est(o)+' min':''}</span></div>
+  <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc(o.modelo||'Sin modelo')}${o.vin?' · '+esc(o.vin):''}</div><div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
   <div class="pg5" aria-hidden="true">${ETAPAS.map((e,i)=>`<i class="${i<=idx(o.etapa)?'d':''}"></i>`).join('')}</div>
   <div class="row"><button class="btn sm" style="flex:1" data-a="mv" data-f="${o.folio}">Mover a…</button>${n?`<button class="btn sm pri" style="flex:1" data-a="sig" data-f="${o.folio}">Siguiente: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn sm" style="flex:1" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div></article>`}
 
 const inp=(l,p,v,x='')=>`<label class="f">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
+const heroH=o=>{const f=o.fotos.g_frente&&src(o.fotos.g_frente);
+  return(f?`<div class="hero"><img alt="Frente de la moto" src="${f}"></div>`:'')+`<div class="itbl"><div><span>Cliente</span><b>${esc(o.cliente||'—')}</b></div><div><span>Unidad</span><b>${esc(o.modelo||'—')}${o.vin?' · '+esc(o.vin):''}</b></div><div><span>Técnico</span><b>${esc(o.mec||'—')}${o.bahia?' · Bahía '+o.bahia:''}</b></div></div>`};
 function drawer(o){const bad=o.chk.filter(c=>c.e==='px'||c.e==='ur').length,pend=o.lineas.filter(l=>l.st==='pend').length,e=ETAPAS[idx(o.etapa)];
   const T=[['u','Unidad',''],['i','Inspección',bad?`<span class="cnt">${bad}</span>`:''],['c','Cotización',pend?`<span class="cnt">${pend}</span>`:''],['z','Cierre','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
   <header class="drh"><button class="ib" data-a="cerrard" aria-label="Cerrar orden">${IC.back}</button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span><span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print">${IC.pr} Imprimir</button><button class="btn sm" data-a="mv" data-f="${o.folio}">Mover a…</button></header>
   <div class="dstep" aria-label="Proceso">${ETAPAS.map((x,i)=>`<span class="${i<idx(o.etapa)?'d':i===idx(o.etapa)?'c':''}" ${i===idx(o.etapa)?`style="--c:${x[2]}" aria-current="step"`:''}>${x[1]}</span>`).join('')}</div>
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
-  <div class="dbody">${{u:tU,i:tI,c:tC,z:tZ}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
+  <div class="dbody">${dt==='u'?'':heroH(o)}${{u:tU,i:tI,c:tC,z:tZ}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
 function foot(o){const n=sig(o),b=n?puede(o,n):'',m=est(o);
   return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}
   <div class="row">${o.etapa!=='entregado'?`<span class="big" id="crono">${hms(ms(o))}</span>${m?`<span class="mut">est. ${m} min</span>`:''}<span style="flex:1"></span><button class="btn sm ${o.t.ini?'amb':'pri'}" data-a="cr">${o.t.ini?'Pausar':'Iniciar'}</button><button class="btn sm" data-a="fin">Terminar</button>`:`<span class="mut">Tiempo real: ${hms(o.t.acum)}${m?' · estándar '+m+' min':''}</span>`}</div>
@@ -107,19 +112,22 @@ function firmaCard(o,k,t){const f=o.firmas[k],s=f&&src(f);
 function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${o.fotos[k]?'g':'w'}">${o.fotos[k]?IC.ok+' Cargada':'Obligatoria'}</span></div>${o.fotos[k]?`<img class="pic" alt="${t}" src="${src(o.fotos[k])}">`:''}<label class="btn file">${IC.cam} ${o.fotos[k]?'Reemplazar foto':'Tomar foto'}<input type="file" accept="image/*" capture="environment" data-foto="${k}"></label></div>`;
   return`<details class="card" ${np<32?'open':''}><summary class="row sp" style="cursor:pointer;min-height:44px"><span class="h">A. Inventario de recepción</span><span class="chip ${np===32?'g':'n'}">${np}/32</span></summary>
   <button class="btn" data-a="invall">${IC.ok} Todo completo (marcar los 32)</button><div class="g2">${INV32.map((n,i)=>{const x=o.inv[i];return`<div class="ir"><button class="tg ${x.p?'on':''}" data-a="inv" data-n="${i}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${i+1}. ${n}</span></button><input aria-label="Cantidad de ${n}" inputmode="numeric" data-n data-p="inv.${i}.c" value="${x.c}"></div>`}).join('')}</div></details>
-  <div class="h">B. Condición técnica</div><div class="mut">N/R no revisado · OK sin trabajo · Próximo trabajo próximo · Urgente trabajo urgente</div>
+  <div class="h">B. Condición técnica</div><div class="lgd">${[['ur','Urgente'],['px','Próximo'],['ok','OK'],['nr','No revisado']].map(([e,t])=>`<span class="lgi lg-${e}"><i>${e==='nr'?'':CI[e]}</i>${t}</span>`).join('')}</div>
   ${CATS.map((c,i)=>{const k=o.chk[i];return`<div class="card"><div class="h">${i+1}. ${c[0]}</div><div class="mut">${c[1]}</div><div class="seg">${COND.map(([e,t,l])=>`<button class="${k.e===e?'s-'+e:''}" data-a="cond" data-i="${i}" data-e="${e}" aria-pressed="${k.e===e}" aria-label="${l}">${CI[e]} ${t}</button>`).join('')}</div>
    ${k.e==='px'||k.e==='ur'?`<label class="f">Nota técnica<textarea data-c="${i}">${esc(k.n)}</textarea></label>${k.f?`<img class="pic" alt="Evidencia ${c[0]}" src="${src(k.f)}">`:''}<div class="row wrap"><label class="btn file">${IC.cam} Foto<input type="file" accept="image/*" capture="environment" data-ffoto="${i}"></label><button class="btn" data-a="pc" data-i="${i}">Pasar a cotización</button></div>`:''}</div>`}).join('')}
   ${fo('bayoneta','Foto bayoneta / nivel de aceite')}${fo('tanque','Foto tanque / estado exterior')}${firmaCard(o,'entrega','Firma del cliente (entrega la unidad)')}`}
 
-function lineaH(l,i){const mo=l.t==='mo';
-  return`<div class="card ln st-${l.st}"><div class="row sp"><div style="flex:1;min-width:0"><div class="fol sm">${esc(l.sku)}</div><div>${esc(l.desc)}</div></div>${l.f?`<img class="th" alt="Evidencia" src="${src(l.f)}">`:''}<button class="ib sq" data-a="dl" data-i="${i}" aria-label="Quitar ${esc(l.desc)}">${IC.fa}</button></div>
-  <div class="row wrap">${mo?`<label class="f" style="max-width:96px">Min<input data-n data-p="lineas.${i}.min" inputmode="numeric" value="${l.min||0}"></label>`:`<label class="f" style="max-width:90px">Cant.<input data-n data-p="lineas.${i}.cant" inputmode="numeric" value="${l.cant}"></label>`}<label class="f" style="max-width:130px">${mo?'Monto $':'Precio $'}<input data-n data-p="lineas.${i}.precio" inputmode="decimal" value="${l.precio}"></label><div class="f" style="align-items:flex-end">Importe<b class="fol" id="imp-${i}">${money(imp(l))}</b></div></div>
-  ${!Number(l.precio)&&l.st!=='gar'?`<span class="chip w">${IC.at} Sin precio</span>`:''}
-  <div class="seg">${AUT.map(([k,n])=>`<button class="${l.st===k?'s-'+k:''}" data-a="aut" data-i="${i}" data-k="${k}" aria-pressed="${l.st===k}">${n}</button>`).join('')}</div>
-  ${l.st==='rech'?`<div class="g2"><label class="f">Motivo del rechazo<select data-p="lineas.${i}.mot"><option value="">Selecciona…</option>${MOTIVOS.map(m=>`<option ${l.mot===m?'selected':''}>${m}</option>`).join('')}</select></label><label class="f">Dar seguimiento el<input type="date" data-p="lineas.${i}.seg" value="${esc(l.seg||'')}"></label></div>`:''}</div>`}
+function lineaH(l,i){const mo=l.t==='mo',ic={pend:IC.at,aut:IC.ok,gar:IC.ok,rech:IC.fa}[l.st];
+  return`<div class="qr st-${l.st}"><span class="qi" aria-hidden="true">${ic}</span>
+  <div class="qo"><b>${mo?'Mano de obra':'Refacción'}</b><span class="fol sm">${esc(l.sku)}</span></div>
+  <div class="qd"><div class="qdesc">${esc(l.desc)}</div>${l.f?`<img class="th" alt="Evidencia" src="${src(l.f)}">`:''}
+   <div class="row wrap">${mo?`<label class="f" style="max-width:96px">Min<input data-n data-p="lineas.${i}.min" inputmode="numeric" value="${l.min||0}"></label>`:`<label class="f" style="max-width:90px">Cant.<input data-n data-p="lineas.${i}.cant" inputmode="numeric" value="${l.cant}"></label>`}<label class="f" style="max-width:130px">${mo?'Monto $':'Precio $'}<input data-n data-p="lineas.${i}.precio" inputmode="decimal" value="${l.precio}"></label></div>
+   ${!Number(l.precio)&&l.st!=='gar'?`<span class="chip w">${IC.at} Sin precio</span>`:''}</div>
+  <div class="qp"><b class="fol" id="imp-${i}">${money(imp(l))}</b></div>
+  <div class="qa"><button class="qb ok ${l.st==='aut'?'on':''}" data-a="aut" data-i="${i}" data-k="aut" aria-pressed="${l.st==='aut'}">${IC.ok} Aceptar</button><button class="qb no ${l.st==='rech'?'on':''}" data-a="aut" data-i="${i}" data-k="rech" aria-pressed="${l.st==='rech'}">${IC.fa} Rechazar</button><button class="qb gr ${l.st==='gar'?'on':''}" data-a="aut" data-i="${i}" data-k="gar" aria-pressed="${l.st==='gar'}">Garantía</button><button class="qb del" data-a="dl" data-i="${i}" aria-label="Quitar ${esc(l.desc)}">${IC.fa}</button></div>
+  ${l.st==='rech'?`<div class="qx g2"><label class="f">Motivo del rechazo<select data-p="lineas.${i}.mot"><option value="">Selecciona…</option>${MOTIVOS.map(m=>`<option ${l.mot===m?'selected':''}>${m}</option>`).join('')}</select></label><label class="f">Dar seguimiento el<input type="date" data-p="lineas.${i}.seg" value="${esc(l.seg||'')}"></label></div>`:''}</div>`}
 const totH=o=>{const t=tot(o);return`<div class="row sp"><span>Cotizado</span><span class="fol">${money(t.cot)}</span></div><div class="row sp h"><span>Autorizado (a cobrar)</span><span class="fol">${money(t.aut)}</span></div><div class="row sp"><span>Garantía (sin cargo)</span><span class="fol">${money(t.gar)}</span></div><div class="row sp"><span>Pendiente de autorizar</span><span class="fol">${money(t.pend)}</span></div><div class="row sp"><span>Rechazado / diferido</span><span class="fol">${money(t.rech)}</span></div>`};
-function tC(o){return`${o.lineas.map(lineaH).join('')||'<p class="mut">Sin conceptos. Agrega refacciones, mano de obra o pasa hallazgos desde Inspección.</p>'}
+function tC(o){return`${o.lineas.length?`<div class="qt"><div class="qh"><span></span><span>Operación</span><span>Descripción</span><span>Precio</span><span>Autorización</span></div>${o.lineas.map(lineaH).join('')}</div>`:'<p class="mut">Sin conceptos. Agrega refacciones, mano de obra o pasa hallazgos desde Inspección.</p>'}
   <div class="card"><div class="h">Agregar</div><label class="f">Buscar SKU o refacción (catálogo)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" style="display:flex;flex-direction:column;gap:6px"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div>
   <div class="card"><div class="h">Hallazgo adicional con foto</div><label class="f">Descripción<input id="hl"></label><div class="row"><label class="btn file">${IC.cam} Foto<input type="file" accept="image/*" capture="environment" id="hf"></label><button class="btn" data-a="hall">Agregar a cotización</button></div></div>
   <div class="card" id="tot">${totH(o)}</div>
@@ -166,7 +174,7 @@ const acts={
  pc:d=>{const o=O(D),c=o.chk[+d.i];o.lineas.push({t:'ref',sku:'HALLAZGO',desc:CATS[+d.i][0]+': '+(c.n||COND.find(x=>x[0]===c.e)[2]),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:c.f||null});touch(o);dt='c';keepSc=false;renderDrawer();toast('Agregado a la cotización: captura su precio')},
  firma:d=>abrirFirma(u=>{const o=O(D),f=o.firmas[d.k]||{};delete f.u;f.d=u;o.firmas[d.k]=f;touch(o);renderDrawer()}),
  dl:d=>{const o=O(D);o.lineas.splice(+d.i,1);touch(o);renderDrawer()},
- aut:d=>{const o=O(D),l=o.lineas[+d.i];l.st=d.k;if(d.k==='rech'){if(!l.seg)l.seg=addD(30)}else delete l.cerr;touch(o);renderDrawer()},
+ aut:d=>{const o=O(D),l=o.lineas[+d.i],k=(l.st===d.k&&d.k!=='pend')?'pend':d.k;l.st=k;if(k==='rech'){if(!l.seg)l.seg=addD(30)}else delete l.cerr;touch(o);renderDrawer()},
  autall:()=>{const o=O(D);o.lineas.forEach(l=>{if(l.st==='pend')l.st=o.tipo==='G'?'gar':'aut'});touch(o);renderDrawer()},
  manual:()=>{const s=prompt('Concepto');if(!s)return;const o=O(D);o.lineas.push({t:'ref',sku:'MANUAL',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
  mo:()=>{const s=prompt('Operación de mano de obra');if(!s)return;const o=O(D);o.lineas.push({t:'mo',sku:'MO',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
@@ -220,6 +228,7 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.id==='q2'){const s=t.value.toLowerCase();sug=s.length<2?[]:S.inv.filter(i=>(i.sku+' '+i.nombre).toLowerCase().includes(s)).slice(0,6);
    $('#sug').innerHTML=sug.map((i,k)=>`<button class="btn" style="justify-content:space-between" data-a="add" data-i="${k}"><span>${esc(i.nombre)}<br><small class="fol">${esc(i.sku)}</small></span><span class="fol">${money(i.precio)}</span></button>`).join('')||(s.length>1?'<div class="mut">Sin resultados. Conecta el catálogo en Configuración o agrega un concepto manual.</div>':'')}});
 document.addEventListener('change',async e=>{const t=e.target;
+  if(t.id==='ftipo'){ft=t.value;renderMain();return}
   if(t.dataset.ag){agf[t.dataset.ag]=t.value;renderMain();return}
   const o=D&&O(D);if(!o||t.type!=='file'||!t.files[0])return;const d=await comprimir(t.files[0]);
   if(t.dataset.foto){o.fotos[t.dataset.foto]={d};touch(o);renderDrawer()}else if(t.dataset.ffoto){o.chk[+t.dataset.ffoto].f=d;touch(o);renderDrawer()}else if(t.id==='hf'){window._hf=d;toast('Foto lista: toca "Agregar a cotización"')}});
@@ -241,7 +250,7 @@ setInterval(()=>{const c=$('#crono'),o=D&&O(D);if(c&&o)c.textContent=hms(ms(o))}
 setInterval(sync,30000);addEventListener('online',sync);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v6 · 20-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v7 · 20-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
@@ -283,5 +292,6 @@ IDB.open().then(async ok=>{
   if(ok){const v=await IDB.get('S');
     if(v&&v.orders){S=v}else{try{await IDB.set('S',S)}catch{}}
     try{localStorage.removeItem('taller_v2')}catch{}}
+  $('#ftipo').innerHTML='<option value="">Todos los tipos</option>'+Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
   S.orders=S.orders||[];S.dirty=S.dirty||[];S.inv=S.inv||[];S.seq=S.seq||{};S.del=S.del||[];S.orders.forEach(migEt);
   sesion=leerSes();aplicarTema();pintaLogin();aplicaAg();render();sync();if(sesion)cargaCat(true)});
