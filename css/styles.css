@@ -274,3 +274,47 @@ html.dark .tt,html.dark .dlg{background:#162032;border-color:#334155;color:var(-
 .llc{padding:4px 12px}.llr{display:grid;grid-template-columns:92px minmax(0,1.4fr) minmax(0,1fr) minmax(0,.8fr) auto;gap:8px;align-items:end;padding:10px 0;border-top:1px solid var(--bd)}.llr:first-child{border-top:0}
 .llr .llp{align-self:center}.llr .cqs{margin-left:0}.llr .llop,.llr .fgal{grid-column:1/-1}
 @media(max-width:760px){.llr{grid-template-columns:1.4fr 1fr 1fr;grid-template-areas:"p p p" "m d s" "q q q"}.llr .llp{grid-area:p}.llr>label:nth-of-type(1){grid-area:m}.llr>label:nth-of-type(2){grid-area:d}.llr>label:nth-of-type(3){grid-area:s}.llr .cqs{grid-area:q;justify-content:space-between}}
+
+/* ===== v18: tabla de cotización sin cortes, pestañas que caben en el celular, fotos y visor con zoom ===== */
+.qh,.qr{grid-template-columns:40px minmax(90px,.7fr) minmax(0,2fr) 90px 340px}
+.qa{flex-wrap:wrap;min-width:0}.qb{white-space:nowrap;flex:1 1 auto}
+@media(max-width:899px){
+ .qh{display:none}
+ .qr{grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"i d p" "i o p" "a a a"}
+ .qi{grid-area:i}.qd{grid-area:d}.qo{grid-area:o;flex-direction:row;gap:8px;align-items:center}.qp{grid-area:p}.qa{grid-area:a}
+}
+@media(max-width:480px){
+ .qa{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 40px;gap:6px}
+ .qb{padding:0 4px;font-size:12px;min-width:0}.qb.del{width:auto}
+}
+@media(max-width:380px){.qb:not(.del) svg{display:none}}
+@media(max-width:699px){
+ .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));overflow:visible}
+ .tabs .tab{flex-direction:column;justify-content:center;gap:1px;padding:4px 2px;min-height:52px;font-size:12px;text-align:center;min-width:0}
+ .tabs .tab .cnt{font-size:11px;padding:0 6px}
+}
+@media(max-width:560px){
+ .dtabs{overflow-x:hidden}
+ .dtabs .tab{padding:0 4px;gap:4px;font-size:13px;min-width:0}
+ .dtabs .tab .cnt{padding:0 5px;font-size:11px}
+}
+@media(max-width:340px){.tabs .tab{font-size:11px}}
+/* Fotos: botón que abre "cámara o galería" */
+button.gf{font-family:inherit;line-height:1.25;width:100%}
+.cq.fcam{font-family:inherit}
+[data-a="zoom"]{cursor:zoom-in}
+.fin{position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none}
+/* Visor de fotos con zoom */
+.vz{position:fixed;inset:0;z-index:120;background:#020617;display:flex;flex-direction:column;color:#fff;user-select:none;-webkit-user-select:none}
+.vz[hidden]{display:none}
+.vz button{min-width:48px;min-height:48px;border:0;border-radius:8px;background:rgba(255,255,255,.16);color:#fff;font:600 18px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;padding:0 12px;touch-action:manipulation}
+.vz button[hidden]{display:none}
+.vz-top{display:flex;align-items:center;gap:8px;padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top))}
+.vz-n{flex:1;font:600 14px "Fira Code",monospace}
+.vz-chg{font-size:14px!important}
+.vz-stage{flex:1;min-height:0;overflow:hidden;position:relative;touch-action:none;display:flex;align-items:center;justify-content:center}
+.vz-img{max-width:100%;max-height:100%;display:block;transform-origin:center center;pointer-events:none;-webkit-user-drag:none}
+.vz-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;background:rgba(15,23,42,.6)!important}
+.vz-nav.prev{left:8px}.vz-nav.next{right:8px}
+.vz-bar{display:flex;justify-content:center;gap:8px;padding:8px 12px calc(8px + env(safe-area-inset-bottom))}
+.vz-bar button{min-width:64px}

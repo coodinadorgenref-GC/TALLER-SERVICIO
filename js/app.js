@@ -31,19 +31,19 @@ async function bajaFoto(id){const k='https://fotos.local/'+id;let c=null;
   try{c=await caches.open('taller-fotos');const h=await c.match(k);if(h)return await h.text()}catch{}
   try{const r=await api.taller({action:'foto',id});if(r&&r.success&&r.d){if(c)c.put(k,new Response(r.d)).catch(()=>{});return r.d}}catch{}
   return''}
-const FQ=[];let FA=0;
+const FQ=[];let FA=0,avisoF=false;const avisoFoto=()=>{if(avisoF)return;avisoF=true;toast('No se pudo cargar una foto de Drive. Revisa que el Apps Script esté publicado con la versión más reciente (gas/taller_api.gs v4).')};
 function fotoProxy(id){if(FC.has(id))return Promise.resolve(FC.get(id));return new Promise(res=>{FQ.push({id,res});bombea()})}
 function bombea(){while(FA<3&&FQ.length){const j=FQ.shift();FA++;bajaFoto(j.id).then(d=>{if(d)FC.set(j.id,d);FA--;j.res(d);bombea()})}}
 document.addEventListener('error',e=>{const t=e.target;if(!t||t.tagName!=='IMG'||!navigator.onLine)return;
   const m=/(?:drive\.google\.com\/thumbnail\?id=|googleusercontent\.com\/d\/)([\w-]+)/.exec(t.src);if(!m)return;
   if(!t.dataset.alt&&/thumbnail/.test(t.src)){t.dataset.alt='1';t.src='https://lh3.googleusercontent.com/d/'+m[1]+'=w1600';return}
-  if(!t.dataset.px){t.dataset.px='1';fotoProxy(m[1]).then(d=>{if(d&&t.isConnected)t.src=d})}},true);
+  if(!t.dataset.px){t.dataset.px='1';fotoProxy(m[1]).then(d=>{if(d&&t.isConnected)t.src=d;else if(!d)avisoFoto()})}},true);
 const idx=e=>ETAPAS.findIndex(x=>x[0]===e),O=f=>S.orders.find(o=>o.folio===f),mine=()=>S.orders.filter(o=>o.suc===S.suc);
 const adminReal=()=>!!(sesion&&sesion.esAdmin&&!sesion.esVendedor&&!sesion.esGerente);
 const imp=l=>(Number(l.cant)||0)*(Number(l.precio)||0);
 const ms=o=>o.t.acum+(o.t.ini?Date.now()-o.t.ini:0);
 const hms=m=>{const s=Math.floor(m/1000);return[s/3600|0,s/60%60|0,s%60].map(x=>String(x).padStart(2,'0')).join(':')};
-const touch=o=>{if(!S.dirty.includes(o.folio))S.dirty.push(o.folio);o.upd=Date.now();save()};
+const touch=o=>{if(!S.dirty.includes(o.folio))S.dirty.push(o.folio);o.upd=Date.now();save();syncSoon(4000)};
 const est=o=>o.lineas.filter(l=>l.t==='mo'&&l.st!=='rech').reduce((a,l)=>a+(Number(l.min)||0),0);
 const tot=o=>{const t={cot:0,aut:0,gar:0,rech:0,pend:0};o.lineas.forEach(l=>{const v=imp(l);t.cot+=v;t[l.st]+=v});return t};
 const desk=()=>matchMedia('(min-width:700px)').matches;
@@ -102,7 +102,7 @@ function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==
 
 const inp=(l,p,v,x='')=>`<label class="f">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
 const heroH=o=>{const f=o.fotos.g_frente&&src(o.fotos.g_frente);
-  return(f?`<div class="hero"><img alt="Frente de la moto" src="${f}"></div>`:'')+`<div class="itbl"><div><span>Cliente</span><b>${esc(o.cliente||'—')}</b></div><div><span>Unidad</span><b>${esc(o.modelo||'—')}${o.vin?' · '+esc(o.vin):''}</b></div><div><span>Técnico</span><b>${esc(o.mec||'—')}${o.bahia?' · Bahía '+o.bahia:''}</b></div></div>`};
+  return(f?`<div class="hero"><img alt="Frente de la moto" src="${f}" data-a="zoom"></div>`:'')+`<div class="itbl"><div><span>Cliente</span><b>${esc(o.cliente||'—')}</b></div><div><span>Unidad</span><b>${esc(o.modelo||'—')}${o.vin?' · '+esc(o.vin):''}</b></div><div><span>Técnico</span><b>${esc(o.mec||'—')}${o.bahia?' · Bahía '+o.bahia:''}</b></div></div>`};
 function drawer(o){const bad=o.chk.filter(c=>c.e==='px'||c.e==='ur').length,pend=o.lineas.filter(l=>l.st==='pend').length,e=ETAPAS[idx(o.etapa)];
   const T=[['u','Unidad',''],['i','Inspección',bad?`<span class="cnt">${bad}</span>`:''],['c','Cotización',pend?`<span class="cnt">${pend}</span>`:''],['z','Cierre','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
@@ -115,7 +115,7 @@ function foot(o){const n=sig(o),b=n?puede(o,n):'';
 
 const gfotos=o=>{const n=FOTOS_GRAL.filter(x=>x[2]&&o.fotos[x[0]]&&src(o.fotos[x[0]])).length,r=FOTOS_GRAL.filter(x=>x[2]).length;
   return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n===r?'g':'w'}">${n}/${r} lados</span></div><div class="mut">Toma las fotos al recibir la unidad (sirven de evidencia de cómo llegó) y marca en la moto cada daño o detalle: se numera y puedes subirle su foto.</div>
-  <div class="sh">Fotos generales de la moto</div><div class="gfo">${FOTOS_GRAL.map(([k,t,rq])=>{const u=o.fotos[k]&&src(o.fotos[k]);return`<label class="gf ${u?'on':''}">${u?`<img alt="${t}" src="${u}">`:IC.cam}<span class="gt">${t}${rq?'':' (opcional)'}</span><input type="file" accept="image/*" capture="environment" data-foto="${k}" aria-label="Foto ${t}"></label>`}).join('')}</div>${danosH(o)}</div>`};
+  <div class="sh">Fotos generales de la moto</div><div class="gfo">${FOTOS_GRAL.map(([k,t,rq])=>{const u=o.fotos[k]&&src(o.fotos[k]);return`<button type="button" class="gf ${u?'on':''}" data-a="${u?'fver':'fpick'}" data-foto="${k}" aria-label="${u?'Ver foto':'Agregar foto'}: ${t}">${u?`<img alt="${t}" src="${u}">`:IC.cam}<span class="gt">${t}${rq?'':' (opcional)'}</span></button>`}).join('')}</div>${danosH(o)}</div>`};
 function tU(o){return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
   <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin)}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
@@ -124,13 +124,13 @@ function tU(o){return`<div class="card"><div class="h">Cliente</div><div class="
   ${gfotos(o)}`}
 
 function firmaCard(o,k,t){const f=o.firmas[k],s=f&&src(f);
-  return`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>${k!=='entrega'?`<label class="f">Nombre<input data-p="firmas.${k}.n" value="${esc(f?.n||'')}"></label>`:''}${s?`<img class="pic" alt="Firma ${t}" src="${s}">`:''}<button class="btn" data-a="firma" data-k="${k}">${s?'Firmar de nuevo':'Capturar firma'}</button></div>`}
+  return`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>${k!=='entrega'?`<label class="f">Nombre<input data-p="firmas.${k}.n" value="${esc(f?.n||'')}"></label>`:''}${s?`<img class="pic" data-a="zoom" alt="Firma ${t}" src="${s}">`:''}<button class="btn" data-a="firma" data-k="${k}">${s?'Firmar de nuevo':'Capturar firma'}</button></div>`}
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico y la bahía se asignan al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div><div class="g2">${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<label class="f">Bahía<select data-p="bahia"><option value="">—</option>${BAHIAS.map(b=>`<option ${String(o.bahia)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div><datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro'],pfo=new Set();let ds=-1;
 const ptsH=(o,i)=>CATS[i][2].map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('');
 const fotosK=k=>[k.f,...(k.fx||[])].filter(Boolean),OPL=['Cambiar llanta','Reparar ponchadura','Ajustar presión de aire','Balancear llanta','Cambiar válvula o cámara'];
-const camB=(k,att,i)=>{const n=fotosK(k).length;return`<label class="cq fcam" aria-label="Agregar foto${n?' ('+n+')':''}" title="Agregar foto">${IC.cam}${n?`<span class="fcn">${n}</span>`:''}<input type="file" accept="image/*" capture="environment" ${att}="${i}"></label>`};
-const galH=(k,t,i)=>{const L=fotosK(k);return L.length?`<div class="ckx fgal">${L.map((u,j)=>`<span class="fgi"><img alt="Foto ${j+1}" src="${src(u)}"><button class="fgx" data-a="fdel" data-k="${t}" data-i="${i}" data-j="${j}" aria-label="Quitar foto ${j+1}">✕</button></span>`).join('')}</div>`:''};
+const camB=(k,att,i)=>{const n=fotosK(k).length;return`<button type="button" class="cq fcam" data-a="fpick" ${att}="${i}" aria-label="Agregar foto${n?' ('+n+')':''}" title="Agregar foto">${IC.cam}${n?`<span class="fcn">${n}</span>`:''}</button>`};
+const galH=(k,t,i)=>{const L=fotosK(k);return L.length?`<div class="ckx fgal">${L.map((u,j)=>`<span class="fgi"><img alt="Foto ${j+1}" src="${src(u)}" data-a="zoom"><button class="fgx" data-a="fdel" data-k="${t}" data-i="${i}" data-j="${j}" aria-label="Quitar foto ${j+1}">✕</button></span>`).join('')}</div>`:''};
 const sqH=(k,a,i,n)=>`<div class="cqs" role="group" aria-label="${n}">${COND.map(([e,t,lb])=>`<button class="cq cq-${e}${k.e===e?' on':''}" data-a="${a}" data-i="${i}" data-e="${e}" aria-pressed="${k.e===e}" aria-label="${lb}" title="${t}">${k.e===e?IC.ok:''}</button>`).join('')}${camB(k,a==='cond'?'data-ffoto':'data-fll',i)}</div>`;
 function llH(o){return`<div class="sbar">Llantas</div><div class="card llc">`+o.llantas.map((l,i)=>{const bad=l.e==='px'||l.e==='ur';
   return`<div class="llr"><b class="llp">${l.p}</b><label class="f"><span>Medida</span><input data-p="llantas.${i}.med" value="${esc(l.med)}" placeholder="90/90-17"></label><label class="f"><span>Desgaste (mm)</span><input inputmode="decimal" data-p="llantas.${i}.des" value="${esc(l.des)}"></label><label class="f"><span>PSI</span><input inputmode="numeric" data-p="llantas.${i}.psi" value="${esc(l.psi)}"></label>${sqH(l,'lcond',i,'Llanta '+l.p)}
@@ -143,7 +143,7 @@ function danosH(o){const d=o.danos||[];
   <div class="mw" data-a="dmark"><img src="img/moto.png" alt="Moto: vistas lateral, frontal y superior" draggable="false">${d.map((m,i)=>`<button class="mk${i===ds?' sel':''}" style="left:${m.x}%;top:${m.y}%" data-a="dsel" data-i="${i}" aria-label="Daño ${i+1}: ${esc(m.t)}">${i+1}</button>`).join('')}</div>
   ${d.length?d.map((m,i)=>`<div class="dmw"><div class="dmr"><span class="dmn">${i+1}</span><select data-p="danos.${i}.t" aria-label="Tipo de daño ${i+1}">${DANOS.map(x=>`<option ${m.t===x?'selected':''}>${x}</option>`).join('')}</select><input data-p="danos.${i}.n" placeholder="Detalle (opcional)" value="${esc(m.n)}" aria-label="Detalle del daño ${i+1}">${camB(m,'data-fdano',i)}<button class="btn" data-a="ddel" data-i="${i}" aria-label="Quitar daño ${i+1}">✕</button></div>${galH(m,'d',i)}</div>`).join(''):'<p class="mut" style="margin:6px 0 0">Sin daños marcados.</p>'}`}
 
-function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${o.fotos[k]?'g':'w'}">${o.fotos[k]?IC.ok+' Cargada':'Obligatoria'}</span></div>${o.fotos[k]?`<img class="pic" alt="${t}" src="${src(o.fotos[k])}">`:''}<label class="btn file">${IC.cam} ${o.fotos[k]?'Reemplazar foto':'Tomar foto'}<input type="file" accept="image/*" capture="environment" data-foto="${k}"></label></div>`;
+function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${o.fotos[k]?'g':'w'}">${o.fotos[k]?IC.ok+' Cargada':'Obligatoria'}</span></div>${o.fotos[k]?`<img class="pic" data-a="zoom" alt="${t}" src="${src(o.fotos[k])}">`:''}<button type="button" class="btn" data-a="fpick" data-foto="${k}">${IC.cam} ${o.fotos[k]?'Reemplazar foto':'Tomar o elegir foto'}</button></div>`;
   normChk(o);const cnt=x=>o.chk.filter(c=>c.e===x).length,rev=o.chk.length-cnt('nr');
   return asigH(o)+`<div class="card"><div class="row sp"><div class="h">Hoja multipuntos</div><span class="chip ${rev===CATS.length?'g':'n'}">${rev}/${CATS.length} revisados</span></div>
   <button class="btn" data-a="okall">${IC.ok} Todo OK (marca los que siguen en azul)</button>
@@ -156,7 +156,7 @@ function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"
 function lineaH(l,i){const mo=l.t==='mo',ic={pend:IC.at,aut:IC.ok,gar:IC.ok,rech:IC.fa}[l.st];
   return`<div class="qr st-${l.st}"><span class="qi" aria-hidden="true">${ic}</span>
   <div class="qo"><b>${mo?'Mano de obra':'Refacción'}</b><span class="fol sm">${esc(l.sku)}</span></div>
-  <div class="qd"><div class="qdesc">${esc(l.desc)}</div>${l.f?`<img class="th" alt="Evidencia" src="${src(l.f)}">`:''}
+  <div class="qd"><div class="qdesc">${esc(l.desc)}</div>${l.f?`<img class="th" data-a="zoom" alt="Evidencia" src="${src(l.f)}">`:''}
    <div class="row wrap">${mo?`<label class="f" style="max-width:96px">Min<input data-n data-p="lineas.${i}.min" inputmode="numeric" value="${l.min||0}"></label>`:`<label class="f" style="max-width:90px">Cant.<input data-n data-p="lineas.${i}.cant" inputmode="numeric" value="${l.cant}"></label>`}<label class="f" style="max-width:130px">${mo?'Monto $':'Precio $'}<input data-n data-p="lineas.${i}.precio" inputmode="decimal" value="${l.precio}"></label></div>
    ${!Number(l.precio)&&l.st!=='gar'?`<span class="chip w">${IC.at} Sin precio</span>`:''}</div>
   <div class="qp"><b class="fol" id="imp-${i}">${money(imp(l))}</b></div>
@@ -165,7 +165,7 @@ function lineaH(l,i){const mo=l.t==='mo',ic={pend:IC.at,aut:IC.ok,gar:IC.ok,rech
 const totH=o=>{const t=tot(o);return`<div class="row sp"><span>Cotizado</span><span class="fol">${money(t.cot)}</span></div><div class="row sp h"><span>Autorizado (a cobrar)</span><span class="fol">${money(t.aut)}</span></div><div class="row sp"><span>Garantía (sin cargo)</span><span class="fol">${money(t.gar)}</span></div><div class="row sp"><span>Pendiente de autorizar</span><span class="fol">${money(t.pend)}</span></div><div class="row sp"><span>Rechazado / diferido</span><span class="fol">${money(t.rech)}</span></div>`};
 function tC(o){return`${o.lineas.length?`<div class="qt"><div class="qh"><span></span><span>Operación</span><span>Descripción</span><span>Precio</span><span>Autorización</span></div>${o.lineas.map(lineaH).join('')}</div>`:'<p class="mut">Sin conceptos. Agrega refacciones, mano de obra o pasa hallazgos desde Inspección.</p>'}
   <div class="card"><div class="h">Agregar</div><label class="f">Buscar SKU o refacción (catálogo)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" style="display:flex;flex-direction:column;gap:6px"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div>
-  <div class="card"><div class="h">Hallazgo adicional con foto</div><label class="f">Descripción<input id="hl"></label><div class="row"><label class="btn file">${IC.cam} Foto<input type="file" accept="image/*" capture="environment" id="hf"></label><button class="btn" data-a="hall">Agregar a cotización</button></div></div>
+  <div class="card"><div class="h">Hallazgo adicional con foto</div><label class="f">Descripción<input id="hl"></label><div class="row"><button type="button" class="btn" data-a="fpick" data-hf="1">${IC.cam} Foto${window._hf?' ✓':''}</button><button class="btn" data-a="hall">Agregar a cotización</button></div></div>
   <div class="card" id="tot">${totH(o)}</div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>
   <div class="cfg-g">Autorización del cliente</div>${firmaCard(o,'entrega','Firma del cliente (entrega la unidad)')}`}
@@ -197,6 +197,13 @@ const acts={
  nueva:()=>{if(!S.suc)return acts.agpick();sheet('<div class="h">Tipo de orden</div>'+tipoBtns('crear'))},
  elim:()=>{if(!adminReal()||!D)return;sheet(`<div class="h">¿Eliminar la orden ${esc(D)}?</div><div class="mut">Se borra la orden y su cotización de la hoja del taller. Esta acción no se puede deshacer.</div><div class="row"><button class="btn" data-a="cmod">Cancelar</button><button class="btn red" data-a="elimok">Eliminar</button></div>`)},
  cmod:()=>{$('#modal').innerHTML=''},
+ fpick:d=>{fpT={};for(const k in d)if(k!=='a')fpT[k]=d[k];sheet('<div class="h">Agregar foto</div><div class="mut">Toma la foto con la cámara o elige una que ya tengas en la galería.</div><button class="btn pri" data-a="fcam">'+IC.cam+' Tomar foto con la cámara</button><button class="btn" data-a="fgal">'+IC.gal+' Elegir de la galería</button><button class="btn" data-a="cmod">Cancelar</button>')},
+ fcam:()=>{$('#modal').innerHTML='';const i=$('#fin-cam');i.value='';i.click()},
+ fgal:()=>{$('#modal').innerHTML='';const i=$('#fin-gal');i.value='';i.multiple=!(fpT&&(fpT.foto||fpT.hf!=null));i.click()},
+ fver:d=>{const o=D&&O(D),u=o&&o.fotos[d.foto]&&src(o.fotos[d.foto]);if(!u)return acts.fpick(d);abrirVisor([u],0,{foto:d.foto})},
+ zoom:(d,e)=>{const im=e.target.closest('img'),g=im.closest('.fgal'),L=g?[...g.querySelectorAll('img[data-a="zoom"]')]:[im];abrirVisor(L.map(x=>x.currentSrc||x.src),Math.max(0,L.indexOf(im)),null)},
+ vzcerrar:()=>cerrarVisor(),vzprev:()=>{VW.i=(VW.i+VW.L.length-1)%VW.L.length;vzMuestra()},vznext:()=>{VW.i=(VW.i+1)%VW.L.length;vzMuestra()},
+ vzmas:()=>vzZoom(VW.s*1.5),vzmenos:()=>vzZoom(VW.s/1.5),vzreset:()=>vzZoom(1),vzcambiar:()=>{const t=VW.T;cerrarVisor();if(t)acts.fpick(t)},
  elimok:()=>{if(!adminReal()||!D)return;const f=D;S.orders=S.orders.filter(o=>o.folio!==f);S.dirty=S.dirty.filter(x=>x!==f);(S.del=S.del||[]).push(f);D=null;save();$('#modal').innerHTML='';render();sync();toast('Orden eliminada')},
  lav:()=>{const o=O(D);o.lav=!o.lav;touch(o);renderDrawer()},
  agpick:()=>{if(!sesion||!multi(sesion.agencia))return;sheet('<div class="h">Agencia de trabajo</div><div class="mut">Elige la agencia en la que vas a trabajar.</div>'+permitidas(sesion.agencia).map(a=>`<button class="btn ${a===S.suc?'pri':''}" data-a="agset" data-k="${esc(a)}">${esc(a)}</button>`).join(''))},
@@ -212,7 +219,7 @@ const acts={
  tcerrar:()=>{$('#toast').style.display='none'},dno:()=>cerrarAsk(null),dnop:()=>{},dsi:()=>{const i=$('#dlgi');cerrarAsk(i?i.value.trim():true)},
  syncnow:async()=>{if(!sesion)return;toast('Sincronizando…');await sync();pintaSyn();if(/clave/i.test(syncMsg)){const k=await ask({t:'Clave del taller',m:'El servidor pide una clave: es la de TALLER_CLAVE en el Apps Script del taller.',input:'Clave',ok:'Guardar',tipo:'err'});if(k){localStorage.setItem('taller_clave',k.trim());await sync();pintaSyn()}}toast(syncMsg?'No se pudo sincronizar: '+syncMsg:'Sincronizado · '+mine().length+' órdenes en '+(S.suc||'—')+' ('+S.orders.length+' en total)')},
  lcond:d=>{const o=O(D);o.llantas[+d.i].e=d.e;touch(o);renderDrawer()},
- fdel:d=>{const o=O(D),k=d.k==='l'?o.llantas[+d.i]:d.k==='d'?o.danos[+d.i]:o.chk[+d.i],j=+d.j;if(j===0)k.f=(k.fx||[]).shift()||null;else k.fx.splice(j-1,1);touch(o);renderDrawer()},
+ fdel:d=>{const o=O(D),k=d.k==='l'?o.llantas[+d.i]:d.k==='d'?o.danos[+d.i]:o.chk[+d.i],j=+d.j,u=j===0?k.f:(k.fx||[])[j-1];if(typeof u==='string'&&u&&!u.startsWith('data:'))(o.rmf=o.rmf||[]).push(u);if(j===0)k.f=(k.fx||[]).shift()||null;else k.fx.splice(j-1,1);touch(o);renderDrawer()},
  okall:()=>{const o=O(D);normChk(o);o.chk.forEach(x=>{if(x.e==='nr')x.e='ok'});o.inv.forEach(x=>{x.p=true;if(!(x.c>0))x.c=1});touch(o);renderDrawer()},
  cond:d=>{const o=O(D),i=+d.i;o.chk[i].e=d.e;if(d.e!=='nr')CATS[i][2].forEach(n=>{o.inv[n].p=true;if(!(o.inv[n].c>0))o.inv[n].c=1});touch(o);renderDrawer()},
  pc:d=>{const o=O(D),c=o.chk[+d.i];o.lineas.push({t:'ref',sku:'HALLAZGO',desc:CATS[+d.i][0]+': '+(c.op?c.op+(c.n?' ('+c.n+')':''):(c.n||COND.find(x=>x[0]===c.e)[2])),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:c.f||null});touch(o);dt='c';keepSc=false;renderDrawer();toast('Agregado a la cotización: captura su precio')},
@@ -260,6 +267,7 @@ const acts={
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&acts[b.dataset.a])acts[b.dataset.a](b.dataset,e)});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches&&e.target.matches('article[data-a]'))acts.abrir(e.target.dataset);
+  if(visorOn()){if(e.key==='Escape')cerrarVisor();else if(e.key==='ArrowLeft'&&VW.L.length>1)acts.vzprev();else if(e.key==='ArrowRight'&&VW.L.length>1)acts.vznext();else if(e.key==='+'||e.key==='=')acts.vzmas();else if(e.key==='-')acts.vzmenos();return}
   if(e.key==='Escape'){if($('#modal').innerHTML)$('#modal').innerHTML='';else if(D){D=null;render()}}});
 document.addEventListener('input',e=>{const t=e.target;
   if(t.id==='gq'){q=t.value.trim();renderMain();return}
@@ -272,9 +280,46 @@ document.addEventListener('input',e=>{const t=e.target;
 document.addEventListener('change',async e=>{const t=e.target;
   if(t.id==='ftipo'){ft=t.value;renderMain();return}
   if(t.dataset.ag){agf[t.dataset.ag]=t.value;renderMain();return}
-  const o=D&&O(D);if(!o||t.type!=='file'||!t.files[0])return;const d=await comprimir(t.files[0]);
-  if(t.dataset.foto){o.fotos[t.dataset.foto]={d};touch(o);renderDrawer()}else if(t.dataset.ffoto!=null||t.dataset.fll!=null||t.dataset.fdano!=null){const k=t.dataset.ffoto!=null?o.chk[+t.dataset.ffoto]:t.dataset.fll!=null?o.llantas[+t.dataset.fll]:o.danos[+t.dataset.fdano];if(!k.f)k.f=d;else(k.fx=k.fx||[]).push(d);touch(o);renderDrawer()}else if(t.id==='hf'){window._hf=d;toast('Foto lista: toca "Agregar a cotización"')}});
-function comprimir(f,m=900,q=.65){return new Promise(r=>{const im=new Image,u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL('image/jpeg',q))};im.src=u})}
+  if(t.id==='fin-cam'||t.id==='fin-gal'){const fs=[...t.files];t.value='';if(fs.length&&fpT)await subirFotos(fs,fpT)}});
+function comprimir(f,m=1280,q=.7){return new Promise((r,x)=>{const im=new Image,u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL('image/jpeg',q))};im.onerror=()=>{URL.revokeObjectURL(u);x(new Error('imagen no legible'))};im.src=u})}
+/* ---------- fotos: cámara o galería ---------- */
+IC.gal='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>';
+let fpT=null,fotoPend=false,fotoErr=false;
+async function subirFotos(fs,T){const o=D&&O(D);if(!o)return;let n=0,bad=0;
+  for(const f of fs){let d;try{d=await comprimir(f)}catch{bad++;continue}
+    if(T.foto){o.fotos[T.foto]={d};n++;break}
+    if(T.hf!=null){window._hf=d;n++;break}
+    const k=T.ffoto!=null?o.chk[+T.ffoto]:T.fll!=null?o.llantas[+T.fll]:o.danos[+T.fdano];if(!k){bad++;continue}
+    if(!k.f)k.f=d;else(k.fx=k.fx||[]).push(d);n++}
+  if(bad)toast('No se pudo leer '+(bad>1?'alguna de las fotos':'la foto')+': prueba con otra imagen (JPG o PNG)');
+  if(!n)return;
+  if(T.hf!=null){renderDrawer();toast('Foto lista: toca "Agregar a cotización"');return}
+  touch(o);fotoPend=true;fotoErr=false;renderDrawer();if(!bad)toast('Foto agregada · subiendo para que se vea en la PC…');syncSoon(1200)}
+/* ---------- visor de fotos con zoom (pellizco, rueda, doble toque, arrastrar) ---------- */
+const VW={L:[],i:0,s:1,x:0,y:0,T:null,P:new Map(),d0:1,s0:1,lt:0,lx:0,ly:0,mv:0};
+const visorOn=()=>{const v=$('#visor');return !!v&&!v.hidden};
+function vzPinta(){const im=$('#vz-im'),st=$('#vz-st');if(!im||!st)return;
+  if(VW.s<=1.001){VW.s=1;VW.x=0;VW.y=0}else{const mx=Math.max(0,(im.offsetWidth*VW.s-st.clientWidth)/2),my=Math.max(0,(im.offsetHeight*VW.s-st.clientHeight)/2);VW.x=Math.max(-mx,Math.min(mx,VW.x));VW.y=Math.max(-my,Math.min(my,VW.y))}
+  im.style.transform='translate('+VW.x+'px,'+VW.y+'px) scale('+VW.s+')';const p=$('#vz-pct');if(p)p.textContent=Math.round(VW.s*100)+'%'}
+function vzZoom(ns,px=0,py=0){ns=Math.min(8,Math.max(1,ns));const k=ns/VW.s;VW.x=px-(px-VW.x)*k;VW.y=py-(py-VW.y)*k;VW.s=ns;vzPinta()}
+function vzEventos(st){
+  st.addEventListener('pointerdown',e=>{try{st.setPointerCapture(e.pointerId)}catch{}VW.P.set(e.pointerId,{x:e.clientX,y:e.clientY});VW.mv=VW.P.size>1?99:0;if(VW.P.size===2){const[a,b]=[...VW.P.values()];VW.d0=Math.hypot(a.x-b.x,a.y-b.y)||1;VW.s0=VW.s}});
+  st.addEventListener('pointermove',e=>{const p=VW.P.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;VW.mv+=Math.abs(dx)+Math.abs(dy);
+    if(VW.P.size===2){const[a,b]=[...VW.P.values()],d=Math.hypot(a.x-b.x,a.y-b.y)||1,r=st.getBoundingClientRect();vzZoom(VW.s0*d/VW.d0,(a.x+b.x)/2-r.left-r.width/2,(a.y+b.y)/2-r.top-r.height/2)}
+    else if(VW.s>1){VW.x+=dx;VW.y+=dy;vzPinta()}});
+  const fin=e=>{if(!VW.P.has(e.pointerId))return;VW.P.delete(e.pointerId);
+    if(e.type==='pointerup'&&VW.mv<8&&VW.P.size===0){const t=Date.now();
+      if(t-VW.lt<320&&Math.hypot(e.clientX-VW.lx,e.clientY-VW.ly)<30){VW.lt=0;const r=st.getBoundingClientRect();vzZoom(VW.s>1.05?1:2.5,e.clientX-r.left-r.width/2,e.clientY-r.top-r.height/2)}
+      else{VW.lt=t;VW.lx=e.clientX;VW.ly=e.clientY}}};
+  st.addEventListener('pointerup',fin);st.addEventListener('pointercancel',fin);
+  st.addEventListener('wheel',e=>{e.preventDefault();const r=st.getBoundingClientRect();vzZoom(VW.s*(e.deltaY<0?1.2:1/1.2),e.clientX-r.left-r.width/2,e.clientY-r.top-r.height/2)},{passive:false})}
+function visorEl(){let v=$('#visor');if(v)return v;v=document.createElement('div');v.id='visor';v.className='vz';v.hidden=true;v.setAttribute('role','dialog');v.setAttribute('aria-modal','true');v.setAttribute('aria-label','Visor de foto');
+  v.innerHTML='<div class="vz-top"><span class="vz-n" id="vz-n"></span><button type="button" class="vz-chg" id="vz-chg" data-a="vzcambiar" hidden>'+IC.cam+' Cambiar foto</button><button type="button" data-a="vzcerrar" aria-label="Cerrar visor">✕</button></div><div class="vz-stage" id="vz-st"><img class="vz-img" id="vz-im" alt="Foto ampliada" draggable="false"></div><button type="button" class="vz-nav prev" data-a="vzprev" aria-label="Foto anterior">‹</button><button type="button" class="vz-nav next" data-a="vznext" aria-label="Foto siguiente">›</button><div class="vz-bar"><button type="button" data-a="vzmenos" aria-label="Alejar">−</button><button type="button" data-a="vzreset" id="vz-pct" aria-label="Tamaño original">100%</button><button type="button" data-a="vzmas" aria-label="Acercar">+</button></div>';
+  document.body.appendChild(v);vzEventos(v.querySelector('#vz-st'));return v}
+function vzMuestra(){const v=visorEl();$('#vz-im').src=VW.L[VW.i];VW.s=1;VW.x=0;VW.y=0;vzPinta();$('#vz-n').textContent=VW.L.length>1?(VW.i+1)+' / '+VW.L.length:'Foto';
+  v.querySelector('.prev').hidden=v.querySelector('.next').hidden=VW.L.length<2;$('#vz-chg').hidden=!VW.T;v.hidden=false}
+function abrirVisor(L,i,T){VW.L=L;VW.i=i;VW.T=T;const tt=$('#toast');if(tt)tt.style.display='none';vzMuestra()}
+function cerrarVisor(){const v=$('#visor');if(v)v.hidden=true}
 /* arrastrar y soltar: complemento en escritorio */
 document.addEventListener('dragstart',e=>{const k=e.target.closest&&e.target.closest('.k');if(!k)return;dragF=k.dataset.f;e.dataTransfer.setData('text/plain',dragF);k.classList.add('dg')});
 document.addEventListener('dragend',()=>{dragF=null;document.querySelectorAll('.dg,.over').forEach(x=>x.classList.remove('dg','over'))});
@@ -283,17 +328,36 @@ document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.clo
 document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('.col');if(!c||!dragF)return;e.preventDefault();const o=O(dragF);dragF=null;document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));if(o&&c.dataset.drop!==o.etapa)mover(o,c.dataset.drop)});
 
 function aplicarUrls(o,u){for(const k in u){const[a,b,c]=k.split('.');if(a==='fotos'&&o.fotos[b])o.fotos[b]={u:u[k]};else if(a==='firmas'&&o.firmas[b])o.firmas[b]={n:o.firmas[b].n,u:u[k]};else if(a==='chk'&&o.chk[b])o.chk[b].f=u[k];else if(a==='chkx'&&o.chk[b]&&o.chk[b].fx)o.chk[b].fx[c]=u[k];else if(a==='ll'&&o.llantas&&o.llantas[b])o.llantas[b].f=u[k];else if(a==='llx'&&o.llantas&&o.llantas[b]&&o.llantas[b].fx)o.llantas[b].fx[c]=u[k];else if(a==='dan'&&o.danos&&o.danos[b])o.danos[b].f=u[k];else if(a==='danx'&&o.danos&&o.danos[b]&&o.danos[b].fx)o.danos[b].fx[c]=u[k];else if(a==='lineas'&&o.lineas[b])o.lineas[b].f=u[k]}}
-let syncMsg='';
+let syncMsg='',syT=0,pendDr=false;
+const syncSoon=(ms=2500)=>{clearTimeout(syT);syT=setTimeout(sync,ms)};
+const escribiendo=()=>{const a=document.activeElement;return!!(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)&&a.closest&&a.closest('#drawer'))};
 function pintaSyn(){const b=$('#synb'),s=$('#syn');if(!b||!s)return;const n=S.dirty.length;b.hidden=!n;b.textContent=n;s.classList.toggle('err',!!syncMsg);s.title=syncMsg?'Sin sincronizar: '+syncMsg:n?n+' pendientes de subir':'Sincronizado'}
+// Junta las fotos que otro dispositivo (p. ej. el celular) ya subió con las de esta copia, sin pisar lo que esta copia ya tiene.
+function mergeFotos(l,r){let ch=false;const rm=new Set(l.rmf||[]),ok=u=>typeof u==='string'&&u&&!u.startsWith('data:')&&!rm.has(u),vacio=x=>!(x&&(x.d||x.u));
+  ['fotos','firmas'].forEach(a=>{const rr=r[a]||{};for(const k in rr){const rv=rr[k],lv=(l[a]||{})[k];if(rv&&ok(rv.u)&&vacio(lv)){(l[a]=l[a]||{})[k]=a==='firmas'?{n:(lv&&lv.n)||rv.n||'',u:rv.u}:{u:rv.u};ch=true}}});
+  ['chk','llantas','danos'].forEach(a=>{const ra=r[a],la=l[a];if(!Array.isArray(ra)||!Array.isArray(la)||(a==='danos'&&ra.length!==la.length))return;
+    ra.forEach((rk,i)=>{const lk=la[i];if(!rk||!lk)return;const ll=[lk.f,...(lk.fx||[])].filter(Boolean);
+      [rk.f,...(rk.fx||[])].filter(ok).forEach(u=>{if(ll.includes(u))return;if(!lk.f)lk.f=u;else(lk.fx=lk.fx||[]).push(u);ll.push(u);ch=true})})});
+  return ch}
 async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(sesion&&!navigator.onLine){syncMsg='sin internet';pintaSyn()}return}syncing=true;let err='';
   try{for(const f of [...(S.del||[])]){const r=await api.taller({action:'eliminarOrden',folio:f});if(r.success)S.del=S.del.filter(x=>x!==f);else err=r.message||'error del servidor'}
+   // 1) bajar lo que hay en la hoja (y juntar las fotos que subieron otros dispositivos)
+   const r=await api.taller({action:'listarOrdenes'});
+   if(r.success){let ch=false,chd=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio||(S.del||[]).includes(ro.folio))return;migEt(ro);const l=O(ro.folio);
+      if(!l){S.orders.push(ro);ch=true}
+      else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}
+      else if(mergeFotos(l,ro)){if(D===l.folio)chd=true;else ch=true}});
+     if(ch)renderMain();if(chd){if(escribiendo())pendDr=true;else{renderDrawer();renderMain()}}}
+   else err=r.message||'error al leer las órdenes';
+   // 2) subir lo pendiente
    for(const f of [...S.dirty]){const o=O(f);if(!o){S.dirty=S.dirty.filter(x=>x!==f);continue}const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success){err=(r.message||'error del servidor')+' ('+f+')';continue}aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==f)}
-   const r=await api.taller({action:'listarOrdenes'});if(r.success){let ch=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio||(S.del||[]).includes(ro.folio))return;migEt(ro);const l=O(ro.folio);if(!l){S.orders.push(ro);ch=true}else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}});if(ch)renderMain()}else err=r.message||'error al leer las órdenes'
-   save()}catch(e){err=String(e&&e.message||e)}syncMsg=err;syncing=false;pintaSyn()}
-setInterval(sync,30000);setInterval(pintaSyn,2000);addEventListener('online',sync);
+   save()}catch(e){err=String(e&&e.message||e)}syncMsg=err;syncing=false;pintaSyn();
+  if(fotoPend){if(!err&&!S.dirty.length){fotoPend=false;fotoErr=false;toast('Foto sincronizada: ya se puede ver en la PC')}else if(err&&!fotoErr){fotoErr=true;toast('La foto quedó guardada en este dispositivo, pero no se pudo subir: '+err)}}
+  if(!err&&S.dirty.length)syncSoon(2500)}
+setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v17 · 21-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v18 · 21-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
