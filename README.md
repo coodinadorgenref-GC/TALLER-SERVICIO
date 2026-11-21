@@ -15,6 +15,11 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v24
+- Datos del vehículo: nuevo campo **Marca / fabricante** que se llena solo con el Serie / VIN (Bajaj MD2, Vento 3EF/LFF, Haojue LC6PCK, Suzuki LC6PCJ/MB8/JS1/RFD/MLC, Hercules H93, Honda, Yamaha). Se puede corregir a mano y sugiere las marcas conocidas.
+- Series de e-bike (BIC-… bicicleta, TRI-… triciclo) se reconocen como marca *E-Bike*; no traen año.
+- La marca se copia a las órdenes de garantía, seguimiento y cita, y sale en la orden impresa junto al modelo.
+
 ## Novedades v23
 - Unidad: *Accesorios y documentos* ahora viven dentro de *Datos del asesor de servicio* (recepción de la unidad).
 - Serie / VIN: con los 17 caracteres se detecta el año de la moto (posición 10 del VIN) y se llena solo; si el año capturado no coincide se avisa y se ofrece usar el de la serie. También se muestra el fabricante cuando se reconoce (Bajaj, Suzuki, Honda, Yamaha). El modelo no se puede obtener del VIN.

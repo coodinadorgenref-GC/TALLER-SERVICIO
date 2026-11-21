@@ -56,7 +56,7 @@ const wa=(tel,m)=>{let t=String(tel||'').replace(/\D/g,'');if(!t){toast('Captura
 async function folio(t){try{const r=await api.taller({action:'siguienteFolio',tipo:t});if(r.folio)return r.folio}catch{}
   S.seq[t]=(S.seq[t]||0)+1;return t+'-'+String(S.seq[t]).padStart(4,'0')+'L'}
 async function crear(t,x={}){
-    const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,lav:false,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',anio:'',motor:'',vin:'',placas:'',asesor:sesion?(sesion.nombre||sesion.correo||''):'',asesorRef:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
+    const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,lav:false,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',marca:'',anio:'',motor:'',vin:'',placas:'',asesor:sesion?(sesion.nombre||sesion.correo||''):'',asesorRef:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
    inv:INV32.map(()=>({p:false,c:1})),chk:CATS.map(()=>({e:'nr',n:'',f:null})),fotos:{},firmas:{},recibe:'',diag:'',leg:false,
    lineas:[],
    t:{acum:0,ini:null},cita:null,ref:'',prox:{f:'',km:''},fing:Date.now(),cre:Date.now(),listo:false},x);
@@ -121,7 +121,7 @@ function foot(o){const n=sig(o),b=n?puede(o,n):'';
 
 const gfotos=o=>{const n=nRecep(o);return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n?'g':'w'}">${n?n+(n>1?' fotos':' foto')+' de ingreso':'Faltan fotos de ingreso'}</span></div>${danosH(o)}</div>`};
 function tU(o){return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
-  <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${inp('Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
+  <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Marca / fabricante','marca',o.marca,'list="marcas" autocomplete="off"')}<datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist>${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${inp('Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
   <div class="mut" id="vinh">${vinH(o)}</div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
   <label class="f">Motivo de ingreso<textarea data-p="motivo">${esc(o.motivo)}</textarea></label><label class="f">Condiciones en las que se recibe la unidad<textarea data-p="cond">${esc(o.cond)}</textarea></label>
@@ -150,18 +150,24 @@ function reporte(){const t=tarifa(),L=mine();let n=0,hc=0,mc=0,ha=0,ma=0;
 async function subeTarifas(){let r='ok';for(const ag of Object.keys(S.tarPend||{})){
   try{const x=await api.taller({action:'guardarConfig',cfgK:'tarifa_mo|'+ag,cfgV:(S.tarifas||{})[ag]||0});if(x&&x.success)delete S.tarPend[ag];else r=/desconocida/i.test((x&&x.message)||'')?'viejo':'error'}catch{r='error'}}
   save();return r}
-// VIN de 17 caracteres: la posición 10 es el año modelo (A=2010 … Y=2030; 1-9 = 2001-2009). El fabricante sale de los 3 primeros caracteres (WMI). El modelo no viene en el VIN de forma pública.
-const VINY='ABCDEFGHJKLMNPRSTVWXY',WMI={MD2:'Bajaj',JS1:'Suzuki (Japón)',LC6:'Suzuki (Haojue, China)',RFD:'Suzuki (Taiwán)',MLC:'Suzuki (Tailandia)',JH2:'Honda',LAL:'Honda (China)',JYA:'Yamaha'};
-function vinInfo(v){v=String(v||'').toUpperCase().replace(/\s+/g,'');const r={n:v.length,ok:false,anio:0,fab:'',mal:false};if(v.length!==17)return r;
+// VIN de 17 caracteres: la posición 10 es el año modelo (A=2010 … Y=2030; 1-9 = 2001-2009). El fabricante sale de los 3 primeros caracteres (WMI); en LC6 se afina con los caracteres 4-6 (Haojue y Suzuki comparten WMI). El modelo no viene en el VIN de forma pública.
+const VINY='ABCDEFGHJKLMNPRSTVWXY',WMI={MD2:'Bajaj','3EF':'Vento',LFF:'Vento',LC6PCK:'Haojue',LC6PCJ:'Suzuki',MB8:'Suzuki',JS1:'Suzuki',RFD:'Suzuki',MLC:'Suzuki',H93:'Hercules',JH2:'Honda',LAL:'Honda',JYA:'Yamaha'};
+const MARCAS=['Bajaj','Vento','Haojue','Suzuki','Hercules','Honda','Yamaha','E-Bike'];
+// E-bikes: serie con guiones tipo BIC-A04NA-7220 / TRI-P05NA-7220 (BIC = bicicleta, TRI = triciclo). No es VIN: no trae año; el bloque final (7220, 4812, 6020) es voltaje+Ah de la batería.
+const EBIKE=/^(BIC|TRI)-[A-Z0-9-]+$/;
+function vinInfo(v){v=String(v||'').toUpperCase().replace(/\s+/g,'');const r={n:v.length,ok:false,anio:0,fab:'',mal:false,ebike:false,tipo:''};
+  if(EBIKE.test(v)){r.ebike=true;r.fab='E-Bike';r.tipo=v.startsWith('TRI')?'triciclo':'bicicleta';return r}
+  if(v.length!==17)return r;
   if(/[IOQ]/.test(v)||!/^[A-Z0-9]+$/.test(v)){r.mal=true;return r}
-  const c=v[9],y=/[1-9]/.test(c)?2000+ +c:VINY.indexOf(c)<0?0:2010+VINY.indexOf(c);r.ok=true;r.anio=y;r.fab=WMI[v.slice(0,3)]||'';
+  const c=v[9],y=/[1-9]/.test(c)?2000+ +c:VINY.indexOf(c)<0?0:2010+VINY.indexOf(c);r.ok=true;r.anio=y;r.fab=WMI[v.slice(0,6)]||WMI[v.slice(0,3)]||'';
   if(!y||y>new Date().getFullYear()+1)r.anio=0;return r}
 function vinH(o){const r=vinInfo(o.vin);if(!r.n)return'';
-  if(r.n<17)return`Serie de ${r.n}/17 caracteres: al completarla se detecta el año.`;
+  if(r.ebike)return`Serie de e-bike (${r.tipo}): no incluye año · marca <b>E-Bike</b>.`;
+  if(r.n<17)return`Serie de ${r.n}/17 caracteres: al completarla se detectan año y marca.`;
   if(r.mal)return`${IC.at} La serie tiene caracteres no válidos (el VIN no usa I, O ni Q): revísala.`;
   if(!r.anio)return`${IC.at} No se pudo leer el año en la posición 10 de la serie: revísala o captura el año a mano.`;
   const dif=Number(o.anio)!==r.anio;
-  return`Según la serie: año <b>${r.anio}</b>${r.fab?' · fabricante <b>'+esc(r.fab)+'</b>':''}${dif?` ${o.anio?'· el año capturado ('+esc(o.anio)+') no coincide. ':''}<button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:' · coincide con el año capturado.'}`}
+  return`Según la serie: año <b>${r.anio}</b>${r.fab?' · fabricante <b>'+esc(r.fab)+'</b>':' · fabricante no reconocido (captura la marca a mano)'}${dif?` ${o.anio?'· el año capturado ('+esc(o.anio)+') no coincide. ':''}<button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:' · coincide con el año capturado.'}`}
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico se asigna al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div>${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor)}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
   <div class="sh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
@@ -284,12 +290,12 @@ const acts={
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
  fin:()=>{const o=O(D);o.t.acum=ms(o);o.t.ini=null;touch(o);renderDrawer();renderMain();toast('Tiempo real: '+hms(o.t.acum)+(est(o)?' · estándar '+est(o)+' min':''))},
- clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
+ clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
  print:()=>imprimir(O(D)),
  sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+o.prox.km+' km)':''}. ¿Te agendamos una cita en ${o.suc}?`)},
  sgre:async d=>{const o=O(d.f),l=o.lineas[+d.i],v=await ask({t:'Nueva fecha de seguimiento',input:'Fecha',type:'date',def:l.seg||addD(15),ok:'Guardar'});if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
- sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
- sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio})},
+ sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
+ sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio})},
  sgx:d=>{const o=O(d.f);if(d.k==='l')o.lineas[+d.i].cerr=true;else o.prox.cerr=true;touch(o);renderMain()},
  cfg:()=>{const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG();
   sheet(`<div class="h">Configuración</div>
@@ -322,11 +328,14 @@ document.addEventListener('input',e=>{const t=e.target;
   if(mt){const m=o.danos[+mt[1]];m.t=t.value;if(m.t===REC){if(!m.n)m.n=FI}else if(m.n===FI)m.n='';touch(o);renderDrawer();return}
   if(t.dataset.p==='placas'||t.dataset.p==='vin'){const p=t.selectionStart;t.value=t.dataset.p==='vin'?t.value.toUpperCase().replace(/\s+/g,''):t.value.toUpperCase();try{t.setSelectionRange(p,p)}catch{}}
   if(t.dataset.p==='anio')delete o.anioAuto;
+  if(t.dataset.p==='marca')delete o.marcaAuto;
   if(t.dataset.p){setPath(o,t.dataset.p,t.hasAttribute('data-n')?(parseFloat(String(t.value).replace(',','.'))||0):t.value);touch(o);
    if(t.dataset.p.startsWith('lineas.')){const i=t.dataset.p.split('.')[1],el=$('#imp-'+i);if(el&&o.lineas[i])el.textContent=money(imp(o.lineas[i]));const tt=$('#tot');if(tt)tt.innerHTML=totH(o)}}
   if(t.dataset.p==='vin'){const r=vinInfo(o.vin);
    if(r.ok&&r.anio&&(!o.anio||o.anioAuto)){o.anio=String(r.anio);o.anioAuto=true;const ai=document.querySelector('[data-p="anio"]');if(ai)ai.value=o.anio}
    else if(!(r.ok&&r.anio)&&o.anioAuto){o.anio='';delete o.anioAuto;const ai=document.querySelector('[data-p="anio"]');if(ai)ai.value=''}
+   if(r.fab&&(!o.marca||o.marcaAuto)){o.marca=r.fab;o.marcaAuto=true;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=o.marca}
+   else if(!r.fab&&o.marcaAuto){o.marca='';delete o.marcaAuto;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=''}
    touch(o);const vh=$('#vinh');if(vh)vh.innerHTML=vinH(o)}
   if(t.dataset.c){o.chk[+t.dataset.c].n=t.value;touch(o)}
   if(t.id==='q2'){const s=t.value.toLowerCase();sug=s.length<2?[]:S.inv.filter(i=>(i.sku+' '+i.nombre).toLowerCase().includes(s)).slice(0,6);
@@ -412,7 +421,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v23 · 21-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v24 · 21-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
