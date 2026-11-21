@@ -15,6 +15,10 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v23
+- Unidad: *Accesorios y documentos* ahora viven dentro de *Datos del asesor de servicio* (recepción de la unidad).
+- Serie / VIN: con los 17 caracteres se detecta el año de la moto (posición 10 del VIN) y se llena solo; si el año capturado no coincide se avisa y se ofrece usar el de la serie. También se muestra el fabricante cuando se reconoce (Bajaj, Suzuki, Honda, Yamaha). El modelo no se puede obtener del VIN.
+
 ## Novedades v22
 - Daños y detalles: *Recepción* es un tipo más en la lista de cada punto de la moto; al elegirlo el detalle dice "Fotos de ingreso" y se toman o eligen varias fotos. Para salir de Recepción se pide al menos una foto de ingreso.
 - No se avanza de Recepción sin los datos del vehículo (modelo, año, serie/VIN, motor, kilometraje y combustible; las placas son opcionales).
