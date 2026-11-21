@@ -14,7 +14,13 @@ const save=()=>{if(IDB.db){clearTimeout(svT);svT=setTimeout(flush,120)}else{try{
 addEventListener('pagehide',flush);document.addEventListener('visibilitychange',()=>{if(document.hidden)flush()});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=n=>'$'+Number(n||0).toLocaleString('es-MX',{maximumFractionDigits:2});
-const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',3200)};
+const TI={ok:IC.ok,err:IC.at,inf:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 11v6M12 7h.01"/></svg>'};let askRes=null;
+const toast=(t,tipo)=>{tipo=tipo||(/no se pudo|error|falta|inv[aá]lid|sin internet|memoria llena|captura|describe/i.test(t)?'err':/sincronizad|agregad|guardad|lista|copiad|enviad/i.test(t)?'ok':'inf');const e=$('#toast');e.innerHTML=`<div class="tt ${tipo}" role="${tipo==='err'?'alert':'status'}"><span class="ti">${TI[tipo]}</span><span class="tm">${esc(t)}</span><button class="tc" data-a="tcerrar" aria-label="Cerrar aviso">✕</button></div>`;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',tipo==='err'?7000:3800)};
+function ask(o){return new Promise(res=>{let d=$('#dlg');if(!d){d=document.createElement('div');d.id='dlg';document.body.appendChild(d)}askRes=res;const tp=o.tipo||'inf';
+  d.innerHTML=`<div class="dov2" data-a="dno"><div class="dlg ${tp}" role="alertdialog" aria-modal="true" aria-labelledby="dlgt" data-a="dnop"><div class="dlgh"><span class="ti">${TI[tp]}</span><b id="dlgt">${esc(o.t)}</b></div>${o.m?`<p class="dlgm">${esc(o.m)}</p>`:''}${o.input?`<label class="f">${esc(o.input)}<input id="dlgi" type="${o.type||'text'}" value="${esc(o.def||'')}" autocomplete="off"></label>`:''}<div class="dlgb"><button type="button" class="btn" data-a="dno">${esc(o.no||'Cancelar')}</button><button type="button" class="btn pri" data-a="dsi">${esc(o.ok||'Aceptar')}</button></div></div></div>`;
+  setTimeout(()=>($('#dlgi')||$('.dlg .btn.pri')).focus(),30)})}
+function cerrarAsk(v){const d=$('#dlg');if(d)d.innerHTML='';const r=askRes;askRes=null;if(r)r(v)}
+document.addEventListener('keydown',e=>{if(!$('#dlg .dlg'))return;if(e.key==='Escape')cerrarAsk(null);else if(e.key==='Enter'&&e.target.id==='dlgi'){e.preventDefault();cerrarAsk(e.target.value.trim())}});
 const iso=(d=new Date())=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const addD=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
 const src=x=>typeof x==='string'?x:(x&&(x.d||x.u))||'';
@@ -39,11 +45,12 @@ async function crear(t,x={}){
    t:{acum:0,ini:null},cita:null,ref:'',prox:{f:'',km:''},fing:Date.now(),cre:Date.now(),listo:false},x);
   S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
 
-function puede(o,dest){const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
+function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
   if(i===0){const f=FOTOS_GRAL.filter(x=>x[2]&&!(o.fotos[x[0]]&&src(o.fotos[x[0]])));if(f.length)return'Faltan fotos generales de la moto: '+f.map(x=>x[1]).join(', ');
     if(!o.cliente||!o.modelo)return'Captura cliente y modelo (unidad)'}
   if(j>=2&&!o.mec)return'Asigna el técnico (mecánico) en Taller';
   if(j>=2&&!o.fotos.bayoneta)return'Falta la foto de la bayoneta / drenado de aceite';
+  if(j>=2){const f=[];o.chk.forEach((c,k)=>{if(c.e==='nr')f.push(k+1)});o.llantas.forEach(l=>{if(l.e==='nr'||!l.med||!l.des||!l.psi)f.push('llanta '+l.p.toLowerCase())});if(f.length)return'Falta clasificar (azul) o capturar en Inspección: '+f.join(', ')}
   const L=o.lineas;
   if(j>=3){if(!L.length)return'Agrega la cotización';if(L.some(l=>l.st==='pend'))return'Hay conceptos pendientes de autorización'}
   if(j===4){if(!o.lav)return'Marca que la moto fue lavada (Cierre)';if(!(o.firmas.cli&&src(o.firmas.cli)))return'Falta la firma del cliente en Cierre'}
@@ -107,12 +114,16 @@ function firmaCard(o,k,t){const f=o.firmas[k],s=f&&src(f);
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico y la bahía se asignan al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div><div class="g2">${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<label class="f">Bahía<select data-p="bahia"><option value="">—</option>${BAHIAS.map(b=>`<option ${String(o.bahia)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div><datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro'],pfo=new Set();let ds=-1;
 const ptsH=(o,i)=>CATS[i][2].map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('');
-function llH(o){return`<div class="sbar">Llantas</div>`+o.llantas.map((l,i)=>`<div class="ckr"><div class="ckt"><b>${l.p}</b><span class="mut">Medida, desgaste y presión</span></div><div class="cqs" role="group" aria-label="Llanta ${l.p}">${COND.map(([e,t,lb])=>`<button class="cq cq-${e}${l.e===e?' on':''}" data-a="lcond" data-i="${i}" data-e="${e}" aria-pressed="${l.e===e}" aria-label="${lb}" title="${t}">${l.e===e?IC.ok:''}</button>`).join('')}</div>
-  <div class="g3 ckx"><label class="f">Medida<input data-p="llantas.${i}.med" value="${esc(l.med)}" placeholder="90/90-17"></label><label class="f">Desgaste (mm)<input inputmode="decimal" data-p="llantas.${i}.des" value="${esc(l.des)}"></label><label class="f">PSI<input inputmode="numeric" data-p="llantas.${i}.psi" value="${esc(l.psi)}"></label></div>
-  <div class="ckx row wrap"><button class="tg ${l.cam?'on':''}" data-a="lcam" data-i="${i}" aria-pressed="${!!l.cam}">${l.cam?IC.ok:''}<span>Requiere cambio de llanta</span></button>${l.cam?`<button class="btn" data-a="lpc" data-i="${i}">Pasar a cotización</button>`:''}</div></div>`).join('')}
+const fotosK=k=>[k.f,...(k.fx||[])].filter(Boolean),OPL=['Cambiar llanta','Reparar ponchadura','Ajustar presión de aire','Balancear llanta','Cambiar válvula o cámara'];
+const camB=(k,att,i)=>{const n=fotosK(k).length;return`<label class="cq fcam" aria-label="Agregar foto${n?' ('+n+')':''}" title="Agregar foto">${IC.cam}${n?`<span class="fcn">${n}</span>`:''}<input type="file" accept="image/*" capture="environment" ${att}="${i}"></label>`};
+const galH=(k,t,i)=>{const L=fotosK(k);return L.length?`<div class="ckx fgal">${L.map((u,j)=>`<span class="fgi"><img alt="Foto ${j+1}" src="${src(u)}"><button class="fgx" data-a="fdel" data-k="${t}" data-i="${i}" data-j="${j}" aria-label="Quitar foto ${j+1}">✕</button></span>`).join('')}</div>`:''};
+const sqH=(k,a,i,n)=>`<div class="cqs" role="group" aria-label="${n}">${COND.map(([e,t,lb])=>`<button class="cq cq-${e}${k.e===e?' on':''}" data-a="${a}" data-i="${i}" data-e="${e}" aria-pressed="${k.e===e}" aria-label="${lb}" title="${t}">${k.e===e?IC.ok:''}</button>`).join('')}${camB(k,a==='cond'?'data-ffoto':'data-fll',i)}</div>`;
+function llH(o){return`<div class="sbar">Llantas</div><div class="card llc">`+o.llantas.map((l,i)=>{const bad=l.e==='px'||l.e==='ur';
+  return`<div class="llr"><b class="llp">${l.p}</b><label class="f"><span>Medida</span><input data-p="llantas.${i}.med" value="${esc(l.med)}" placeholder="90/90-17"></label><label class="f"><span>Desgaste (mm)</span><input inputmode="decimal" data-p="llantas.${i}.des" value="${esc(l.des)}"></label><label class="f"><span>PSI</span><input inputmode="numeric" data-p="llantas.${i}.psi" value="${esc(l.psi)}"></label>${sqH(l,'lcond',i,'Llanta '+l.p)}
+  ${bad?`<label class="f llop"><span>Operación recomendada</span><input data-p="llantas.${i}.op" list="opl" value="${esc(l.op||'')}" placeholder="Elige o escribe la operación"></label>`:''}${galH(l,'l',i)}</div>`}).join('')+`<datalist id="opl">${OPL.map(x=>`<option value="${x}">`).join('')}</datalist></div>`}
 function ckRow(o,i){const c=CATS[i],k=o.chk[i],bad=k.e==='px'||k.e==='ur';
-  return`<div class="ckr"><div class="ckt"><b>${i+1}. ${c[0]}</b><span class="mut">${c[1]}</span></div><div class="cqs" role="group" aria-label="${c[0]}">${COND.map(([e,t,l])=>`<button class="cq cq-${e}${k.e===e?' on':''}" data-a="cond" data-i="${i}" data-e="${e}" aria-pressed="${k.e===e}" aria-label="${l}" title="${t}">${k.e===e?IC.ok:''}</button>`).join('')}</div>
-  ${bad?`<div class="ckx"><label class="f">Operación recomendada<input data-p="chk.${i}.op" list="op${i}" value="${esc(k.op||'')}" placeholder="Elige o escribe la operación"></label><datalist id="op${i}">${OPS[i].map(x=>`<option value="${x}">`).join('')}</datalist><label class="f">Nota técnica<textarea data-c="${i}">${esc(k.n)}</textarea></label>${k.f?`<img class="pic" alt="Evidencia ${c[0]}" src="${src(k.f)}">`:''}<div class="row wrap"><label class="btn file">${IC.cam} Foto<input type="file" accept="image/*" capture="environment" data-ffoto="${i}"></label><button class="btn" data-a="pc" data-i="${i}">Pasar a cotización</button></div></div>`:''}</div>`}
+  return`<div class="ckr"><div class="ckt"><b>${i+1}. ${c[0]}</b><span class="mut">${c[1]}</span></div>${sqH(k,'cond',i,c[0])}${galH(k,'c',i)}
+  ${bad?`<div class="ckx"><label class="f">Operación recomendada<input data-p="chk.${i}.op" list="op${i}" value="${esc(k.op||'')}" placeholder="Elige o escribe la operación"></label><datalist id="op${i}">${OPS[i].map(x=>`<option value="${x}">`).join('')}</datalist><label class="f">Nota técnica<textarea data-c="${i}">${esc(k.n)}</textarea></label><button class="btn" data-a="pc" data-i="${i}">Pasar a cotización</button></div>`:''}</div>`}
 function danosH(o){const d=o.danos||[];
   return`<div class="h" style="margin-top:12px">Daños y detalles al recibir</div><div class="mut">Toca la moto donde haya un daño (lateral, frente o arriba): se numera y lo describes abajo.</div>
   <div class="mw" data-a="dmark"><img src="img/moto.png" alt="Moto: vistas lateral, frontal y superior" draggable="false">${d.map((m,i)=>`<button class="mk${i===ds?' sel':''}" style="left:${m.x}%;top:${m.y}%" data-a="dsel" data-i="${i}" aria-label="Daño ${i+1}: ${esc(m.t)}">${i+1}</button>`).join('')}</div>
@@ -123,7 +134,7 @@ function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"
   return asigH(o)+`<div class="card"><div class="row sp"><div class="h">Hoja multipuntos</div><span class="chip ${rev===CATS.length?'g':'n'}">${rev}/${CATS.length} revisados</span></div>
   <button class="btn" data-a="okall">${IC.ok} Todo OK (marca los que siguen en azul)</button>
   <div class="lgd">${[['nr','Azul · No revisado'],['ok','Verde · OK'],['px','Amarillo · Próximo'],['ur','Rojo · Urgente']].map(([e,t])=>`<span class="lgi lg-${e}"><i>${CI[e]}</i>${t} <b>${cnt(e)}</b></span>`).join('')}</div></div>
-  ${SECC.map(([t,ix],si)=>`<div class="sbar">${t}</div>${ix.map(i=>ckRow(o,i)).join('')}<div class="ckr"><label class="f" style="flex:1 1 100%">Adicionales · ${t}<input data-p="adic.${si}" value="${esc((o.adic||[])[si])}" placeholder="Otro trabajo o detalle (opcional)"></label></div>`).join('')}
+  ${SECC.map(([t,ix],si)=>`<div class="sbar">${t}</div>${ix.map(i=>ckRow(o,i)).join('')}`).join('')}
   ${llH(o)}
   <div class="card"><div class="h">Accesorios y documentos</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>
   ${fo('bayoneta','Foto bayoneta / drenado de aceite')}`}
@@ -184,9 +195,10 @@ const acts={
  inv:d=>{const o=O(D),x=o.inv[+d.n];x.p=!x.p;if(x.p&&!(x.c>0))x.c=1;touch(o);renderDrawer()},invall:()=>{const o=O(D);o.inv.forEach(x=>{x.p=true;if(!(x.c>0))x.c=1});touch(o);renderDrawer()},
  pfo:d=>{const i=+d.i;pfo.has(i)?pfo.delete(i):pfo.add(i)},dsel:d=>{ds=+d.i;renderDrawer()},ddel:d=>{const o=O(D);o.danos.splice(+d.i,1);ds=-1;touch(o);renderDrawer()},
  dmark:(d,e)=>{const o=O(D),r=e.target.closest('.mw').getBoundingClientRect();(o.danos=o.danos||[]).push({x:+((e.clientX-r.left)/r.width*100).toFixed(1),y:+((e.clientY-r.top)/r.height*100).toFixed(1),t:'Rayado',n:''});ds=o.danos.length-1;touch(o);renderDrawer()},
- syncnow:async()=>{if(!sesion)return;toast('Sincronizando…');await sync();pintaSyn();if(/clave/i.test(syncMsg)){const k=prompt('El servidor pide una clave. Escribe la clave del taller (la de TALLER_CLAVE en Apps Script):','');if(k){localStorage.setItem('taller_clave',k.trim());await sync();pintaSyn()}}toast(syncMsg?'No se pudo sincronizar: '+syncMsg:'Sincronizado · '+mine().length+' órdenes en '+(S.suc||'—')+' ('+S.orders.length+' en total)')},
- lcond:d=>{const o=O(D);o.llantas[+d.i].e=d.e;touch(o);renderDrawer()},lcam:d=>{const o=O(D),l=o.llantas[+d.i];l.cam=!l.cam;if(l.cam&&l.e==='nr')l.e='ur';touch(o);renderDrawer()},
- lpc:d=>{const o=O(D),l=o.llantas[+d.i];o.lineas.push({t:'ref',sku:'LLANTA',desc:'Cambio de llanta '+l.p.toLowerCase()+(l.med?' '+l.med:''),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:null});touch(o);dt='c';keepSc=false;renderDrawer();toast('Agregado a la cotización: captura su precio')},
+ tcerrar:()=>{$('#toast').style.display='none'},dno:()=>cerrarAsk(null),dnop:()=>{},dsi:()=>{const i=$('#dlgi');cerrarAsk(i?i.value.trim():true)},
+ syncnow:async()=>{if(!sesion)return;toast('Sincronizando…');await sync();pintaSyn();if(/clave/i.test(syncMsg)){const k=await ask({t:'Clave del taller',m:'El servidor pide una clave: es la de TALLER_CLAVE en el Apps Script del taller.',input:'Clave',ok:'Guardar',tipo:'err'});if(k){localStorage.setItem('taller_clave',k.trim());await sync();pintaSyn()}}toast(syncMsg?'No se pudo sincronizar: '+syncMsg:'Sincronizado · '+mine().length+' órdenes en '+(S.suc||'—')+' ('+S.orders.length+' en total)')},
+ lcond:d=>{const o=O(D);o.llantas[+d.i].e=d.e;touch(o);renderDrawer()},
+ fdel:d=>{const o=O(D),k=d.k==='l'?o.llantas[+d.i]:o.chk[+d.i],j=+d.j;if(j===0)k.f=(k.fx||[]).shift()||null;else k.fx.splice(j-1,1);touch(o);renderDrawer()},
  okall:()=>{const o=O(D);normChk(o);o.chk.forEach(x=>{if(x.e==='nr')x.e='ok'});o.inv.forEach(x=>{x.p=true;if(!(x.c>0))x.c=1});touch(o);renderDrawer()},
  cond:d=>{const o=O(D),i=+d.i;o.chk[i].e=d.e;if(d.e!=='nr')CATS[i][2].forEach(n=>{o.inv[n].p=true;if(!(o.inv[n].c>0))o.inv[n].c=1});touch(o);renderDrawer()},
  pc:d=>{const o=O(D),c=o.chk[+d.i];o.lineas.push({t:'ref',sku:'HALLAZGO',desc:CATS[+d.i][0]+': '+(c.op?c.op+(c.n?' ('+c.n+')':''):(c.n||COND.find(x=>x[0]===c.e)[2])),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:c.f||null});touch(o);dt='c';keepSc=false;renderDrawer();toast('Agregado a la cotización: captura su precio')},
@@ -194,13 +206,13 @@ const acts={
  dl:d=>{const o=O(D);o.lineas.splice(+d.i,1);touch(o);renderDrawer()},
  aut:d=>{const o=O(D),l=o.lineas[+d.i],k=(l.st===d.k&&d.k!=='pend')?'pend':d.k;l.st=k;if(k==='rech'){if(!l.seg)l.seg=addD(30)}else delete l.cerr;touch(o);renderDrawer()},
  autall:()=>{const o=O(D);o.lineas.forEach(l=>{if(l.st==='pend')l.st=o.tipo==='G'?'gar':'aut'});touch(o);renderDrawer()},
- manual:()=>{const s=prompt('Concepto');if(!s)return;const o=O(D);o.lineas.push({t:'ref',sku:'MANUAL',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
- mo:()=>{const s=prompt('Operación de mano de obra');if(!s)return;const o=O(D);o.lineas.push({t:'mo',sku:'MO',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
+ manual:async()=>{const s=await ask({t:'Agregar concepto',input:'Concepto',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'ref',sku:'MANUAL',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
+ mo:async()=>{const s=await ask({t:'Agregar mano de obra',input:'Operación',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'mo',sku:'MO',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
  add:d=>{const o=O(D),i=sug[+d.i];o.lineas.push({t:'ref',sku:i.sku,desc:i.nombre,cant:1,precio:i.precio,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
  hall:()=>{const o=O(D),t=$('#hl').value.trim();if(!t)return toast('Describe el hallazgo');o.lineas.push({t:'ref',sku:'HALLAZGO',desc:t,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:window._hf||null});window._hf=null;touch(o);renderDrawer()},
  leg:()=>{const o=O(D);o.leg=!o.leg;touch(o);renderDrawer()},
- wa:()=>{const o=O(D),L=o.lineas.filter(l=>l.st!=='rech');if(!L.length)return toast('No hay conceptos que enviar');
-  if(L.some(l=>!Number(l.precio)&&l.st!=='gar')&&!confirm('Hay conceptos sin precio. ¿Enviar de todos modos?'))return;
+ wa:async()=>{const o=O(D),L=o.lineas.filter(l=>l.st!=='rech');if(!L.length)return toast('No hay conceptos que enviar');
+  if(L.some(l=>!Number(l.precio)&&l.st!=='gar')&&!(await ask({t:'Conceptos sin precio',m:'Hay conceptos sin precio. ¿Enviar de todos modos?',ok:'Enviar',tipo:'err'})))return;
   wa(o.tel,`Hola ${o.cliente}, cotización ${o.folio} (${o.modelo}):\n`+L.map(l=>`• ${l.desc}${l.t==='mo'?'':' x'+l.cant}: ${l.st==='gar'?'garantía':money(imp(l))}`).join('\n')+`\n*Total: ${money(L.filter(l=>l.st!=='gar').reduce((a,l)=>a+imp(l),0))}*\nResponde "SÍ" para autorizar todo o indícanos qué conceptos autorizas.`)},
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
@@ -208,7 +220,7 @@ const acts={
  clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
  print:()=>imprimir(O(D)),
  sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+o.prox.km+' km)':''}. ¿Te agendamos una cita en ${o.suc}?`)},
- sgre:d=>{const o=O(d.f),l=o.lineas[+d.i],v=prompt('Nueva fecha de seguimiento (AAAA-MM-DD)',l.seg||addD(15));if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
+ sgre:async d=>{const o=O(d.f),l=o.lineas[+d.i],v=await ask({t:'Nueva fecha de seguimiento',input:'Fecha',type:'date',def:l.seg||addD(15),ok:'Guardar'});if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
  sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
  sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,anio:o.anio,motor:o.motor,vin:o.vin,km:o.km,ref:o.folio})},
  sgx:d=>{const o=O(d.f);if(d.k==='l')o.lineas[+d.i].cerr=true;else o.prox.cerr=true;touch(o);renderMain()},
@@ -247,7 +259,7 @@ document.addEventListener('change',async e=>{const t=e.target;
   if(t.id==='ftipo'){ft=t.value;renderMain();return}
   if(t.dataset.ag){agf[t.dataset.ag]=t.value;renderMain();return}
   const o=D&&O(D);if(!o||t.type!=='file'||!t.files[0])return;const d=await comprimir(t.files[0]);
-  if(t.dataset.foto){o.fotos[t.dataset.foto]={d};touch(o);renderDrawer()}else if(t.dataset.ffoto){o.chk[+t.dataset.ffoto].f=d;touch(o);renderDrawer()}else if(t.id==='hf'){window._hf=d;toast('Foto lista: toca "Agregar a cotización"')}});
+  if(t.dataset.foto){o.fotos[t.dataset.foto]={d};touch(o);renderDrawer()}else if(t.dataset.ffoto!=null||t.dataset.fll!=null){const k=t.dataset.ffoto!=null?o.chk[+t.dataset.ffoto]:o.llantas[+t.dataset.fll];if(!k.f)k.f=d;else(k.fx=k.fx||[]).push(d);touch(o);renderDrawer()}else if(t.id==='hf'){window._hf=d;toast('Foto lista: toca "Agregar a cotización"')}});
 function comprimir(f,m=900,q=.65){return new Promise(r=>{const im=new Image,u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL('image/jpeg',q))};im.src=u})}
 /* arrastrar y soltar: complemento en escritorio */
 document.addEventListener('dragstart',e=>{const k=e.target.closest&&e.target.closest('.k');if(!k)return;dragF=k.dataset.f;e.dataTransfer.setData('text/plain',dragF);k.classList.add('dg')});
@@ -256,7 +268,7 @@ document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.clos
 document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.closest('.col');if(c)c.classList.remove('over')});
 document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('.col');if(!c||!dragF)return;e.preventDefault();const o=O(dragF);dragF=null;document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));if(o&&c.dataset.drop!==o.etapa)mover(o,c.dataset.drop)});
 
-function aplicarUrls(o,u){for(const k in u){const[a,b]=k.split('.');if(a==='fotos'&&o.fotos[b])o.fotos[b]={u:u[k]};else if(a==='firmas'&&o.firmas[b])o.firmas[b]={n:o.firmas[b].n,u:u[k]};else if(a==='chk'&&o.chk[b])o.chk[b].f=u[k];else if(a==='lineas'&&o.lineas[b])o.lineas[b].f=u[k]}}
+function aplicarUrls(o,u){for(const k in u){const[a,b,c]=k.split('.');if(a==='fotos'&&o.fotos[b])o.fotos[b]={u:u[k]};else if(a==='firmas'&&o.firmas[b])o.firmas[b]={n:o.firmas[b].n,u:u[k]};else if(a==='chk'&&o.chk[b])o.chk[b].f=u[k];else if(a==='chkx'&&o.chk[b]&&o.chk[b].fx)o.chk[b].fx[c]=u[k];else if(a==='ll'&&o.llantas&&o.llantas[b])o.llantas[b].f=u[k];else if(a==='llx'&&o.llantas&&o.llantas[b]&&o.llantas[b].fx)o.llantas[b].fx[c]=u[k];else if(a==='lineas'&&o.lineas[b])o.lineas[b].f=u[k]}}
 let syncMsg='';
 function pintaSyn(){const b=$('#synb'),s=$('#syn');if(!b||!s)return;const n=S.dirty.length;b.hidden=!n;b.textContent=n;s.classList.toggle('err',!!syncMsg);s.title=syncMsg?'Sin sincronizar: '+syncMsg:n?n+' pendientes de subir':'Sincronizado'}
 async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(sesion&&!navigator.onLine){syncMsg='sin internet';pintaSyn()}return}syncing=true;let err='';

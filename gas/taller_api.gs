@@ -63,6 +63,9 @@ function aplicar_(o, u) {
     if (a === 'fotos' && o.fotos[b]) o.fotos[b] = { u: u[k] };
     else if (a === 'firmas' && o.firmas[b]) o.firmas[b] = { n: o.firmas[b].n, u: u[k] };
     else if (a === 'chk' && o.chk[b]) o.chk[b].f = u[k];
+    else if (a === 'chkx' && o.chk[b] && o.chk[b].fx) o.chk[b].fx[p[2]] = u[k];
+    else if (a === 'll' && o.llantas && o.llantas[b]) o.llantas[b].f = u[k];
+    else if (a === 'llx' && o.llantas && o.llantas[b] && o.llantas[b].fx) o.llantas[b].fx[p[2]] = u[k];
     else if (a === 'lineas' && o.lineas[b]) o.lineas[b].f = u[k];
   });
 }
@@ -70,7 +73,14 @@ function guardarOrden_(o) {
   var urls = {};
   Object.keys(o.fotos || {}).forEach(function (k) { if (o.fotos[k].d) urls['fotos.' + k] = subir_(o.folio, 'foto-' + k, o.fotos[k].d); });
   Object.keys(o.firmas || {}).forEach(function (k) { if (o.firmas[k].d) urls['firmas.' + k] = subir_(o.folio, 'firma-' + k, o.firmas[k].d); });
-  (o.chk || []).forEach(function (c, i) { if (c.f && c.f.indexOf('data:') === 0) urls['chk.' + i] = subir_(o.folio, 'condicion-' + (i + 1), c.f); });
+  (o.chk || []).forEach(function (c, i) {
+    if (c.f && c.f.indexOf('data:') === 0) urls['chk.' + i] = subir_(o.folio, 'condicion-' + (i + 1), c.f);
+    (c.fx || []).forEach(function (x, j) { if (x && x.indexOf('data:') === 0) urls['chkx.' + i + '.' + j] = subir_(o.folio, 'condicion-' + (i + 1) + '-' + (j + 2), x); });
+  });
+  (o.llantas || []).forEach(function (l, i) {
+    if (l.f && l.f.indexOf('data:') === 0) urls['ll.' + i] = subir_(o.folio, 'llanta-' + (i + 1), l.f);
+    (l.fx || []).forEach(function (x, j) { if (x && x.indexOf('data:') === 0) urls['llx.' + i + '.' + j] = subir_(o.folio, 'llanta-' + (i + 1) + '-' + (j + 2), x); });
+  });
   (o.lineas || []).forEach(function (l, i) { if (l.f && l.f.indexOf('data:') === 0) urls['lineas.' + i] = subir_(o.folio, 'hallazgo-' + (i + 1), l.f); });
   var copia = JSON.parse(JSON.stringify(o)); aplicar_(copia, urls);
   var L = o.lineas || [], t = { cot: 0, aut: 0 };
