@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v5 (tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v6 (enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -19,13 +19,21 @@ function sheet_(n) {
   return s;
 }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function doGet() { return out_({ success: true, servicio: 'taller', version: 5 }); }
+function doGet() { return out_({ success: true, servicio: 'taller', version: 6 }); }
 function doPost(e) {
   var b;
   try { b = JSON.parse(e.postData.contents); } catch (err) { return out_({ success: false, message: String(err) }); }
-  if (TALLER_CLAVE && b.clave !== TALLER_CLAVE) return out_({ success: false, message: 'Clave inválida' });
-  // Las fotos se piden sin bloqueo para poder bajar varias a la vez.
-  if (b.action === 'foto') { try { return out_(foto_(b.id)); } catch (err) { return out_({ success: false, message: String(err) }); } }
+  // Las acciones del cliente (enlace de visto bueno) no usan la clave del taller: se protegen con el token de cada orden.
+  var pub = b.action === 'verOrden' || b.action === 'autorizarCliente' || b.action === 'fotoCliente';
+  if (!pub && TALLER_CLAVE && b.clave !== TALLER_CLAVE) return out_({ success: false, message: 'Clave inválida' });
+  // Lecturas sin bloqueo para poder bajar varias fotos a la vez.
+  if (b.action === 'foto' || b.action === 'fotoCliente' || b.action === 'verOrden') {
+    try {
+      if (b.action === 'foto') return out_(foto_(b.id));
+      if (b.action === 'fotoCliente') return out_(fotoCliente_(b.folio, b.tok, b.id));
+      return out_(verOrden_(b.folio, b.tok));
+    } catch (err) { return out_({ success: false, message: String(err) }); }
+  }
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     if (b.action === 'siguienteFolio') return out_({ success: true, folio: siguienteFolio_(b.tipo) });
@@ -34,6 +42,7 @@ function doPost(e) {
     if (b.action === 'eliminarOrden') return out_(eliminarOrden_(b.folio));
     if (b.action === 'leerConfig') return out_({ success: true, config: leerConfig_() });
     if (b.action === 'guardarConfig') return out_(guardarConfig_(b.cfgK, b.cfgV));
+    if (b.action === 'autorizarCliente') return out_(autorizarCliente_(b));
     return out_({ success: false, message: 'Acción desconocida' });
   } catch (err) { return out_({ success: false, message: String(err) }); }
   finally { lock.releaseLock(); }
@@ -89,6 +98,10 @@ function aplicar_(o, u) {
   });
 }
 function guardarOrden_(o) {
+  // Si el cliente autorizó desde el enlace mientras el taller tenía la orden abierta, no se pierde su autorización.
+  var prev = buscar_(o.folio);
+  if (prev && prev.tok && !o.tok) o.tok = prev.tok;
+  if (prev && prev.auth && (!o.auth || o.auth.t < prev.auth.t)) mezclaAuth_(o, prev);
   var urls = {};
   Object.keys(o.fotos || {}).forEach(function (k) { if (o.fotos[k].d) urls['fotos.' + k] = subir_(o.folio, 'foto-' + k, o.fotos[k].d); });
   Object.keys(o.firmas || {}).forEach(function (k) { if (o.firmas[k].d) urls['firmas.' + k] = subir_(o.folio, 'firma-' + k, o.firmas[k].d); });
@@ -142,4 +155,76 @@ function guardarConfig_(k, v) {
   v = Number(v); if (!(v >= 0)) return { success: false, message: 'Valor inválido' };
   upsert_(sheet_('CONFIG_TALLER'), String(k), [String(k), v, new Date()]);
   return { success: true };
+}
+
+// ---------- Enlace de visto bueno para el cliente ----------
+function buscar_(folio) {
+  var s = sheet_('ORDENES_TALLER'), v = s.getRange(1, 1, Math.max(s.getLastRow(), 1), 1).getValues();
+  for (var i = 1; i < v.length; i++) if (v[i][0] === folio) {
+    try { return JSON.parse(s.getRange(i + 1, 20).getValue() || '{}'); } catch (e) { return null; }
+  }
+  return null;
+}
+function valida_(o, tok) { return !!(o && o.tok && tok && String(o.tok) === String(tok)); }
+function url_(x) { return (typeof x === 'string' && x.indexOf('http') === 0) ? x : null; }
+function urls_(a) { return (a || []).map(url_).filter(function (x) { return x; }); }
+// Solo viaja lo que el cliente necesita ver: sin teléfono, dirección, inventario ni datos internos.
+function verOrden_(folio, tok) {
+  var o = buscar_(String(folio || ''));
+  if (!valida_(o, tok)) return { success: false, message: 'Enlace inválido o vencido' };
+  var fotos = {};
+  Object.keys(o.fotos || {}).forEach(function (k) { var u = o.fotos[k] && url_(o.fotos[k].u); if (u) fotos[k] = { u: u }; });
+  var aut = o.firmas && o.firmas.aut && url_(o.firmas.aut.u);
+  return { success: true, orden: {
+    folio: o.folio, tipo: o.tipo, suc: o.suc, etapa: o.etapa, cliente: o.cliente, modelo: o.modelo, anio: o.anio, vin: o.vin, km: o.km,
+    mec: o.mec, fing: o.fing, marca: o.marca, placas: o.placas, asesor: o.asesor, motivo: o.motivo, cond: o.cond, diag: o.diag, fotos: fotos,
+    danos: (o.danos || []).map(function (d) { return { x: d.x, y: d.y, t: d.t, n: d.n, f: url_(d.f), fx: urls_(d.fx) }; }),
+    chk: (o.chk || []).map(function (c) { return { e: c.e, n: c.n, op: c.op || '', f: url_(c.f), fx: urls_(c.fx) }; }),
+    llantas: (o.llantas || []).map(function (l) { return { p: l.p, med: l.med, des: l.des, psi: l.psi, e: l.e, n: l.n, op: l.op || '', f: url_(l.f), fx: urls_(l.fx) }; }),
+    lineas: (o.lineas || []).map(function (l) { return { t: l.t, sku: l.sku, desc: l.desc, cant: l.cant, precio: l.precio, min: l.min, st: l.st, mot: l.mot || '', f: url_(l.f) }; }),
+    auth: o.auth ? { t: o.auth.t, n: o.auth.n } : null, firma: aut || null
+  } };
+}
+// Foto del enlace: solo si el archivo pertenece a esa orden.
+function fotoCliente_(folio, tok, id) {
+  var o = buscar_(String(folio || ''));
+  if (!valida_(o, tok)) return { success: false, message: 'Enlace inválido o vencido' };
+  if (JSON.stringify(o).indexOf(String(id)) < 0) return { success: false, message: 'Foto no encontrada' };
+  return foto_(id);
+}
+function autorizarCliente_(b) {
+  var o = buscar_(String(b.folio || ''));
+  if (!valida_(o, b.tok)) return { success: false, message: 'Enlace inválido o vencido' };
+  if (o.etapa === 'entregado') return { success: false, message: 'Esta orden ya fue entregada' };
+  var nombre = String(b.nombre || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  if (nombre.length < 3) return { success: false, message: 'Escribe tu nombre completo' };
+  var m = /^data:image\/png;base64,(.+)$/.exec(String(b.firma || ''));
+  if (!m || m[1].length > 900000) return { success: false, message: 'Falta la firma' };
+  var D = b.decisiones || [], L = o.lineas || [], hecho = [];
+  var seg = Utilities.formatDate(new Date(Date.now() + 30 * 864e5), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  for (var k = 0; k < D.length; k++) {
+    var d = D[k], l = L[d.i];
+    if (!l || l.desc !== d.desc) return { success: false, message: 'La cotización cambió. Recarga la página para ver la versión actualizada.' };
+    if (l.st !== 'pend' || (d.st !== 'aut' && d.st !== 'rech')) continue;   // solo se decide lo pendiente
+    l.st = d.st;
+    if (d.st === 'rech') { l.mot = String(d.mot || 'Otro').slice(0, 40); if (!l.seg) l.seg = seg; }
+    hecho.push({ i: d.i, desc: l.desc, st: l.st, mot: l.mot || '', seg: l.seg || '' });
+  }
+  if (!hecho.length) return { success: false, message: 'No hay conceptos pendientes de autorizar' };
+  o.firmas = o.firmas || {};
+  o.firmas.aut = { n: nombre, u: subir_(o.folio, 'firma-autoriza', 'data:image/png;base64,' + m[1]) };
+  o.auth = { t: Date.now(), n: nombre, d: hecho };
+  o.upd = Date.now();
+  var r = guardarOrden_(o);
+  return { success: true, total: r.total };
+}
+// Aplica a la orden que llega del taller la autorización que ya está guardada en el servidor.
+function mezclaAuth_(o, prev) {
+  o.auth = prev.auth;
+  o.firmas = o.firmas || {};
+  if (prev.firmas && prev.firmas.aut && !(o.firmas.aut && o.firmas.aut.d)) o.firmas.aut = prev.firmas.aut;
+  (prev.auth.d || []).forEach(function (d) {
+    var l = (o.lineas || [])[d.i];
+    if (l && l.desc === d.desc && l.st === 'pend') { l.st = d.st; if (d.mot) l.mot = d.mot; if (d.st === 'rech' && !l.seg) l.seg = d.seg || ''; }
+  });
 }

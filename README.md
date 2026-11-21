@@ -60,3 +60,7 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 ## Puesta en marcha
 1. Pega `gas/taller_api.gs` en tu proyecto de Apps Script, ejecuta `setup()` y publica como Web App (acceso: Cualquier persona).
 2. Pon la URL de la Web App en `js/api.js` (`TALLER_API`) y sube el cambio. Ya no se captura dentro de la app.
+
+## Visto bueno para el cliente (enlace con firma)
+"Enviar visto bueno por WhatsApp" sube la orden y manda un enlace personal (`cliente.html?o=FOLIO&k=TOKEN`). El cliente ve fotos de ingreso, carrocería, inspección y cotización, acepta o rechaza cada concepto y firma. El logo sale de la agencia de la orden. La autorización vuelve al taller con la sincronización y aparece en la tarjeta de la orden.
+Acciones públicas del Apps Script (protegidas con el token de la orden): `verOrden`, `autorizarCliente`, `fotoCliente` (gas v6).
