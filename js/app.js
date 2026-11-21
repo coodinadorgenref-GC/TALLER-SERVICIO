@@ -23,7 +23,9 @@ function cerrarAsk(v){const d=$('#dlg');if(d)d.innerHTML='';const r=askRes;askRe
 document.addEventListener('keydown',e=>{if(!$('#dlg .dlg'))return;if(e.key==='Escape')cerrarAsk(null);else if(e.key==='Enter'&&e.target.id==='dlgi'){e.preventDefault();cerrarAsk(e.target.value.trim())}});
 const iso=(d=new Date())=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const addD=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
-const src=x=>typeof x==='string'?x:(x&&(x.d||x.u))||'';
+// Las fotos subidas a Drive se guardan como drive.google.com/uc?id=…; el navegador ya no las muestra en <img>, así que se piden como miniatura grande.
+const src=x=>{const u=typeof x==='string'?x:(x&&(x.d||x.u))||'',m=/drive\.google\.com\/(?:uc\?(?:export=\w+&)?id=|file\/d\/)([\w-]+)/.exec(u);return m?'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1600':u};
+document.addEventListener('error',e=>{const t=e.target;if(!t||t.tagName!=='IMG'||t.dataset.alt)return;const m=/drive\.google\.com\/thumbnail\?id=([\w-]+)/.exec(t.src);if(m){t.dataset.alt='1';t.src='https://lh3.googleusercontent.com/d/'+m[1]+'=w1600'}},true);
 const idx=e=>ETAPAS.findIndex(x=>x[0]===e),O=f=>S.orders.find(o=>o.folio===f),mine=()=>S.orders.filter(o=>o.suc===S.suc);
 const adminReal=()=>!!(sesion&&sesion.esAdmin&&!sesion.esVendedor&&!sesion.esGerente);
 const imp=l=>(Number(l.cant)||0)*(Number(l.precio)||0);
