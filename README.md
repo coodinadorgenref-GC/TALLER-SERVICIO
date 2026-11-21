@@ -17,4 +17,4 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 
 ## Puesta en marcha
 1. Pega `gas/taller_api.gs` en tu proyecto de Apps Script, ejecuta `setup()` y publica como Web App (acceso: Cualquier persona).
-2. En la app: Configuración → Conexión (avanzado) → URL de la Web App (ya viene precargada).
+2. Pon la URL de la Web App en `js/api.js` (`TALLER_API`) y sube el cambio. Ya no se captura dentro de la app.

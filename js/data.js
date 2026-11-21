@@ -1,7 +1,7 @@
 const ETAPAS=[['recepcion','Recepción','#475569','Motos de nuevo ingreso'],['taller','Taller','#B45309','Técnico asignado'],['cotizacion','Cotización','#1E40AF','Presupuesto y adicionales'],['autorizado','Autorizado','#0F766E','Cliente autoriza o rechaza'],['entregado','Entregado','#15803D','Lavada y entregada']];
 const ETMIG={diagnostico:'taller',reparacion:'autorizado'};   // nombres de etapa anteriores
 // Fotos generales de la moto al recibirla: [clave, nombre, obligatoria]
-const FOTOS_GRAL=[['g_frente','Frente',1],['g_trasera','Trasera',1],['g_izq','Lado izquierdo',1],['g_der','Lado derecho',1],['g_tablero','Tablero / km',0]];
+const FOTOS_GRAL=[['g_tablero','Tablero / km',0],['g_izq','Lado izquierdo',1],['g_trasera','Trasera',1],['g_der','Lado derecho',1],['g_frente','Frente',1]];
 // Agencias (cuenta → columna AGENCIA de Usuarios_Autorizados) y su logo
 const AGENCIAS_TALLER=['BAJAJ CANCUN','BAJAJ TIZIMIN','BAJAJ VALLADOLID','CARABELA V1','CAUCEL VENTO','PISTE VENTO','SUZUKI TIZIMIN','SUZUKI VALLADOLID','TICUL VENTO','TIZIMIN VENTO','UMAN VENTO','PISTE MUEBLES'];
 const ZONA_AG={'UMAN VENTO':'MERIDA','CAUCEL VENTO':'MERIDA','TICUL VENTO':'MERIDA'};   // las demás son de VALLADOLID

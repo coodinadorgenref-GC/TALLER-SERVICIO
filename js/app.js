@@ -43,7 +43,7 @@ async function crear(t,x={}){
 function puede(o,dest){const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
   if(i===0){const f=FOTOS_GRAL.filter(x=>x[2]&&!(o.fotos[x[0]]&&src(o.fotos[x[0]])));if(f.length)return'Faltan fotos generales de la moto: '+f.map(x=>x[1]).join(', ');
     if(!o.cliente||!o.modelo)return'Captura cliente y modelo (unidad)'}
-  if(j>=1&&!o.mec)return'Asigna el técnico (mecánico) en Unidad';
+  if(j>=1&&!o.mec)return'Asigna el técnico (mecánico) en Inspección';
   if(j>=2&&(!o.fotos.bayoneta||!o.fotos.tanque))return'Faltan las 2 fotos de inspección (bayoneta y tanque)';
   const L=o.lineas;
   if(j>=3){if(!L.length)return'Agrega la cotización';if(L.some(l=>l.st==='pend'))return'Hay conceptos pendientes de autorización'}
@@ -74,7 +74,7 @@ function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==
   gf=FOTOS_GRAL.filter(x=>x[2]).every(x=>o.fotos[x[0]]&&src(o.fotos[x[0]]));
   return`<article class="card k" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
   <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span></div>
-  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos generales completas':'Faltan fotos generales')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}<span class="kt${o.t.ini?' on':''}">${IC.clock} ${hms(ms(o))}${est(o)?' / '+est(o)+' min':''}</span></div>
+  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos generales completas':'Faltan fotos generales')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}</div>
   <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc(o.modelo||'Sin modelo')}${o.vin?' · '+esc(o.vin):''}</div><div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
   <div class="pg5" aria-hidden="true">${ETAPAS.map((e,i)=>`<i class="${i<=idx(o.etapa)?'d':''}"></i>`).join('')}</div>
@@ -90,32 +90,30 @@ function drawer(o){const bad=o.chk.filter(c=>c.e==='px'||c.e==='ur').length,pend
   <div class="dstep" aria-label="Proceso">${ETAPAS.map((x,i)=>`<span class="${i<idx(o.etapa)?'d':i===idx(o.etapa)?'c':''}" ${i===idx(o.etapa)?`style="--c:${x[2]}" aria-current="step"`:''}>${x[1]}</span>`).join('')}</div>
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
   <div class="dbody">${dt==='u'?'':heroH(o)}${{u:tU,i:tI,c:tC,z:tZ}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
-function foot(o){const n=sig(o),b=n?puede(o,n):'',m=est(o);
+function foot(o){const n=sig(o),b=n?puede(o,n):'';
   return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}
-  <div class="row">${o.etapa!=='entregado'?`<span class="big" id="crono">${hms(ms(o))}</span>${m?`<span class="mut">est. ${m} min</span>`:''}<span style="flex:1"></span><button class="btn sm ${o.t.ini?'amb':'pri'}" data-a="cr">${o.t.ini?'Pausar':'Iniciar'}</button><button class="btn sm" data-a="fin">Terminar</button>`:`<span class="mut">Tiempo real: ${hms(o.t.acum)}${m?' · estándar '+m+' min':''}</span>`}</div>
   <div class="row">${n?`<button class="btn pri" data-a="sig" data-f="${o.folio}" ${b?'disabled':''}>Siguiente etapa: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div>`}
 
 const gfotos=o=>{const n=FOTOS_GRAL.filter(x=>x[2]&&o.fotos[x[0]]&&src(o.fotos[x[0]])).length,r=FOTOS_GRAL.filter(x=>x[2]).length;
   return`<div class="card"><div class="row sp"><div class="h">Fotos generales de la moto</div><span class="chip ${n===r?'g':'w'}">${n}/${r} lados</span></div><div class="mut">Toma las fotos al recibir la unidad: sirven de evidencia de cómo llegó.</div>
   <div class="gfo">${FOTOS_GRAL.map(([k,t,rq])=>{const u=o.fotos[k]&&src(o.fotos[k]);return`<label class="gf ${u?'on':''}">${u?`<img alt="${t}" src="${u}">`:IC.cam}<span class="gt">${t}${rq?'':' (opcional)'}</span><input type="file" accept="image/*" capture="environment" data-foto="${k}" aria-label="Foto ${t}"></label>`}).join('')}</div></div>`};
-function tU(o){return gfotos(o)+`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
-  <div class="card"><div class="h">Unidad</div><div class="g2">${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin)}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}${inp('Fecha de compra','fcompra',o.fcompra,'type="date"')}</div>
-  <div class="g2"><label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label>${inp('Mecánico asignado','mec',o.mec,'list="mecs"')}<label class="f">Bahía<select data-p="bahia"><option value="">—</option>${BAHIAS.map(b=>`<option ${String(o.bahia)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div>
-  <datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>
-  <div class="card"><div class="h">Trabajo solicitado</div><div class="row wrap">${Object.entries(TIPOS).map(([k,v])=>`<span class="chip ${k===o.tipo?'':'n'}" ${k===o.tipo?'aria-current="true"':''}>${k===o.tipo?IC.ok:''} ${k} · ${v}</span>`).join('')}</div>
+function tU(o){return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
+  <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin)}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}${inp('Fecha de compra','fcompra',o.fcompra,'type="date"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
   <label class="f">Motivo de ingreso<textarea data-p="motivo">${esc(o.motivo)}</textarea></label><label class="f">Condiciones en las que se recibe la unidad<textarea data-p="cond">${esc(o.cond)}</textarea></label>
-  <div class="mut">Ingreso: ${new Date(o.fing).toLocaleString('es-MX')}${o.ref?' · Orden original: '+esc(o.ref):''}</div></div>`}
+  <div class="mut">Ingreso: ${new Date(o.fing).toLocaleString('es-MX')}${o.ref?' · Orden original: '+esc(o.ref):''}</div></div>
+  ${gfotos(o)}`}
 
 function firmaCard(o,k,t){const f=o.firmas[k],s=f&&src(f);
   return`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>${k!=='entrega'?`<label class="f">Nombre<input data-p="firmas.${k}.n" value="${esc(f?.n||'')}"></label>`:''}${s?`<img class="pic" alt="Firma ${t}" src="${s}">`:''}<button class="btn" data-a="firma" data-k="${k}">${s?'Firmar de nuevo':'Capturar firma'}</button></div>`}
+const asigH=o=>`<div class="card"><div class="h">Asignación en taller</div><div class="g2">${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<label class="f">Bahía<select data-p="bahia"><option value="">—</option>${BAHIAS.map(b=>`<option ${String(o.bahia)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div><datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${o.fotos[k]?'g':'w'}">${o.fotos[k]?IC.ok+' Cargada':'Obligatoria'}</span></div>${o.fotos[k]?`<img class="pic" alt="${t}" src="${src(o.fotos[k])}">`:''}<label class="btn file">${IC.cam} ${o.fotos[k]?'Reemplazar foto':'Tomar foto'}<input type="file" accept="image/*" capture="environment" data-foto="${k}"></label></div>`;
-  return`<details class="card" ${np<32?'open':''}><summary class="row sp" style="cursor:pointer;min-height:44px"><span class="h">A. Inventario de recepción</span><span class="chip ${np===32?'g':'n'}">${np}/32</span></summary>
+  return asigH(o)+`<details class="card" ${np<32?'open':''}><summary class="row sp" style="cursor:pointer;min-height:44px"><span class="h">A. Inventario de recepción</span><span class="chip ${np===32?'g':'n'}">${np}/32</span></summary>
   <button class="btn" data-a="invall">${IC.ok} Todo completo (marcar los 32)</button><div class="g2">${INV32.map((n,i)=>{const x=o.inv[i];return`<div class="ir"><button class="tg ${x.p?'on':''}" data-a="inv" data-n="${i}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${i+1}. ${n}</span></button><input aria-label="Cantidad de ${n}" inputmode="numeric" data-n data-p="inv.${i}.c" value="${x.c}"></div>`}).join('')}</div></details>
   <div class="h">B. Condición técnica</div><div class="lgd">${[['ur','Urgente'],['px','Próximo'],['ok','OK'],['nr','No revisado']].map(([e,t])=>`<span class="lgi lg-${e}"><i>${e==='nr'?'':CI[e]}</i>${t}</span>`).join('')}</div>
   ${CATS.map((c,i)=>{const k=o.chk[i];return`<div class="card"><div class="h">${i+1}. ${c[0]}</div><div class="mut">${c[1]}</div><div class="seg">${COND.map(([e,t,l])=>`<button class="${k.e===e?'s-'+e:''}" data-a="cond" data-i="${i}" data-e="${e}" aria-pressed="${k.e===e}" aria-label="${l}">${CI[e]} ${t}</button>`).join('')}</div>
    ${k.e==='px'||k.e==='ur'?`<label class="f">Nota técnica<textarea data-c="${i}">${esc(k.n)}</textarea></label>${k.f?`<img class="pic" alt="Evidencia ${c[0]}" src="${src(k.f)}">`:''}<div class="row wrap"><label class="btn file">${IC.cam} Foto<input type="file" accept="image/*" capture="environment" data-ffoto="${i}"></label><button class="btn" data-a="pc" data-i="${i}">Pasar a cotización</button></div>`:''}</div>`}).join('')}
-  ${fo('bayoneta','Foto bayoneta / nivel de aceite')}${fo('tanque','Foto tanque / estado exterior')}${firmaCard(o,'entrega','Firma del cliente (entrega la unidad)')}`}
+  ${fo('bayoneta','Foto bayoneta / nivel de aceite')}${fo('tanque','Foto tanque / estado exterior')}`}
 
 function lineaH(l,i){const mo=l.t==='mo',ic={pend:IC.at,aut:IC.ok,gar:IC.ok,rech:IC.fa}[l.st];
   return`<div class="qr st-${l.st}"><span class="qi" aria-hidden="true">${ic}</span>
@@ -131,7 +129,8 @@ function tC(o){return`${o.lineas.length?`<div class="qt"><div class="qh"><span><
   <div class="card"><div class="h">Agregar</div><label class="f">Buscar SKU o refacción (catálogo)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" style="display:flex;flex-direction:column;gap:6px"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div>
   <div class="card"><div class="h">Hallazgo adicional con foto</div><label class="f">Descripción<input id="hl"></label><div class="row"><label class="btn file">${IC.cam} Foto<input type="file" accept="image/*" capture="environment" id="hf"></label><button class="btn" data-a="hall">Agregar a cotización</button></div></div>
   <div class="card" id="tot">${totH(o)}</div>
-  <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>`}
+  <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>
+  <div class="cfg-g">Autorización del cliente</div>${firmaCard(o,'entrega','Firma del cliente (entrega la unidad)')}`}
 function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><button class="btn ${o.lav?'':'pri'}" data-a="lav" aria-pressed="${!!o.lav}">${o.lav?IC.ok+' Moto lavada (tocar para revertir)':'Marcar moto lavada'}</button><div class="mut">Requisito para pasar a Entregado.</div></div>
   <div class="card"><div class="h">Diagnóstico del técnico</div><label class="f"><span class="sr">Diagnóstico</span><textarea data-p="diag" style="min-height:110px">${esc(o.diag)}</textarea></label></div>
   <div class="card"><div class="h">Aviso legal</div><p style="margin:0;font-size:14px">${LEYENDA}</p><button class="btn ${o.leg?'':'pri'}" data-a="leg" aria-pressed="${!!o.leg}">${o.leg?IC.ok+' Cliente informado (tocar para revertir)':'El cliente fue informado'}</button></div>
@@ -205,9 +204,7 @@ const acts={
 <div class="mut">Identificador de versión</div><div class="ver">${esc(APP_BUILD)}</div>
 <button class="btn" data-a="catup">Actualizar catálogo</button>
 <button class="btn" data-a="recarga">Forzar recarga (limpiar caché de esta pestaña)</button>
-<details class="cfg-d"><summary>Conexión (avanzado)</summary><label class="f">URL de la API del taller (Apps Script)<input id="c-u" value="${esc(tallerUrl())}"></label><label class="f">Clave compartida (opcional)<input id="c-k" value="${esc(localStorage.getItem('taller_clave')||'')}"></label><button class="btn pri" data-a="cfgok">Guardar y sincronizar</button></details>
 <button class="btn red" data-a="salir">Cerrar sesión</button>`)},
- cfgok:()=>{localStorage.setItem('taller_api',$('#c-u').value.trim());localStorage.setItem('taller_clave',$('#c-k').value.trim());$('#modal').innerHTML='';sync();toast('Sincronizando…')},
  tema:d=>{try{localStorage.setItem('taller_tema',d.tm)}catch{}aplicarTema()},
  catup:()=>cargaCat(false),recarga:()=>recarga(),
  ojo:()=>{const i=$('#lg-p');i.type=i.type==='password'?'text':'password'},
@@ -246,11 +243,10 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine)retur
    for(const f of [...S.dirty]){const o=O(f);if(!o)continue;const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success)break;aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==f)}
    const r=await api.taller({action:'listarOrdenes'});if(r.success){let ch=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio||(S.del||[]).includes(ro.folio))return;migEt(ro);const l=O(ro.folio);if(!l){S.orders.push(ro);ch=true}else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}});if(ch)renderMain()}
    save()}catch{}syncing=false}
-setInterval(()=>{const c=$('#crono'),o=D&&O(D);if(c&&o)c.textContent=hms(ms(o))},1000);
 setInterval(sync,30000);addEventListener('online',sync);
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v7 · 20-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v8 · 20-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
