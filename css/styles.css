@@ -224,12 +224,8 @@ html.dark .k>.row:first-child{background:#162032}
 /* Hoja multipuntos: azul = sin revisar, verde = OK, amarillo = próximo, rojo = urgente */
 .seg .s-nr{background:#1E5FD1;color:#fff;border-color:#1E5FD1}.seg .s-px{background:#FACC15;color:#000;border-color:#FACC15}
 .lg-nr i{background:#1E5FD1;border:0;width:20px;height:20px}.lg-px i{background:#FACC15;color:#000}.lg-ur i{background:#DC2626;color:#fff}.lg-ok i{background:#15803D;color:#fff}
-.moto{display:block;width:100%;max-width:460px;margin:6px auto;color:var(--tx)}.hz{cursor:pointer}.hz text{pointer-events:none}
 .pts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;margin:8px 0}
-.zl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-top:8px}.zl button{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 8px;border-radius:8px;border:1px solid #94A3B8;background:#fff;color:var(--tx);font:500 13px "Fira Sans",sans-serif;text-align:left;cursor:pointer}
 .zl button.sel{outline:3px solid var(--p);outline-offset:1px}.zl i{flex:none;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font:700 12px "Fira Sans",sans-serif}
-.zl .z-nr{background:#1E5FD1}.zl .z-ok{background:#15803D}.zl .z-px{background:#FACC15;color:#000}.zl .z-ur{background:#DC2626}
-html.dark .zl button{background:#0f172a;border-color:#334155}html.dark .seg .s-nr{background:#1E5FD1;border-color:#1E5FD1}
 
 /* Lista de verificación (estilo Superservice): cuadros siempre de color, el elegido lleva palomita y borde */
 .sbar{background:#4B5563;color:#fff;font:600 14px "Fira Sans",sans-serif;padding:9px 12px;border-radius:3px;margin-top:10px}
@@ -241,5 +237,13 @@ html.dark .ckr{background:#162032}html.dark .cq.on{border-color:#fff;box-shadow:
 /* Diagrama de daños en Recepción */
 .mw{position:relative;max-width:520px;margin:8px auto;border:1px solid var(--bd2);border-radius:8px;background:#fff;cursor:crosshair;touch-action:manipulation;overflow:hidden}.mw img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
 .mk{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#DC2626;color:#fff;border:2px solid #fff;font:700 14px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.mk::after{content:"";position:absolute;inset:-7px}.mk.sel{outline:3px solid #0F172A}
-.dr{display:flex;gap:6px;align-items:center;margin-top:6px}.dn{flex:none;width:28px;height:28px;border-radius:50%;background:#DC2626;color:#fff;font:700 13px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center}
-.dr select,.dr input{min-height:44px;border:1px solid #94A3B8;border-radius:8px;padding:0 8px;font:500 14px "Fira Sans",sans-serif;background:#fff;color:var(--tx)}.dr input{flex:1;min-width:0}html.dark .dr select,html.dark .dr input{background:#0f172a;border-color:#334155}
+
+/* Filas de daños (clases propias: .dr es el panel de la orden) */
+.dmr{display:grid;grid-template-columns:28px minmax(110px,150px) 1fr 44px;gap:8px;align-items:center;margin-top:8px}
+.dmn{width:28px;height:28px;border-radius:50%;background:#DC2626;color:#fff;font:700 13px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center}
+.dmr select,.dmr input{min-height:44px;width:100%;min-width:0;border:1px solid #94A3B8;border-radius:8px;padding:0 10px;font:500 15px "Fira Sans",sans-serif;background:#fff;color:var(--tx)}
+.dmr .btn{min-height:44px;padding:0;flex:none}html.dark .dmr select,html.dark .dmr input{background:#0f172a;border-color:#334155}
+@media(max-width:520px){.dmr{grid-template-columns:28px 1fr 44px}.dmr .btn{grid-column:3;grid-row:1}.dmr input{grid-column:2/4;grid-row:2}}
+/* Ergonomía: separación táctil de 8px, barras más bajas, Imprimir solo con ícono en pantallas chicas */
+.cqs{gap:8px}.dstep{padding:6px 12px}.dft{padding:8px 12px calc(8px + env(safe-area-inset-bottom));gap:6px}.dbody{gap:10px}
+@media(max-width:600px){.drh .bt{display:none}.drh .btn.sm{min-width:44px;padding:0 10px}}

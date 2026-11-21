@@ -6,7 +6,7 @@ function imprimir(o){
   const rows=o.lineas.map((l,i)=>`<tr><td>${i+1}</td><td>${esc(l.sku)}</td><td>${esc(l.desc)} <i>(${AUT.find(a=>a[0]===l.st)[1]})</i></td><td>${l.t==='mo'?(l.min||'')+' min':l.cant}</td><td>${money(l.precio)}</td><td>${l.st==='gar'?'GARANTÍA':money(imp(l))}</td></tr>`);
   while(rows.length<7)rows.push(`<tr><td>${rows.length+1}</td><td></td><td></td><td></td><td></td><td></td></tr>`);
   $('#print').innerHTML=`<h1>LA BARATA DEL HOGAR · AGENCIA: ${esc(s.n)}</h1><div style="text-align:center">${esc(s.d)} ${esc(s.t)}</div><h1 style="margin-top:6px">ORDEN DE SERVICIO ${esc(o.folio)}</h1>
-  <table><tr><td colspan="2"><b>CLIENTE:</b> ${esc(o.cliente)}</td><td><b>FECHA COMPRA:</b> ${esc(o.fcompra)}</td></tr><tr><td colspan="2"><b>DIRECCIÓN:</b> ${esc(o.dir)}</td><td><b>TELÉFONO:</b> ${esc(o.tel)}</td></tr>
+  <table><tr><td colspan="3"><b>CLIENTE:</b> ${esc(o.cliente)}</td></tr><tr><td colspan="2"><b>DIRECCIÓN:</b> ${esc(o.dir)}</td><td><b>TELÉFONO:</b> ${esc(o.tel)}</td></tr>
   <tr><td><b>MODELO:</b> ${esc(o.modelo)} ${esc(o.anio)}</td><td><b>SERIE:</b> ${esc(o.vin)}</td><td><b>MOTOR:</b> ${esc(o.motor)}</td></tr><tr><td><b>KM:</b> ${esc(o.km)}</td><td><b>FECHA INGRESO:</b> ${new Date(o.fing).toLocaleDateString('es-MX')}</td><td><b>¿ES GARANTÍA?</b> SÍ [${o.gar?'X':' '}] NO [${o.gar?' ':'X'}]</td></tr></table>
   <div class="pg">${col(0,16)}${col(16,32)}</div>
   <table><tr><td><b>CONDICIONES EN LAS QUE SE RECIBE LA UNIDAD:</b> ${esc(o.cond)}<br>${danoP(o)}</td></tr><tr><td><b>TRABAJO SOLICITADO:</b> ${Object.entries(TIPOS).map(([k,v])=>`${k} ${v} [${k===o.tipo?'X':' '}]`).join(' &nbsp; ')}<br>${esc(o.motivo)}</td></tr>
