@@ -331,3 +331,6 @@ html.dark .qt .qadd{background:#1b283c;border-color:#475569}html.dark .qt .qe{bo
 /* v21: opción Recepción dentro de Daños y detalles */
 .dm-op.on{background:var(--nv)!important;color:#fff!important;border-color:var(--nv)!important}
 .seg+.mut{margin-top:8px}
+
+/* v22: puntos de Recepción en azul */
+.mk.rc{background:#1E5FD1}

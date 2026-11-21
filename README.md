@@ -15,6 +15,12 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v22
+- Daños y detalles: *Recepción* es un tipo más en la lista de cada punto de la moto; al elegirlo el detalle dice "Fotos de ingreso" y se toman o eligen varias fotos. Para salir de Recepción se pide al menos una foto de ingreso.
+- No se avanza de Recepción sin los datos del vehículo (modelo, año, serie/VIN, motor, kilometraje y combustible; las placas son opcionales).
+- *Pasar a cotización* no duplica un hallazgo ya enviado.
+- Cierre: se quitó *Quien recibe la unidad*.
+
 ## Novedades v21
 - Unidad: *Datos del asesor de servicio* (el asesor de servicio es quien crea la orden; también se captura el asesor de refacciones) y *Asignación en taller* (solo técnico, sin bahía).
 - Las fotos generales de la moto ahora se toman en Carrocería › Daños y detalles › **Recepción**.
