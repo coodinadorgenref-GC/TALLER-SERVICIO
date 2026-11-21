@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v2.
+ * API del taller (Google Apps Script) — v3 (fotos múltiples por zona/llanta, eliminar orden).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -18,7 +18,7 @@ function sheet_(n) {
   return s;
 }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function doGet() { return out_({ success: true, servicio: 'taller', version: 2 }); }
+function doGet() { return out_({ success: true, servicio: 'taller', version: 3 }); }
 function doPost(e) {
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
