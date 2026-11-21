@@ -1,15 +1,16 @@
 /**
- * API del taller (Google Apps Script) — v4 (foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v5 (tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
- * Hojas: ORDENES_TALLER, COTIZACIONES_TALLER, AGENDA_TALLER. Fotos y firmas: Drive/TALLER_FOTOS/<folio>.
+ * Hojas: ORDENES_TALLER, COTIZACIONES_TALLER, AGENDA_TALLER, CONFIG_TALLER. Fotos y firmas: Drive/TALLER_FOTOS/<folio>.
  */
 const TALLER_CLAVE = ''; // opcional: si la llenas, escribe la misma en Configuración de la app
 const H = {
   ORDENES_TALLER: ['folio','sucursal','tipo','etapa','cliente','tel','modelo','vin','km','garantia','mecanico','bahia','tiempo_real_ms','inventario_presentes','total_cotizado','total_autorizado','ref','proximo_servicio','actualizado','json'],
   COTIZACIONES_TALLER: ['folio','tipo','sku','descripcion','cantidad','precio','importe','minutos','estado','motivo_rechazo','seguimiento'],
-  AGENDA_TALLER: ['folio','fecha','hora','bahia','mecanico']
+  AGENDA_TALLER: ['folio','fecha','hora','bahia','mecanico'],
+  CONFIG_TALLER: ['clave','valor','actualizado']
 };
 function setup() { Object.keys(H).forEach(function (n) { sheet_(n); }); }
 function sheet_(n) {
@@ -18,7 +19,7 @@ function sheet_(n) {
   return s;
 }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function doGet() { return out_({ success: true, servicio: 'taller', version: 4 }); }
+function doGet() { return out_({ success: true, servicio: 'taller', version: 5 }); }
 function doPost(e) {
   var b;
   try { b = JSON.parse(e.postData.contents); } catch (err) { return out_({ success: false, message: String(err) }); }
@@ -31,6 +32,8 @@ function doPost(e) {
     if (b.action === 'guardarOrden') return out_(guardarOrden_(b.orden));
     if (b.action === 'listarOrdenes') return out_({ success: true, ordenes: listar_() });
     if (b.action === 'eliminarOrden') return out_(eliminarOrden_(b.folio));
+    if (b.action === 'leerConfig') return out_({ success: true, config: leerConfig_() });
+    if (b.action === 'guardarConfig') return out_(guardarConfig_(b.cfgK, b.cfgV));
     return out_({ success: false, message: 'Acción desconocida' });
   } catch (err) { return out_({ success: false, message: String(err) }); }
   finally { lock.releaseLock(); }
@@ -125,5 +128,18 @@ function eliminarOrden_(folio) {
     var s = sheet_(n), v = s.getDataRange().getValues();
     for (var r = v.length; r > 1; r--) if (v[r - 1][0] === folio) s.deleteRow(r);
   });
+  return { success: true };
+}
+
+// Configuración compartida (por ahora: tarifa de mano de obra por hora de cada agencia, clave 'tarifa_mo|AGENCIA').
+function leerConfig_() {
+  var o = {};
+  sheet_('CONFIG_TALLER').getDataRange().getValues().slice(1).forEach(function (r) { if (r[0]) o[r[0]] = r[1]; });
+  return o;
+}
+function guardarConfig_(k, v) {
+  if (!/^tarifa_mo\|.{1,60}$/.test(String(k || ''))) return { success: false, message: 'Clave de configuración inválida' };
+  v = Number(v); if (!(v >= 0)) return { success: false, message: 'Valor inválido' };
+  upsert_(sheet_('CONFIG_TALLER'), String(k), [String(k), v, new Date()]);
   return { success: true };
 }
