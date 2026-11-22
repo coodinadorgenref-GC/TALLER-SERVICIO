@@ -244,7 +244,7 @@ html.dark .ckr{background:#162032}html.dark .cq.on{border-color:#fff;box-shadow:
 .dmr select,.dmr input{min-height:44px;width:100%;min-width:0;border:1px solid #94A3B8;border-radius:8px;padding:0 10px;font:500 15px "Fira Sans",sans-serif;background:#fff;color:var(--tx)}
 .dmr .btn{min-height:44px;padding:0;flex:none}html.dark .dmr select,html.dark .dmr input{background:#0f172a;border-color:#334155}
 @media(max-width:520px){.dmr{grid-template-columns:28px 1fr 44px 44px}.dmr .cq{grid-column:3;grid-row:1}.dmr .btn{grid-column:4;grid-row:1}.dmr input{grid-column:2/5;grid-row:2}}
-.sh{font-weight:700;font-size:14px;margin-top:10px}.dmw .fgal{margin:8px 0 0 36px}
+.sbh{font-weight:700;font-size:14px;margin-top:10px}.dmw .fgal{margin:8px 0 0 36px}
 /* Ergonomía: separación táctil de 8px, barras más bajas, Imprimir solo con ícono en pantallas chicas */
 .cqs{gap:8px}.dstep{padding:6px 12px}.dft{padding:8px 12px calc(8px + env(safe-area-inset-bottom));gap:6px}.dbody{gap:10px}
 @media(max-width:600px){.drh .bt{display:none}.drh .btn.sm{min-width:44px;padding:0 10px}}

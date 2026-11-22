@@ -15,8 +15,18 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
-## Novedades v27
-- Al completar el VIN, la marca se corrige sola aunque ya hubiera otra capturada (el VIN manda); el aviso queda en una línea con botones pequeños.
+## Novedades v28
+- **Base de motos** (hoja `MOTOS_TALLER` en la API del taller, `gas/taller_api.gs` v7): una fila por VIN con cliente, teléfono, dirección, marca, modelo con cilindraje, año, placas, fecha de venta, factura, sucursal y origen (VENTA / TALLER / VENTA+TALLER). Kilometraje y combustible no se guardan: se capturan en cada visita.
+- Al completar el **VIN** se llenan solos los datos vacíos de la orden; al escribir el **teléfono** (10 dígitos) se ofrecen las motos de ese cliente. Lo ya capturado nunca se pisa.
+- Cada orden guardada registra su moto en la base: así entra un cliente al que el grupo no le vendió.
+- Importador en Configuración (solo administrador): acepta el reporte de ventas GCVEN02 en CSV o `base_motos.csv`; se queda con la venta vigente más reciente por VIN y no pisa lo capturado en visitas.
+- La marca de la base manda sobre la de la tabla del VIN; si el VIN completo da una marca inequívoca, corrige la marca capturada. Aviso del VIN en una línea con botones pequeños.
+
+### Puesta en marcha de la base de motos
+1. En Apps Script pega `gas/taller_api.gs` (v7), escribe una clave secreta en `TALLER_CLAVE` (la base se niega sin clave porque trae datos personales), ejecuta `setup()` y publica una nueva versión de la implementación.
+2. En la app: Configuración → escribe la misma clave.
+3. Configuración → Importar base de motos (CSV): sube `base_motos.csv` (historial) y después cada mes el GCVEN02 en CSV.
+4. No subas `base_motos.csv` ni el reporte a este repositorio: contienen datos personales de clientes.
 
 ## Novedades v26
 - Tabla de marcas del Serie / VIN rehecha con el reporte de ventas 2023-2026 (~10,300 motos): **98 % se llena sola y correcta**, 2 % pide elegir y 0.06 % se equivoca.
@@ -63,3 +73,7 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 ## Puesta en marcha
 1. Pega `gas/taller_api.gs` en tu proyecto de Apps Script, ejecuta `setup()` y publica como Web App (acceso: Cualquier persona).
 2. Pon la URL de la Web App en `js/api.js` (`TALLER_API`) y sube el cambio. Ya no se captura dentro de la app.
+
+## Visto bueno para el cliente (enlace con firma)
+"Enviar visto bueno por WhatsApp" sube la orden y manda un enlace personal (`cliente.html?o=FOLIO&k=TOKEN`). El cliente ve fotos de ingreso, carrocería, inspección y cotización, acepta o rechaza cada concepto y firma. El logo sale de la agencia de la orden. La autorización vuelve al taller con la sincronización y aparece en la tarjeta de la orden.
+Acciones públicas del Apps Script (protegidas con el token de la orden): `verOrden`, `autorizarCliente`, `fotoCliente` (gas v6).

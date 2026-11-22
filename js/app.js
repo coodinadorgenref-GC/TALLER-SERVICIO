@@ -101,7 +101,7 @@ function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==
   gf=nRecep(o)>0;
   return`<article class="card k" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
   <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span></div>
-  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}</div>
+  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}${o.auth?bd('ok',IC.ok,'El cliente autorizó desde el enlace'):''}</div>
   <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc(o.modelo||'Sin modelo')}${o.vin?' · '+esc(o.vin):''}</div><div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
   <div class="pg5" aria-hidden="true">${ETAPAS.map((e,i)=>`<i class="${i<=idx(o.etapa)?'d':''}"></i>`).join('')}</div>
@@ -261,7 +261,7 @@ async function importaMotos(file){if(!file)return;const st=$('#impst'),msg=t=>{i
 // ---- fin base de motos ----
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico se asigna al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div>${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor)}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
-  <div class="sh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
+  <div class="sbh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
 const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro','Recepción'],REC='Recepción',FI='Fotos de ingreso',pfo=new Set();let ds=-1;
 // Fotos de ingreso: puntos de tipo Recepción (varias fotos cada uno) + las fotos generales de órdenes anteriores
 const nRecep=o=>(o.danos||[]).filter(m=>m.t===REC).reduce((a,m)=>a+fotosK(m).filter(u=>src(u)).length,0)+FOTOS_GRAL.filter(x=>o.fotos[x[0]]&&src(o.fotos[x[0]])).length;
@@ -279,10 +279,10 @@ function ckRow(o,i){const c=CATS[i],k=o.chk[i],bad=k.e==='px'||k.e==='ur';
   return`<div class="ckr"><div class="ckt"><b>${i+1}. ${c[0]}</b><span class="mut">${c[1]}</span></div>${sqH(k,'cond',i,c[0])}${galH(k,'c',i)}
   ${bad?`<div class="ckx"><label class="f">Operación recomendada<input data-p="chk.${i}.op" list="op${i}" value="${esc(k.op||'')}" placeholder="Elige o escribe la operación"></label><datalist id="op${i}">${OPS[i].map(x=>`<option value="${x}">`).join('')}</datalist><label class="f">Nota técnica<textarea data-c="${i}">${esc(k.n)}</textarea></label>${enCot(o,i)?`<button class="btn" disabled>${IC.ok} Ya está en la cotización</button>`:`<button class="btn" data-a="pc" data-i="${i}">Pasar a cotización</button>`}</div>`:''}</div>`}
 function danosH(o){const d=o.danos||[],leg=FOTOS_GRAL.filter(x=>o.fotos[x[0]]&&src(o.fotos[x[0]]));
-  return`<div class="sh" style="margin-top:14px">Daños y detalles</div><div class="mut">Toca la moto donde haya un daño o detalle (lateral, frente o arriba): se numera y eliges el tipo en la lista. Para las fotos de ingreso elige <b>Recepción</b>: el detalle se llena solo y puedes tomar o elegir varias fotos.</div>
+  return`<div class="sbh" style="margin-top:14px">Daños y detalles</div><div class="mut">Toca la moto donde haya un daño o detalle (lateral, frente o arriba): se numera y eliges el tipo en la lista. Para las fotos de ingreso elige <b>Recepción</b>: el detalle se llena solo y puedes tomar o elegir varias fotos.</div>
   <div class="mw" data-a="dmark"><img src="img/moto.png" alt="Moto: vistas lateral, frontal y superior" draggable="false">${d.map((m,i)=>`<button class="mk${m.t===REC?' rc':''}${i===ds?' sel':''}" style="left:${m.x}%;top:${m.y}%" data-a="dsel" data-i="${i}" aria-label="Punto ${i+1}: ${esc(m.t)}">${i+1}</button>`).join('')}</div>
   ${d.length?d.map((m,i)=>`<div class="dmw"><div class="dmr"><span class="dmn">${i+1}</span><select data-p="danos.${i}.t" aria-label="Tipo del punto ${i+1}">${DANOS.map(x=>`<option ${m.t===x?'selected':''}>${x}</option>`).join('')}</select><input data-p="danos.${i}.n" placeholder="Detalle (opcional)" value="${esc(m.n)}" aria-label="Detalle del punto ${i+1}">${camB(m,'data-fdano',i)}<button class="btn" data-a="ddel" data-i="${i}" aria-label="Quitar punto ${i+1}">✕</button></div>${galH(m,'d',i)}</div>`).join(''):'<p class="mut" style="margin:6px 0 0">Sin puntos marcados.</p>'}
-  ${leg.length?`<div class="sh" style="margin-top:14px">Fotos de ingreso anteriores</div><div class="gfo">${leg.map(([k,t])=>`<button type="button" class="gf on" data-a="fver" data-foto="${k}" aria-label="Ver foto: ${t}"><img alt="${t}" src="${src(o.fotos[k])}"><span class="gt">${t}</span></button>`).join('')}</div>`:''}`}
+  ${leg.length?`<div class="sbh" style="margin-top:14px">Fotos de ingreso anteriores</div><div class="gfo">${leg.map(([k,t])=>`<button type="button" class="gf on" data-a="fver" data-foto="${k}" aria-label="Ver foto: ${t}"><img alt="${t}" src="${src(o.fotos[k])}"><span class="gt">${t}</span></button>`).join('')}</div>`:''}`}
 
 function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${o.fotos[k]?'g':'w'}">${o.fotos[k]?IC.ok+' Cargada':'Obligatoria'}</span></div>${o.fotos[k]?`<img class="pic" data-a="zoom" alt="${t}" src="${src(o.fotos[k])}">`:''}<button type="button" class="btn" data-a="fpick" data-foto="${k}">${IC.cam} ${o.fotos[k]?'Reemplazar foto':'Tomar o elegir foto'}</button></div>`;
   normChk(o);const cnt=x=>o.chk.filter(c=>c.e===x).length,rev=o.chk.length-cnt('nr');
@@ -303,11 +303,15 @@ function lineaH(l,i){const mo=l.t==='mo',ic={pend:IC.at,aut:IC.ok,gar:IC.ok,rech
   <div class="qa"><button class="qb ok ${l.st==='aut'?'on':''}" data-a="aut" data-i="${i}" data-k="aut" aria-pressed="${l.st==='aut'}">${IC.ok} Aceptar</button><button class="qb no ${l.st==='rech'?'on':''}" data-a="aut" data-i="${i}" data-k="rech" aria-pressed="${l.st==='rech'}">${IC.fa} Rechazar</button><button class="qb gr ${l.st==='gar'?'on':''}" data-a="aut" data-i="${i}" data-k="gar" aria-pressed="${l.st==='gar'}">Garantía</button><button class="qb del" data-a="dl" data-i="${i}" aria-label="Quitar ${esc(l.desc)}">${IC.fa}</button></div>
   ${l.st==='rech'?(l.rg?`<div class="qx rgs"><span class="chip g">${IC.ok} Rechazo guardado</span><span>Motivo: <b>${esc(l.mot)}</b> · Seguimiento: <b>${esc(fechaMx(l.seg))}</b></span><button class="btn sm" data-a="redit" data-i="${i}">Editar</button></div>`:`<div class="qx g2"><label class="f">Motivo del rechazo<select data-p="lineas.${i}.mot"><option value="">Selecciona…</option>${MOTIVOS.map(m=>`<option ${l.mot===m?'selected':''}>${m}</option>`).join('')}</select></label><label class="f">Dar seguimiento el<input type="date" data-p="lineas.${i}.seg" value="${esc(l.seg||'')}"></label><div class="row" style="grid-column:1/-1"><button class="btn pri" data-a="rguardar" data-i="${i}">Guardar rechazo</button></div></div>`):''}</div>`}
 const totH=o=>{const t=tot(o);return`<div class="row sp"><span>Cotizado</span><span class="fol">${money(t.cot)}</span></div><div class="row sp h"><span>Autorizado (a cobrar)</span><span class="fol">${money(t.aut)}</span></div><div class="row sp"><span>Garantía (sin cargo)</span><span class="fol">${money(t.gar)}</span></div><div class="row sp"><span>Pendiente de autorizar</span><span class="fol">${money(t.pend)}</span></div><div class="row sp"><span>Rechazado / diferido</span><span class="fol">${money(t.rech)}</span></div>`};
+const autCard=o=>{const a=o.auth,f=o.firmas.aut,s=f&&src(f);
+  return`<div class="cfg-g">Autorización del cliente</div><div class="card"><div class="row sp"><div class="h">Firma de autorización</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>
+  ${s?`<img class="pic" alt="Firma de autorización" src="${s}"><div class="mut">${esc((a&&a.n)||f.n||'Cliente')}${a?' · '+new Date(a.t).toLocaleString('es-MX')+' · desde el enlace':''}</div>`:`<p class="mut" style="margin:0">El cliente firma desde el enlace que se manda con “Enviar visto bueno por WhatsApp”.${o.vb?' Enlace enviado el '+new Date(o.vb).toLocaleString('es-MX')+'.':''}</p>`}
+  <div class="row wrap"><button class="btn sm" data-a="vblink">Copiar enlace</button><button class="btn sm" data-a="firma" data-k="aut">${s?'Firmar de nuevo en el taller':'Firmar en el taller'}</button></div></div>`};
 function tC(o){return`<div class="qt"><div class="qh"><span></span><span>Operación</span><span>Descripción</span><span>Precio</span><span>Autorización</span></div>${o.lineas.map(lineaH).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
   <div class="qadd"><label class="f">Agregar a la cotización: busca SKU o refacción (catálogo)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" style="display:flex;flex-direction:column;gap:6px"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div></div>
   <div class="card" id="tot">${totH(o)}</div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>
-  <div class="cfg-g">Autorización del cliente</div>${firmaCard(o,'entrega','Firma del cliente (entrega la unidad)')}`}
+  ${autCard(o)}`}
 function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><button class="btn ${o.lav?'':'pri'}" data-a="lav" aria-pressed="${!!o.lav}">${o.lav?IC.ok+' Moto lavada (tocar para revertir)':'Marcar moto lavada'}</button><div class="mut">Requisito para pasar a Entregado.</div></div>
   <div class="card"><div class="h">Diagnóstico del técnico</div><label class="f"><span class="sr">Diagnóstico</span><textarea data-p="diag" style="min-height:110px">${esc(o.diag)}</textarea></label></div>
   <div class="card"><div class="h">Aviso legal</div><p style="margin:0;font-size:14px">${LEYENDA}</p><button class="btn ${o.leg?'':'pri'}" data-a="leg" aria-pressed="${!!o.leg}">${o.leg?IC.ok+' Cliente informado (tocar para revertir)':'El cliente fue informado'}</button></div>
@@ -367,7 +371,7 @@ const acts={
  fdel:d=>{const o=O(D),k=d.k==='l'?o.llantas[+d.i]:d.k==='d'?o.danos[+d.i]:o.chk[+d.i],j=+d.j,u=j===0?k.f:(k.fx||[])[j-1];if(typeof u==='string'&&u&&!u.startsWith('data:'))(o.rmf=o.rmf||[]).push(u);if(j===0)k.f=(k.fx||[]).shift()||null;else k.fx.splice(j-1,1);touch(o);renderDrawer()},
  okall:()=>{const o=O(D);normChk(o);o.chk.forEach(x=>{if(x.e==='nr')x.e='ok'});o.inv.forEach(x=>{x.p=true;if(!(x.c>0))x.c=1});touch(o);renderDrawer()},
  cond:d=>{const o=O(D),i=+d.i;o.chk[i].e=d.e;if(d.e!=='nr')CATS[i][2].forEach(n=>{o.inv[n].p=true;if(!(o.inv[n].c>0))o.inv[n].c=1});touch(o);renderDrawer()},
- pc:d=>{const o=O(D),c=o.chk[+d.i];if(enCot(o,+d.i))return toast('Este hallazgo ya está en la cotización');o.lineas.push({t:'ref',sku:'HALLAZGO',ck:+d.i,desc:CATS[+d.i][0]+': '+(c.op?c.op+(c.n?' ('+c.n+')':''):(c.n||COND.find(x=>x[0]===c.e)[2])),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:c.f||null});touch(o);dt='c';keepSc=false;renderDrawer();toast('Agregado a la cotización: captura su precio')},
+ pc:d=>{const o=O(D),c=o.chk[+d.i];if(enCot(o,+d.i))return toast('Este hallazgo ya está en la cotización');o.lineas.push({t:'ref',sku:'HALLAZGO',ck:+d.i,desc:CATS[+d.i][0]+': '+(c.op?c.op+(c.n?' ('+c.n+')':''):(c.n||COND.find(x=>x[0]===c.e)[2])),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:c.f||null});touch(o);renderDrawer();toast('Agregado a la cotización (pon su precio en la pestaña Cotización)')},
  firma:d=>abrirFirma(u=>{const o=O(D),f=o.firmas[d.k]||{};delete f.u;f.d=u;o.firmas[d.k]=f;touch(o);renderDrawer()}),
  dl:d=>{const o=O(D);o.lineas.splice(+d.i,1);touch(o);renderDrawer()},
  aut:d=>{const o=O(D),l=o.lineas[+d.i],k=(l.st===d.k&&d.k!=='pend')?'pend':d.k;l.st=k;if(k==='rech'){if(!l.seg)l.seg=addD(30)}else{delete l.cerr;delete l.rg}touch(o);renderDrawer()},
@@ -380,7 +384,14 @@ const acts={
  leg:()=>{const o=O(D);o.leg=!o.leg;touch(o);renderDrawer()},
  wa:async()=>{const o=O(D),L=o.lineas.filter(l=>l.st!=='rech');if(!L.length)return toast('No hay conceptos que enviar');
   if(L.some(l=>!Number(l.precio)&&l.st!=='gar')&&!(await ask({t:'Conceptos sin precio',m:'Hay conceptos sin precio. ¿Enviar de todos modos?',ok:'Enviar',tipo:'err'})))return;
-  wa(o.tel,`Hola ${o.cliente}, cotización ${o.folio} (${o.modelo}):\n`+L.map(l=>`• ${l.desc}${l.t==='mo'?'':' x'+l.cant}: ${l.st==='gar'?'garantía':money(imp(l))}`).join('\n')+`\n*Total: ${money(L.filter(l=>l.st!=='gar').reduce((a,l)=>a+imp(l),0))}*\nResponde "SÍ" para autorizar todo o indícanos qué conceptos autorizas.`)},
+  const tel=String(o.tel||'').replace(/\D/g,'');if(!tel)return toast('Captura el WhatsApp del cliente');
+  const w=window.open('about:blank','_blank');   // se abre en el toque (gesto del usuario) y se llena cuando la orden ya está en el servidor
+  if(!o.tok)o.tok=nuevoTok();o.vb=Date.now();touch(o);toast('Preparando el enlace…','inf');
+  if(!(await subirOrden(o))){if(w)w.close();return toast('No se pudo subir la orden: revisa tu conexión y vuelve a intentar')}
+  const u='https://wa.me/'+(tel.length===10?'52'+tel:tel)+'?text='+encodeURIComponent(`Hola ${o.cliente}, te compartimos el visto bueno de tu ${o.modelo} (${o.folio}) de ${o.suc}. Revisa las fotos, la inspección y la cotización, y autoriza con tu firma aquí:\n${linkCliente(o)}`);
+  if(w)w.location.href=u;else location.href=u;renderDrawer()},
+ vblink:async()=>{const o=O(D);if(!o.tok)return toast('Primero envía el visto bueno para generar el enlace');if(!(await subirOrden(o)))return toast('No se pudo subir la orden: revisa tu conexión');
+  try{await navigator.clipboard.writeText(linkCliente(o));toast('Enlace copiado')}catch{toast('No se pudo copiar el enlace: '+linkCliente(o))}},
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
  fin:()=>{const o=O(D);o.t.acum=ms(o);o.t.ini=null;touch(o);renderDrawer();renderMain();toast('Tiempo real: '+hms(o.t.acum)+(est(o)?' · estándar '+est(o)+' min':''))},
@@ -499,12 +510,20 @@ function mergeFotos(l,r){let ch=false;const rm=new Set(l.rmf||[]),ok=u=>typeof u
     ra.forEach((rk,i)=>{const lk=la[i];if(!rk||!lk)return;const ll=[lk.f,...(lk.fx||[])].filter(Boolean);
       [rk.f,...(rk.fx||[])].filter(ok).forEach(u=>{if(ll.includes(u))return;if(!lk.f)lk.f=u;else(lk.fx=lk.fx||[]).push(u);ll.push(u);ch=true})})});
   return ch}
+const nuevoTok=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toString(16).padStart(2,'0')).join('');
+const linkCliente=o=>new URL('cliente.html',location.href).href+'?o='+encodeURIComponent(o.folio)+'&k='+o.tok;
+async function subirOrden(o){if(!tallerUrl()||!navigator.onLine)return false;for(let n=0;syncing&&n<50;n++)await new Promise(r=>setTimeout(r,300));
+  try{const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success)return false;aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==o.folio);save();return true}catch{return false}}
+// La autorización que el cliente hizo desde el enlace se aplica aunque la orden esté abierta o con cambios pendientes.
+function aplicaAuth(l,ro){const a=ro.auth;if(!a||(l.auth&&l.auth.t>=a.t))return false;l.auth=a;if(ro.firmas&&ro.firmas.aut)(l.firmas=l.firmas||{}).aut=ro.firmas.aut;
+  (a.d||[]).forEach(d=>{const x=l.lineas[d.i];if(x&&x.desc===d.desc){x.st=d.st;if(d.mot)x.mot=d.mot;if(d.st==='rech'&&!x.seg)x.seg=d.seg||addD(30)}});return true}
 async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(sesion&&!navigator.onLine){syncMsg='sin internet';pintaSyn()}return}syncing=true;let err='';
   try{for(const f of [...(S.del||[])]){const r=await api.taller({action:'eliminarOrden',folio:f});if(r.success)S.del=S.del.filter(x=>x!==f);else err=r.message||'error del servidor'}
    // 1) bajar lo que hay en la hoja (y juntar las fotos que subieron otros dispositivos)
    const r=await api.taller({action:'listarOrdenes'});
    if(r.success){let ch=false,chd=false;(r.ordenes||[]).forEach(ro=>{if(!ro||!ro.folio||(S.del||[]).includes(ro.folio))return;migEt(ro);const l=O(ro.folio);
       if(!l){S.orders.push(ro);ch=true}
+      else if(aplicaAuth(l,ro)){toast('El cliente autorizó '+l.folio+' desde el enlace','ok');if(D===l.folio)chd=true;else ch=true}
       else if((ro.upd||0)>(l.upd||0)&&!S.dirty.includes(l.folio)&&D!==l.folio){Object.assign(l,ro);ch=true}
       else if(mergeFotos(l,ro)){if(D===l.folio)chd=true;else ch=true}});
      if(ch)renderMain();if(chd){if(escribiendo())pendDr=true;else{renderDrawer();renderMain()}}}
