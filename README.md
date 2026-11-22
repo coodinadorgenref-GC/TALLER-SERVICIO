@@ -15,6 +15,9 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v27
+- Al completar el VIN, la marca se corrige sola aunque ya hubiera otra capturada (el VIN manda); el aviso queda en una línea con botones pequeños.
+
 ## Novedades v26
 - Tabla de marcas del Serie / VIN rehecha con el reporte de ventas 2023-2026 (~10,300 motos): **98 % se llena sola y correcta**, 2 % pide elegir y 0.06 % se equivoca.
 - Corrección: `3EF…` y varias series `LFF…` son **Carabela** (no Vento); Vento es `3MU…`. Nuevas marcas: Carabela, Veloci, Islo, Motomel, Kurazai, Atul, Benelli, Hercules.

@@ -173,9 +173,10 @@ function vinH(o){const r=vinInfo(o.vin);if(!r.n)return'';
   if(r.mal)return`${IC.at} La serie tiene caracteres no válidos (el VIN no usa I, O ni Q): revísala.`;
   if(!r.anio)return`${IC.at} No se pudo leer el año en la posición 10 de la serie: revísala o captura el año a mano.`;
   const dif=Number(o.anio)!==r.anio,mc=String(o.marca||'').trim();
-  const btn=m=>`<button type="button" class="btn sm" data-a="vinmarca" data-m="${m}">Usar ${m}</button>`;
-  const fb=r.fab?' · fabricante <b>'+esc(r.fab)+'</b>'+(mc&&mc!==r.fab?` · la marca capturada (${esc(mc)}) no coincide. ${btn(r.fab)}`:''):r.amb?(mc&&r.amb.includes(mc)?' · marca <b>'+esc(mc)+'</b>':' · esta fábrica arma motos de varias marcas ('+r.amb.join(', ')+'): elige la marca '+r.amb.map(btn).join(' ')):' · fabricante no reconocido (captura la marca a mano)';
-  return`Según la serie: año <b>${r.anio}</b>${fb}${dif?` ${o.anio?'· el año capturado ('+esc(o.anio)+') no coincide. ':''}<button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:' · coincide con el año capturado.'}`}
+  const btn=(m,t)=>`<button type="button" class="btn sm" data-a="vinmarca" data-m="${m}">${t||'Usar '+m}</button>`;
+  const pa=dif?`año <b>${r.anio}</b>${o.anio?` (capturaste ${esc(o.anio)})`:''} <button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:`año <b>${r.anio}</b> ✓`;
+  const pm=r.fab?(mc&&mc!==r.fab?`marca <b>${esc(r.fab)}</b> (capturaste ${esc(mc)}) ${btn(r.fab)}`:`marca <b>${esc(r.fab)}</b> ✓`):r.amb?(mc&&r.amb.includes(mc)?`marca <b>${esc(mc)}</b> ✓`:`marca: esta fábrica arma varias (${r.amb.join(', ')}), elige ${r.amb.map(m=>btn(m,m)).join(' ')}`):'marca no reconocida: captúrala a mano';
+  return`Según la serie: ${pa} · ${pm}`}
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico se asigna al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div>${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor)}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
   <div class="sh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
@@ -343,7 +344,7 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset.p==='vin'){const r=vinInfo(o.vin);
    if(r.ok&&r.anio&&(!o.anio||o.anioAuto)){o.anio=String(r.anio);o.anioAuto=true;const ai=document.querySelector('[data-p="anio"]');if(ai)ai.value=o.anio}
    else if(!(r.ok&&r.anio)&&o.anioAuto){o.anio='';delete o.anioAuto;const ai=document.querySelector('[data-p="anio"]');if(ai)ai.value=''}
-   if(r.fab&&(!o.marca||o.marcaAuto)){o.marca=r.fab;o.marcaAuto=true;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=o.marca}
+   if(r.fab){if(o.marca!==r.fab){o.marca=r.fab;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=o.marca}o.marcaAuto=true}
    else if(!r.fab&&o.marcaAuto){o.marca='';delete o.marcaAuto;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=''}
    touch(o);const vh=$('#vinh');if(vh)vh.innerHTML=vinH(o)}
   if(t.dataset.c){o.chk[+t.dataset.c].n=t.value;touch(o)}
@@ -430,7 +431,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v26 · 21-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v27 · 21-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};

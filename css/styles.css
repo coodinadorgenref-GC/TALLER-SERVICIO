@@ -334,3 +334,6 @@ html.dark .qt .qadd{background:#1b283c;border-color:#475569}html.dark .qt .qe{bo
 
 /* v22: puntos de Recepción en azul */
 .mk.rc{background:#1E5FD1}
+
+#vinh .btn{display:inline-flex;min-height:30px;height:30px;padding:0 10px;margin:2px 4px;font-size:13px;flex:none;vertical-align:middle}
+#vinh{line-height:2}
