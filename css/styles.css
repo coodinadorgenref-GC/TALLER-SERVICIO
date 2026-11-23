@@ -479,3 +479,25 @@ html.dark .dr .drh .split .btn[disabled]{background:rgba(255,255,255,.25);border
 .vl{display:inline-flex;align-items:center;gap:6px}
 .vok{display:none;width:16px;height:16px;border-radius:50%;background:#16A34A;color:#fff;align-items:center;justify-content:center;flex:none}
 .vok.on{display:inline-flex}.vok svg{width:10px;height:10px}
+
+/* v37: totales como pie de la tabla de cotización (mismas columnas que las filas: etiqueta a la derecha, importe bajo "Importe") */
+.q2f{border-top:2px solid #243447;background:#F8FAFC}
+.q2s{display:grid;grid-template-columns:34px 200px minmax(0,1fr) 250px 130px;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid var(--bd)}
+.q2s:first-child{border-top:0}
+.q2l{grid-column:1 / 5;text-align:right;font-size:13px;font-weight:600;color:var(--mut)}
+.q2l small{font-size:12px;font-weight:500;color:var(--mut)}
+.q2v{grid-column:5;text-align:right;font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.q2s.sub .q2v{color:var(--tx)}
+.q2s.tot{background:#DCFCE7;border-top:1px solid #86EFAC}
+.q2s.tot .q2l{color:#14532D;font-size:14px;font-weight:700}.q2s.tot .q2l small{color:#166534}
+.q2s.tot .q2v{font-size:20px;color:#14532D}
+.q2s.pen .q2v{color:#92400E}.q2s.rec .q2v{color:var(--mut);font-weight:600}
+.q2s.rec{border-top:1px dashed #94A3B8}
+html.dark .q2f{background:#162032;border-top-color:#475569}html.dark .q2s{border-color:#334155}
+html.dark .q2s.tot{background:#12361f;border-color:#1f6b3a}html.dark .q2s.tot .q2l,html.dark .q2s.tot .q2v,html.dark .q2s.tot .q2l small{color:#bbf7d0}
+html.dark .q2s.pen .q2v{color:#fbbf24}
+@media(max-width:900px){.q2s{grid-template-columns:minmax(0,1fr) auto}.q2l,.q2v{grid-column:auto}.q2l{text-align:left}}
+/* v37: campo que falta para avanzar de etapa */
+.f.miss{color:#B91C1C;font-weight:700}
+.f input.miss,.f select.miss,.f textarea.miss{border:2px solid #DC2626;background:#FEF2F2;box-shadow:0 0 0 3px rgba(220,38,38,.18)}
+html.dark .f.miss{color:#FCA5A5}html.dark .f input.miss,html.dark .f select.miss{border-color:#F87171;background:#2a1517;box-shadow:0 0 0 3px rgba(248,113,113,.25)}

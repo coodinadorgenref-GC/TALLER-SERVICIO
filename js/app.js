@@ -64,9 +64,15 @@ async function crear(t,x={}){
    t:{acum:0,ini:null},cita:null,ref:'',prox:{f:'',km:''},fing:Date.now(),cre:Date.now(),listo:false},x);
   logH(o,'Orden creada · '+TIPOS[t]);S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
 
+const vehFalta=o=>[['marca','Marca / fabricante'],['modelo','Modelo'],['anio','Año'],['vin','Serie / VIN'],['km','Kilometraje'],['comb','Combustible']].filter(([k])=>!String(o[k]||'').trim());
+// Con el aviso "Faltan datos del vehículo" a la vista, marca en rojo el borde de cada campo que falta; se quita en cuanto se captura. También mantiene al día el aviso de abajo y el botón Siguiente.
+function pintaFaltas(o){if(!o)return;const n=sig(o),b=n?puede(o,n):'',ks=o.etapa==='recepcion'&&/^Faltan datos del vehículo/.test(b)?vehFalta(o).map(x=>x[0]):[];
+  ['marca','modelo','anio','vin','km','comb'].forEach(k=>document.querySelectorAll('#drawer [data-p="'+k+'"]').forEach(e=>{const m=ks.includes(k);e.classList.toggle('miss',m);if(m)e.setAttribute('aria-invalid','true');else e.removeAttribute('aria-invalid');const l=e.closest('label');if(l)l.classList.toggle('miss',m)}));
+  const ft=document.querySelector('#drawer .dft');if(ft)ft.innerHTML=foot(o);
+  const nb=document.querySelector('#drawer .drh .nxt');if(nb){nb.disabled=!!b;nb.title=b||'Siguiente etapa: '+(ETAPAS[idx(n)]||[])[1]}}
 function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
   if(i===0){autoMarca(o);
-    const fv=[['marca','Marca / fabricante'],['modelo','Modelo'],['anio','Año'],['vin','Serie / VIN'],['km','Kilometraje'],['comb','Combustible']].filter(([k])=>!String(o[k]||'').trim()).map(x=>x[1]);
+    const fv=vehFalta(o).map(x=>x[1]);
     if(!String(o.cliente||'').trim())return'Captura el cliente (Unidad)';
     if(fv.length)return'Faltan datos del vehículo: '+fv.join(', ');
     if(!nRecep(o))return'Faltan las fotos de ingreso: en Daños y detalles marca un punto, elige Recepción y toma las fotos'}
@@ -93,6 +99,7 @@ function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.db
   el.innerHTML=o?drawer(o):'';document.body.classList.toggle('lock',!!o);
   if(o){const b=el.querySelector('.dbody');if(b&&keepSc)b.scrollTop=sc;if(lastD!==D)el.querySelector('.drh .ib')?.focus()}
   if(o)el.querySelector('.dtabs .tab.on')?.scrollIntoView({inline:'center',block:'nearest'});
+  if(o)pintaFaltas(o);
   lastD=D;keepSc=true}
 const match=o=>{if(ft&&o.tipo!==ft)return false;if(!q)return true;const s=[o.folio,o.cliente,o.modelo,o.vin,o.placas,o.tel,o.motor].join(' ').toLowerCase();return q.toLowerCase().split(/\s+/).every(w=>s.includes(w))};
 function board(){const L=mine().filter(match);
@@ -423,7 +430,9 @@ function lineaH(l,i,o){const mo=l.t==='mo',z=zonaDe(o,l),area=z>=0?CATS[z][0]:(m
    <span class="q2a"><i class="sem ${z>=0?SEMC[o.chk[z].e]||'n':''}"></i>${esc(area)}</span><span class="q2o">${op?esc(op):'<i class="mut">Escribe la descripción…</i>'}</span>
    <select class="q2e est-${l.st}" data-qest="${i}" aria-label="Estado de autorización: ${esc(l.desc)}">${EST.map(([k,n])=>`<option value="${k}" ${l.st===k?'selected':''}>${n}</option>`).join('')}</select>
    <b class="q2i fol" id="imp-${i}">${money(imp(l))}</b></div>${det}</div>`}
-const totH=o=>{const t=tot(o);return`<div class="tb"><div><span>Identificado</span><b>${money(t.cot)}</b></div><div class="g"><span>Autorizado (a cobrar)</span><b>${money(t.aut)}</b></div>${t.gar?`<div><span>Garantía (sin cargo)</span><b>${money(t.gar)}</b></div>`:''}<div class="a"><span>Pendiente</span><b>${money(t.pend)}</b></div><div class="m"><span>Rechazado / diferido</span><b>${money(t.rech)}</b></div></div>`};
+// Totales como pie de la propia tabla: Identificado es el subtotal, Autorizado (a cobrar) el total, y debajo lo que sigue abierto o quedó fuera.
+const totH=o=>{const t=tot(o),r=(c,l,v,x='')=>`<div class="q2s ${c}"><span class="q2l">${l}${x}</span><b class="q2v fol">${money(v)}</b></div>`;
+  return r('sub','Identificado <small>(subtotal)</small>',t.cot)+r('tot','Autorizado <small>(a cobrar)</small>',t.aut)+(t.gar?r('gar','Garantía <small>(sin cargo)</small>',t.gar):'')+r('pen','Pendiente <small>por autorizar</small>',t.pend)+r('rec','Rechazado / diferido',t.rech)};
 const autCard=o=>{const a=o.auth,f=o.firmas.aut,s=f&&src(f);
   return`<div class="cfg-g">Autorización del cliente</div><div class="card"><div class="row sp"><div class="h">Firma de autorización</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>
   ${s?`<img class="pic" alt="Firma de autorización" src="${s}"><div class="mut">${esc((a&&a.n)||f.n||'Cliente')}${a?' · '+new Date(a.t).toLocaleString('es-MX')+' · desde el enlace':''}</div>`:`<p class="mut" style="margin:0">El cliente firma desde el enlace que se manda con “Enviar visto bueno por WhatsApp”.${o.vb?' Enlace enviado el '+new Date(o.vb).toLocaleString('es-MX')+'.':''}</p>`}
@@ -431,8 +440,7 @@ const autCard=o=>{const a=o.auth,f=o.firmas.aut,s=f&&src(f);
 let qmode='';
 const qaddH=()=>`<div class="qadd"><button class="qplus" data-a="qmenu" aria-expanded="${!!qmode}" aria-label="Agregar concepto a la cotización"><span class="qpi" aria-hidden="true">+</span><span>Agregar concepto</span></button>${qmode==='menu'?`<div class="qmenu" role="group" aria-label="Tipo de concepto"><button class="btn qo2" data-a="qopt" data-k="ref"><b>Refacción</b><small>SKU o catálogo</small></button><button class="btn qo2" data-a="qopt" data-k="mo"><b>Mano de obra</b><small>Tiempo o monto</small></button><button class="btn qo2" data-a="qopt" data-k="manual"><b>Concepto manual</b><small>Texto libre</small></button></div>`:''}${qmode==='ref'?`<div class="qref"><label class="f">Busca SKU o refacción (catálogo, precio con IVA)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" class="sugl"></div></div>`:''}</div>`;
 function tC(o){return`<div class="q2t"><div class="q2h"><span></span><span>Área</span><span>Operación</span><span>Estado de autorización</span><span class="r">Importe (IVA incl.)</span></div>${o.lineas.map((l,i)=>lineaH(l,i,o)).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
-  ${qaddH()}</div>
-  <div class="tbw" id="tot">${totH(o)}</div>
+  ${qaddH()}<div class="q2f" id="tot" role="group" aria-label="Totales de la cotización">${totH(o)}</div></div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>
   ${autCard(o)}`}
 function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><button class="btn ${o.lav?'':'pri'}" data-a="lav" aria-pressed="${!!o.lav}">${o.lav?IC.ok+' Moto lavada (tocar para revertir)':'Marcar moto lavada'}</button><div class="mut">Requisito para pasar a Entregado.</div></div>
@@ -607,6 +615,7 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset.p){setPath(o,t.dataset.p,t.hasAttribute('data-n')?(parseFloat(String(t.value).replace(',','.'))||0):t.value);touch(o);
    if(t.dataset.p.startsWith('lineas.')){const i=t.dataset.p.split('.')[1],el=$('#imp-'+i);if(el&&o.lineas[i])el.textContent=money(imp(o.lineas[i]));const tt=$('#tot');if(tt)tt.innerHTML=totH(o)}}
   if(t.dataset.p==='vin')aplicaVin(o,true);
+  if(['marca','modelo','anio','vin','km','comb','cliente'].includes(t.dataset.p))pintaFaltas(o);
   if(t.dataset.p==='tel'&&!o.vin){clearTimeout(MOTOS.tt);const tl=nTel(o.tel);if(tl.length===10)MOTOS.tt=setTimeout(()=>buscaMotosTel(o,tl),350);else{MOTOS.sug=null;pintaSug()}}
   if(t.dataset.c){o.chk[+t.dataset.c].n=t.value;touch(o)}
   if(t.id==='q2'){const s=t.value.toLowerCase();sug=s.length<2?[]:S.inv.filter(i=>(i.sku+' '+i.nombre).toLowerCase().includes(s)).slice(0,6);
@@ -712,7 +721,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v36 · 23-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v37 · 23-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
