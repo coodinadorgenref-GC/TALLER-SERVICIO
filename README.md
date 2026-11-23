@@ -15,6 +15,12 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v35
+- **Botón Siguiente arriba a la izquierda** del encabezado de la orden (junto al folio y la etapa), con una flecha que abre *Mover a…* para elegir cualquier etapa. Si falta algo para avanzar el botón se ve deshabilitado y el aviso sigue en la parte inferior. En la última etapa se conserva *Clonar por garantía* abajo y *Mover a…* a la derecha.
+- **Fecha de compra** se llena sola con la fecha de venta de la base de motos al completar el Serie / VIN (o al elegir una moto del cliente); si la capturas a mano no se vuelve a pisar. También está en Datos del vehículo en celular.
+- **Dirección** se completa desde la base de motos junto con cliente y teléfono (solo si está vacía) y aparece en el aviso *se completó*.
+- **Motor** se quitó de la orden: ya no se pide para avanzar de etapa y en la orden impresa se reemplazó por la fecha de compra.
+
 ## Novedades v34
 - **Modelo por serie (VIN)**: además del año y la marca, al completar los 17 caracteres se sugiere el **modelo**. El VIN no trae el modelo escrito: se toma de la base de motos (`MOTOS_TALLER`), buscando las motos con el mismo prefijo de 8 caracteres (fábrica + descriptor). Si un modelo domina (85 % o más) se llena solo cuando el campo está vacío; si hay varios, el aviso del VIN muestra botones para elegir. Si la moto ya está en la base, manda su modelo. Lo capturado a mano nunca se pisa.
 - **Requiere actualizar `gas/taller_api.gs` a v9** (nueva acción `modeloVin`): pégalo en Apps Script y publica una nueva versión de la implementación. Sin eso la app sigue funcionando y avisa una vez que falta actualizar el script.
