@@ -64,7 +64,8 @@
   function datos(o) {
     const h = ingreso(o)[0], fila = ([k, v]) => v ? `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>` : '';
     const rows = [['Cliente', o.cliente], ['Unidad', [o.marca, o.modelo, o.anio].filter(Boolean).join(' ')], ['Placas', o.placas], ['Asesor', o.asesor], ['Técnico', o.mec || 'Por asignar']];
-    const mas = [['Serie / VIN', o.vin], ['Kilometraje', o.km ? o.km + ' km' : ''], ['Servicio', TIPOS[o.tipo]], ['Motivo de ingreso', o.motivo]];
+    const km = String(o.km || '').replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');   // 112569 → 112,569
+    const mas = [['Serie / VIN', o.vin], ['Kilometraje', km ? km + ' km' : ''], ['Servicio', TIPOS[o.tipo]], ['Motivo de ingreso', o.motivo]];
     return `<section class="dat ${h ? '' : 'nh'}" aria-label="Datos de la orden">${h ? foto(h, 'Foto de ingreso', '', 'hero') : ''}<dl class="kv">${rows.map(fila).join('')}</dl>
       <details class="mas"><summary>Más datos de la unidad</summary><dl class="kv">${mas.map(fila).join('')}</dl></details></section>`;
   }

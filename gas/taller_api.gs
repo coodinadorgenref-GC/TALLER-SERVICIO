@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v8 (colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v9 (modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -30,7 +30,7 @@ function sheet_(n) {
   return s;
 }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function doGet() { return out_({ success: true, servicio: 'taller', version: 8 }); }
+function doGet() { return out_({ success: true, servicio: 'taller', version: 9 }); }
 function doPost(e) {
   var b;
   try { b = JSON.parse(e.postData.contents); } catch (err) { return out_({ success: false, message: String(err) }); }
@@ -38,14 +38,15 @@ function doPost(e) {
   var pub = b.action === 'verOrden' || b.action === 'autorizarCliente' || b.action === 'fotoCliente';
   if (!pub && TALLER_CLAVE && b.clave !== TALLER_CLAVE) return out_({ success: false, message: 'Clave inválida' });
   // La base de motos tiene datos personales de clientes: sin TALLER_CLAVE no se atiende.
-  if ((b.action === 'buscarVin' || b.action === 'buscarMotos' || b.action === 'importarMotos') && !TALLER_CLAVE) return out_({ success: false, message: 'Define TALLER_CLAVE (clave) en el script y en Configuración de la app para usar la base de motos' });
+  if ((b.action === 'buscarVin' || b.action === 'buscarMotos' || b.action === 'modeloVin' || b.action === 'importarMotos') && !TALLER_CLAVE) return out_({ success: false, message: 'Define TALLER_CLAVE (clave) en el script y en Configuración de la app para usar la base de motos' });
   // Lecturas sin bloqueo para poder bajar varias fotos a la vez.
-  if (b.action === 'foto' || b.action === 'fotoCliente' || b.action === 'verOrden' || b.action === 'buscarVin' || b.action === 'buscarMotos') {
+  if (b.action === 'foto' || b.action === 'fotoCliente' || b.action === 'verOrden' || b.action === 'buscarVin' || b.action === 'buscarMotos' || b.action === 'modeloVin') {
     try {
       if (b.action === 'foto') return out_(foto_(b.id));
       if (b.action === 'fotoCliente') return out_(fotoCliente_(b.folio, b.tok, b.id));
       if (b.action === 'buscarVin') return out_(buscarVin_(b.vin));
       if (b.action === 'buscarMotos') return out_(buscarMotos_(b.campo, b.q));
+      if (b.action === 'modeloVin') return out_(modelosDeVin_(b.vin));
       return out_(verOrden_(b.folio, b.tok));
     } catch (err) { return out_({ success: false, message: String(err) }); }
   }
@@ -260,6 +261,23 @@ function buscarMotos_(campo, q) {
   var motos = hit.slice(0, 40).map(function (f) { return motoObj_(s.getRange(f, 1, 1, H.MOTOS_TALLER.length).getValues()[0]); });
   motos.sort(function (a, b) { return String(b.fecha_venta).localeCompare(String(a.fecha_venta)); });
   return { success: true, motos: motos.slice(0, 8) };
+}
+// Modelo probable a partir del VIN. El VIN no trae el modelo escrito, pero las motos de la base con el mismo prefijo (primeros 8 caracteres: fábrica + descriptor) casi siempre son el mismo modelo.
+// Devuelve hasta 5 modelos con cuántas motos de la base tiene cada uno, el más frecuente primero. La app decide si lo llena sola (un modelo domina) o pide elegir.
+function modelosDeVin_(vin) {
+  vin = nVin_(vin);
+  if (vin.length < 8) return { success: true, modelos: [], total: 0 };
+  var pre = vin.slice(0, 8), s = sheet_('MOTOS_TALLER'), n = s.getLastRow();
+  if (n < 2) return { success: true, modelos: [], total: 0 };
+  var cm = H.MOTOS_TALLER.indexOf('modelo') + 1;
+  var v = s.getRange(2, 1, n - 1, cm).getValues(), cuenta = {}, total = 0;
+  for (var i = 0; i < v.length; i++) {
+    if (nVin_(v[i][0]).indexOf(pre) !== 0) continue;
+    var m = txt_(v[i][cm - 1]).toUpperCase(); if (!m) continue;
+    cuenta[m] = (cuenta[m] || 0) + 1; total++;
+  }
+  var lista = Object.keys(cuenta).map(function (k) { return { m: k, n: cuenta[k] }; }).sort(function (a, b) { return b.n - a.n; });
+  return { success: true, modelos: lista.slice(0, 5), total: total };
 }
 // Importa/actualiza en bloque (desde el reporte de ventas). No pisa lo que el taller ya capturó en visitas.
 function importarMotos_(filas) {

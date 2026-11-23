@@ -15,6 +15,12 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v34
+- **Modelo por serie (VIN)**: además del año y la marca, al completar los 17 caracteres se sugiere el **modelo**. El VIN no trae el modelo escrito: se toma de la base de motos (`MOTOS_TALLER`), buscando las motos con el mismo prefijo de 8 caracteres (fábrica + descriptor). Si un modelo domina (85 % o más) se llena solo cuando el campo está vacío; si hay varios, el aviso del VIN muestra botones para elegir. Si la moto ya está en la base, manda su modelo. Lo capturado a mano nunca se pisa.
+- **Requiere actualizar `gas/taller_api.gs` a v9** (nueva acción `modeloVin`): pégalo en Apps Script y publica una nueva versión de la implementación. Sin eso la app sigue funcionando y avisa una vez que falta actualizar el script.
+- **Kilometraje con comas** cada 3 cifras mientras se escribe (1,500 · 112,569), también en *Próximo servicio*, en la orden impresa, en el enlace del cliente y en el WhatsApp de seguimiento.
+- **Técnico principal**: una vez asignado, el nombre se conserva al cambiar de etapa y también se muestra en Recepción (antes decía "Sin asignar" al regresar la orden a Recepción).
+
 ## Novedades v29
 - **Correo electrónico** del cliente en la orden; se guarda en la base de motos y se completa solo la próxima vez (el reporte de ventas no trae correo: se va juntando con las visitas).
 - **Quién trae la moto**: nombre opcional cuando no es el propietario. Es dato de cada visita (sale en la orden impresa), no se guarda en la base.
@@ -52,7 +58,7 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 
 ## Novedades v23
 - Unidad: *Accesorios y documentos* ahora viven dentro de *Datos del asesor de servicio* (recepción de la unidad).
-- Serie / VIN: con los 17 caracteres se detecta el año de la moto (posición 10 del VIN) y se llena solo; si el año capturado no coincide se avisa y se ofrece usar el de la serie. También se muestra el fabricante cuando se reconoce (Bajaj, Suzuki, Honda, Yamaha). El modelo no se puede obtener del VIN.
+- Serie / VIN: con los 17 caracteres se detecta el año de la moto (posición 10 del VIN) y se llena solo; si el año capturado no coincide se avisa y se ofrece usar el de la serie. También se muestra el fabricante cuando se reconoce (Bajaj, Suzuki, Honda, Yamaha). (El modelo se sugiere desde v34 con la base de motos; ver Novedades v34.)
 
 ## Novedades v22
 - Daños y detalles: *Recepción* es un tipo más en la lista de cada punto de la moto; al elegirlo el detalle dice "Fotos de ingreso" y se toman o eligen varias fotos. Para salir de Recepción se pide al menos una foto de ingreso.
