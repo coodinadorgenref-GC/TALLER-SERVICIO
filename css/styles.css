@@ -474,3 +474,8 @@ html.dark .qo2 small{color:#94a3b8}
 .dr .drh .split .btn[disabled]{background:rgba(255,255,255,.35);border-color:transparent;color:rgba(255,255,255,.85)}
 html.dark .dr .drh .split .btn{background:#fff;color:#0F2A55;border-color:#fff}
 html.dark .dr .drh .split .btn[disabled]{background:rgba(255,255,255,.25);border-color:transparent;color:rgba(255,255,255,.8)}
+
+/* v36: círculo verde con paloma junto a Serie / VIN cuando ya tiene los 17 caracteres */
+.vl{display:inline-flex;align-items:center;gap:6px}
+.vok{display:none;width:16px;height:16px;border-radius:50%;background:#16A34A;color:#fff;align-items:center;justify-content:center;flex:none}
+.vok.on{display:inline-flex}.vok svg{width:10px;height:10px}

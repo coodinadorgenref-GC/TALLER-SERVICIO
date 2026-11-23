@@ -15,6 +15,10 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v36
+- **Serie / VIN**: círculo verde con paloma junto al rótulo cuando ya se capturaron los 17 caracteres. Al dar clic o entrar al campo, o al presionar Enter, se vuelven a traer todos los datos de la serie (año, marca, modelo) y de la base de motos (cliente, teléfono, dirección, fecha de compra...).
+- Se quitó la tarjeta **Hoja multipuntos** de Inspección (contador de revisados, botón Todo OK y leyenda de colores); los puntos de revisión siguen igual.
+
 ## Novedades v35
 - **Botón Siguiente arriba a la izquierda** del encabezado de la orden (junto al folio y la etapa), con una flecha que abre *Mover a…* para elegir cualquier etapa. Si falta algo para avanzar el botón se ve deshabilitado y el aviso sigue en la parte inferior. En la última etapa se conserva *Clonar por garantía* abajo y *Mover a…* a la derecha.
 - **Fecha de compra** se llena sola con la fecha de venta de la base de motos al completar el Serie / VIN (o al elegir una moto del cliente); si la capturas a mano no se vuelve a pisar. También está en Datos del vehículo en celular.
