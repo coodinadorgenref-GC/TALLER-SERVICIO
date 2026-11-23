@@ -10,5 +10,7 @@ const api={
   taller:b=>{const u=tallerUrl();if(!u)throw new Error('Sin URL de API');return post(u,Object.assign({clave:claveT()},b))},
   // Catálogo existente (mismas acciones que CATALOGO-DE-INVENTARIO)
   login:(correo,pin,rec=true)=>post(CATALOGO_API,{action:'login',app:'catalogo',correo,codigoAcceso:pin,dispositivo:navigator.userAgent.slice(0,180),recordarme:rec}),
-  inventario:(correo,token)=>post(CATALOGO_API,{action:'obtenerInventario',correo,token})
+  inventario:(correo,token)=>post(CATALOGO_API,{action:'obtenerInventario',correo,token}),
+  // Lista de precios públicos del catálogo, ya con IVA
+  precios:(correo,token)=>post(CATALOGO_API,{action:'obtenerPreciosCatalogo',correo,token})
 };

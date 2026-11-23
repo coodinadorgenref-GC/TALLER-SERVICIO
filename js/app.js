@@ -60,7 +60,7 @@ async function crear(t,x={}){
    inv:INV32.map(()=>({p:false,c:1})),chk:CATS.map(()=>({e:'nr',n:'',f:null})),fotos:{},firmas:{},recibe:'',diag:'',leg:false,
    lineas:[],
    t:{acum:0,ini:null},cita:null,ref:'',prox:{f:'',km:''},fing:Date.now(),cre:Date.now(),listo:false},x);
-  S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
+  logH(o,'Orden creada · '+TIPOS[t]);S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
 
 function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
   if(i===0){autoMarca(o);
@@ -75,10 +75,11 @@ function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<=i)retur
   if(j>=3){if(!L.length)return'Agrega la cotización';if(L.some(l=>l.st==='pend'))return'Hay conceptos pendientes de autorización'}
   if(j===4){if(!o.lav)return'Marca que la moto fue lavada (Cierre)'}
   return''}
+const logH=(o,x)=>{(o.hist=o.hist||[]).push({t:Date.now(),u:(sesion&&(sesion.nombre||sesion.correo))||'',x})};
 function mover(o,dest){const e=puede(o,dest);if(e)return toast(e);
   if(idx(o.etapa)===0&&idx(dest)>0&&!o.firmas.entrega)return abrirFirma(u=>{o.firmas.entrega={d:u};touch(o);mover(o,dest)});
   if(dest==='entregado'&&o.t.ini){o.t.acum=ms(o);o.t.ini=null}
-  o.etapa=dest;touch(o);tab=dest;render();sync()}
+  logH(o,'Etapa: '+ETAPAS[idx(dest)][1]);o.etapa=dest;touch(o);tab=dest;render();sync()}
 
 /* ---------- render ---------- */
 function render(){
@@ -94,15 +95,15 @@ const match=o=>{if(ft&&o.tipo!==ft)return false;if(!q)return true;const s=[o.fol
 function board(){const L=mine().filter(match);
   return`<div class="tabs" role="tablist" aria-label="Etapas">${ETAPAS.map(([k,n])=>`<button class="tab ${k===tab?'on':''}" role="tab" aria-selected="${k===tab}" data-a="tab" data-k="${k}">${n} <span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button>`).join('')}</div>
   ${q?`<p class="mut">${L.length} resultado(s) para «${esc(q)}»</p>`:''}
-  <div class="kan">${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')||'<p class="mut">Sin órdenes en esta etapa.</p>'}</div></section>`}).join('')}</div>`}
+  <div class="kan">${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')}</div></section>`}).join('')}</div>`}
 const ICU='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',ICC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4h6v3H9zM6 6h12v15H6zM9 12h6M9 16h6"/></svg>';
 const bd=(c,i,t,n)=>`<span class="bd ${c}" title="${t}" role="img" aria-label="${t}">${i}${n?`<b>${n}</b>`:''}</span>`;
 function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length,
   gf=nRecep(o)>0;
   return`<article class="card k" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
   <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span></div>
-  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}${o.auth?bd('ok',IC.ok,'El cliente autorizó desde el enlace'):''}</div>
-  <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc(o.modelo||'Sin modelo')}${o.vin?' · '+esc(o.vin):''}</div><div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
+  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}${o.auth?bd('ok',IC.ok,'El cliente autorizó desde el enlace'):''}${o.espRef?bd('wa',IC.at,'Esperando refacciones'):''}${o.ret?bd('al',IC.fa,'Orden retrasada'):''}</div>
+  <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc([o.marca,o.modelo].filter(Boolean).join(' ')||'Sin modelo')}${o.anio?' '+esc(o.anio):''}</div>${o.placas?`<div class="kv pl">${esc(o.placas)}</div>`:''}<div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
   <div class="pg5" aria-hidden="true">${ETAPAS.map((e,i)=>`<i class="${i<=idx(o.etapa)?'d':''}"></i>`).join('')}</div>
   <div class="row"><button class="btn sm" style="flex:1" data-a="mv" data-f="${o.folio}">Mover a…</button>${n?`<button class="btn sm pri" style="flex:1" data-a="sig" data-f="${o.folio}">Siguiente: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn sm" style="flex:1" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div></article>`}
@@ -110,26 +111,53 @@ function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==
 const inp=(l,p,v,x='')=>`<label class="f">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
 const heroH=o=>{const f=heroSrc(o);
   return(f?`<div class="hero"><img alt="Foto de ingreso" src="${f}" data-a="zoom"></div>`:'')+`<div class="itbl"><div><span>Cliente</span><b>${esc(o.cliente||'—')}</b></div><div><span>Unidad</span><b>${esc(o.modelo||'—')}${o.vin?' · '+esc(o.vin):''}${o.placas?' · '+esc(o.placas):''}</b></div><div><span>Técnico</span><b>${esc(o.mec||'—')}${o.bahia?' · Bahía '+o.bahia:''}</b></div></div>`};
-function drawer(o){const bad=o.chk.filter(c=>c.e==='px'||c.e==='ur').length,pend=o.lineas.filter(l=>l.st==='pend').length,e=ETAPAS[idx(o.etapa)];
-  const T=[['u','Unidad',''],['i','Inspección',bad?`<span class="cnt">${bad}</span>`:''],['c','Cotización',pend?`<span class="cnt">${pend}</span>`:''],['z','Cierre','']];
+const sm=(c,n,t)=>n?`<span class="sm ${c}" title="${t}">${n}</span>`:'';
+function drawer(o){const e=ETAPAS[idx(o.etapa)],cn=x=>o.chk.filter(c=>c.e===x).length,ln=x=>(o.llantas||[]).filter(l=>l.e===x).length,
+  nd=(o.danos||[]).filter(d=>d.t!==REC).length,pa=o.lineas.filter(l=>l.st==='pend').length,au=o.lineas.filter(l=>l.st==='aut'||l.st==='gar').length;
+  const T=[['u','Cliente y unidad',''],['i','Inspección',sm('r',cn('ur'),'Urgentes')+sm('a',cn('px'),'Próximos')],['l','Llantas',sm('r',ln('ur'),'Urgentes')+sm('a',ln('px'),'Próximas')],['r','Carrocería',sm('n',nd,'Daños marcados')],['c','Cotización',sm('g',au,'Autorizados')+sm('a',pa,'Por autorizar')],['z','Cierre',''],['h','Historial','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
   <header class="drh"><button class="btn sm" data-a="cerrard" aria-label="Volver al panel general">${IC.back}<span> Panel</span></button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span><span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print" aria-label="Imprimir">${IC.pr}<span class="bt"> Imprimir</span></button><button class="btn sm" data-a="mv" data-f="${o.folio}">Mover a…</button></header>
+  ${dhead(o)}
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
-  <div class="dbody">${dt==='u'?'':heroH(o)}${{u:tU,i:tI,c:tC,z:tZ}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
+  <div class="dbody">${dt==='u'?'':heroH(o)}${{u:tU,i:tI,l:tL,r:tR,c:tC,z:tZ,h:tH}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
+// Encabezado compacto de la orden (solo computadora): cliente y unidad a la izquierda, datos de la orden al centro, equipo a la derecha.
+const fld=(n,l,p,v,x='')=>`<label class="f s${n}">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
+function dhead(o){autoMarca(o);const rec=o.etapa==='recepcion',ro=(n,l,v)=>`<div class="f s${n}"><span>${l}</span><div class="ro">${v}</div></div>`;
+  return`<section class="dhead" aria-label="Datos de la orden">
+  <div class="dz za">${fld(4,'Cliente','cliente',o.cliente)}${fld(2,'Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}
+   ${fld(2,'Marca','marca',o.marca,'list="marcas" autocomplete="off"')}${fld(2,'Modelo','modelo',o.modelo)}${fld(2,'Año','anio',o.anio,'inputmode="numeric"')}
+   ${fld(3,'Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${fld(2,'Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${fld(1,'Km','km',o.km,'inputmode="numeric"')}
+   <div class="mut s6 vinh">${vinH(o)}</div></div>
+  <div class="dz zb">${ro(2,'Tipo de servicio',esc(TIPOS[o.tipo]))}${ro(1,'Ingreso',esc(new Date(o.fing).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})))}
+   <label class="f s1">Promesa de entrega<input type="datetime-local" data-p="prom" value="${esc(o.prom||'')}"></label>
+   <label class="f s1">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label>
+   <div class="f s1"><span>¿Es garantía?</span><div class="seg"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div></div></div>
+  <div class="dz zc">${fld(1,'Asesor de servicio','asesor',o.asesor)}${rec?ro(1,'Técnico principal','<span class="sa">Sin asignar</span> <small>(lo asigna el jefe de taller)</small>'):fld(1,'Técnico principal','mec',o.mec,'list="mecs"')}
+   ${fld(1,'Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}${fld(1,'Recibe la unidad','recibe',o.recibe,'placeholder="Quién la recibe"')}
+   <div class="tgs s2"><button class="tgl ${o.espRef?'on':''}" role="switch" aria-checked="${!!o.espRef}" data-a="tgl" data-k="espRef"><i></i>Esperando refacciones</button><button class="tgl ${o.ret?'on':''}" role="switch" aria-checked="${!!o.ret}" data-a="tgl" data-k="ret"><i></i>Orden retrasada</button></div></div>
+  <datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist><datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></section>`}
 function foot(o){const n=sig(o),b=n?puede(o,n):'';
   return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}
   <div class="row">${n?`<button class="btn pri" data-a="sig" data-f="${o.folio}" ${b?'disabled':''}>Siguiente etapa: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div>`}
 
 const gfotos=o=>{const n=nRecep(o);return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n?'g':'w'}">${n?n+(n>1?' fotos':' foto')+' de ingreso':'Faltan fotos de ingreso'}</span></div>${danosH(o)}</div>`};
-function tU(o){autoMarca(o);return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
+function tU(o){autoMarca(o);return`<div class="u-dup"><div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
   <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Marca / fabricante','marca',o.marca,'list="marcas" autocomplete="off"')}<datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist>${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${inp('Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
   <div class="mut" id="vinh">${vinH(o)}</div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
   <label class="f">Motivo de ingreso<textarea data-p="motivo">${esc(o.motivo)}</textarea></label><label class="f">Condiciones en las que se recibe la unidad<textarea data-p="cond">${esc(o.cond)}</textarea></label>
   <div class="mut">Ingreso: ${new Date(o.fing).toLocaleString('es-MX')}${o.ref?' · Orden original: '+esc(o.ref):''}</div></div>
-  ${asesH(o)}${asigH(o)}
-  ${gfotos(o)}`}
-
+  ${asesH(o)}${asigH(o)}</div>
+  <div class="u-dk"><div class="card"><div class="h">Más datos de la orden</div><div class="dkg">${inp('Dirección','dir',o.dir)}${inp('Motor','motor',o.motor)}${inp('Fecha de compra','fcompra',o.fcompra,'type="date"')}</div><div class="dkg d2"><label class="f">Motivo de ingreso<textarea data-p="motivo">${esc(o.motivo)}</textarea></label><label class="f">Condiciones en las que se recibe la unidad<textarea data-p="cond">${esc(o.cond)}</textarea></label></div>${o.ref?`<div class="mut">Orden original: ${esc(o.ref)}</div>`:''}</div>${accH(o)}</div>`}
+const tL=o=>{normChk(o);return llH(o)};
+const tR=o=>gfotos(o);
+// Historial: lo que registra la app (creación y cambios de etapa) más el visto bueno y la autorización del cliente
+function tH(o){const ev=[...(o.hist||[]).map(h=>({t:h.t,u:h.u,x:h.x}))];
+  if(!ev.some(h=>/creada/i.test(h.x)))ev.push({t:o.fing,u:'',x:'Orden creada · '+TIPOS[o.tipo]});
+  if(o.vb)ev.push({t:o.vb,u:'',x:'Visto bueno enviado por WhatsApp'});
+  if(o.auth)ev.push({t:o.auth.t,u:o.auth.n,x:'El cliente autorizó desde el enlace ('+((o.auth.d||[]).filter(d=>d.st==='aut').length)+' autorizados, '+((o.auth.d||[]).filter(d=>d.st==='rech').length)+' para después)'});
+  ev.sort((a,b)=>b.t-a.t);
+  return`<div class="card"><div class="h">Historial de la orden</div><ol class="hist">${ev.map(h=>`<li><time>${esc(new Date(h.t).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'}))}</time><span>${esc(h.x)}</span>${h.u?`<small>${esc(h.u)}</small>`:''}</li>`).join('')}</ol></div>`}
 function firmaCard(o,k,t){const f=o.firmas[k],s=f&&src(f);
   return`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>${k!=='entrega'?`<label class="f">Nombre<input data-p="firmas.${k}.n" value="${esc(f?.n||'')}"></label>`:''}${s?`<img class="pic" data-a="zoom" alt="Firma ${t}" src="${s}">`:''}<button class="btn" data-a="firma" data-k="${k}">${s?'Firmar de nuevo':'Capturar firma'}</button></div>`}
 const fechaMx=f=>/^\d{4}-\d{2}-\d{2}$/.test(f||'')?f.split('-').reverse().join('/'):'—';
@@ -138,16 +166,54 @@ const bayK=o=>Object.keys(o.fotos||{}).filter(k=>(k==='bayoneta'||/^bayoneta_\d+
 const bayNext=o=>{let n=1;Object.keys(o.fotos||{}).forEach(k=>{const m=/^bayoneta(?:_(\d+))?$/.exec(k);if(m)n=Math.max(n,+(m[1]||1))});return n===1&&!(o.fotos&&o.fotos.bayoneta)?'bayoneta':'bayoneta_'+(n+1)};
 const bayH=o=>{const L=bayK(o);return`<div class="card"><div class="row sp"><div class="h">Foto bayoneta / drenado de aceite</div><span class="chip ${L.length?'g':'w'}">${L.length?IC.ok+' '+L.length+(L.length>1?' fotos':' foto'):'Obligatoria'}</span></div>${L.length?`<div class="ckx fgal">${L.map((k,j)=>`<span class="fgi"><img alt="Foto ${j+1} de la bayoneta" src="${src(o.fotos[k])}" data-a="zoom"><button class="fgx" data-a="bdel" data-foto="${k}" aria-label="Quitar foto ${j+1}">✕</button></span>`).join('')}</div>`:''}<button type="button" class="btn" data-a="fpick" data-bay="1">${IC.cam} ${L.length?'Agregar otra foto':'Tomar o elegir foto'}</button></div>`};
 // Reporte (admin y gerente): tarifa de mano de obra por hora, una por agencia
-function reporte(){const t=tarifa(),L=mine();let n=0,hc=0,mc=0,ha=0,ma=0;
+function repMo(){const t=tarifa(),L=mine();let n=0,hc=0,mc=0,ha=0,ma=0;
   L.forEach(o=>{const m=o.lineas.filter(l=>l.t==='mo'&&l.st!=='rech');if(m.length)n++;m.forEach(l=>{hc+=hrs(l);mc+=imp(l);if(l.st==='aut'){ha+=hrs(l);ma+=imp(l)}})});
   const f=h=>String(+h.toFixed(2));
-  return`<div class="ph"><h2>Reporte${S.suc?' · '+esc(S.suc):''}</h2></div>
-  ${S.suc?`<div class="card"><div class="h">Mano de obra</div><div class="mut">Captura cuánto se cobra por hora de trabajo (por ejemplo $780). En la cotización, la mano de obra solo lleva el tiempo (.5, 1, 1.25…) y el monto se calcula; también puedes poner el monto y el tiempo se calcula.</div>
+  return`${S.suc?`<div class="card"><div class="h">Mano de obra</div><div class="mut">Captura cuánto se cobra por hora de trabajo (por ejemplo $780). En la cotización, la mano de obra solo lleva el tiempo (.5, 1, 1.25…) y el monto se calcula; también puedes poner el monto y el tiempo se calcula.</div>
   <div class="g2"><label class="f">Tarifa por hora ($)<input id="tar" inputmode="decimal" value="${t||''}" placeholder="780"></label></div>
   ${t?`<div class="mut">Con ${money(t)} por hora: ½ h = ${money(t/2)} · 1 h = ${money(t)} · 1.25 h = ${money(t*1.25)}</div>`:'<div class="mut">Aún no hay tarifa en esta agencia.</div>'}
   <div class="row"><button class="btn pri" data-a="tarsave">Guardar tarifa</button></div></div>
   <div class="card"><div class="h">Mano de obra cotizada</div><div class="mut">${n} orden(es) con mano de obra en ${esc(S.suc)} (sin contar lo rechazado).</div>
   <div class="row sp"><span>Cotizada</span><span class="fol">${f(hc)} h · ${money(mc)}</span></div><div class="row sp h"><span>Autorizada (a cobrar)</span><span class="fol">${f(ha)} h · ${money(ma)}</span></div></div>`:'<p class="mut">Elige la agencia (botón junto al engranaje) para definir su tarifa de mano de obra.</p>'}`}
+/* ---------- Reporte (solo administrador y gerente): tablero estilo Triage ---------- */
+const rp={p:'mes',ag:'',sec:'res'},PER=[['hoy','Hoy'],['7','Últimos 7 días'],['30','Últimos 30 días'],['mes','Este mes'],['todo','Todo']],
+  RSEC=[['res','Resumen'],['tec','Técnicos'],['ase','Asesores de servicio'],['seg','Seguimientos'],['top','Top 10 operaciones'],['aut','Autorización del cliente'],['mo','Mano de obra y tarifa']],
+  RCOL=[['ur','Rojo','#DC2626'],['px','Ámbar','#EAB308'],['ok','Verde','#16A34A'],['nr','Azul','#2563EB']];
+function repOrdenes(){const A=sesion?permitidas(sesion.agencia):[],h=new Date();h.setHours(0,0,0,0);
+  const d0=rp.p==='hoy'?+h:rp.p==='7'?h-6*864e5:rp.p==='30'?h-29*864e5:rp.p==='mes'?+new Date(h.getFullYear(),h.getMonth(),1):0;
+  return S.orders.filter(o=>A.includes(o.suc)&&(!rp.ag||o.suc===rp.ag)&&(o.fing||o.cre||0)>=d0)}
+const pcn=(n,d)=>d?Math.round(n/d*100):0,zFoto=c=>!!(c.f||(c.fx&&c.fx.length));
+const repTbl=(tit,cols,rows)=>rows.length?`<div class="card"><div class="h">${tit}</div><div class="rtw"><table class="rt"><thead><tr>${cols.map((c,i)=>`<th scope="col" ${i?'class="num"':''}>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>i?`<td class="num">${c}</td>`:`<th scope="row">${esc(c)}</th>`).join('')}</tr>`).join('')}</tbody></table></div></div>`:'';
+const repKp=(t,v,n)=>`<div class="kp"><span>${t}</span><b>${v}</b>${n?`<small>${n}</small>`:''}</div>`;
+const repBars=(tit,vals,cap)=>`<div class="card bch"><div class="h">${tit}</div><div class="bars" role="img" aria-label="${esc(tit)}: ${vals.map(v=>v.l+' '+(v.v==null?'sin datos':v.v+'%')).join(', ')}"><div class="bax" aria-hidden="true"><i>100%</i><i>50%</i><i>0%</i></div>${vals.map(v=>`<div class="bc"><div class="bv" style="height:${v.v||0}%;background:${v.c}"></div><b>${v.v==null?'—':v.v+'%'}</b><span>${v.l}</span></div>`).join('')}</div><div class="mut">${cap}</div></div>`;
+const repDon=(tit,p,sub)=>{const C=2*Math.PI*54;return`<div class="don" role="img" aria-label="${esc(tit)}: ${p}%"><svg viewBox="0 0 140 140" aria-hidden="true"><circle cx="70" cy="70" r="54" fill="none" stroke="#E2E8F0" stroke-width="16"/><circle cx="70" cy="70" r="54" fill="none" stroke="#1E56A8" stroke-width="16" stroke-dasharray="${(C*p/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 70 70)"/><text x="70" y="76" text-anchor="middle" font-size="26" font-weight="800" fill="#0F172A">${p}%</text></svg><b>${tit}</b><small>${sub}</small></div>`};
+function repSeg(L){let disp=0,cer=0,ven=0;L.forEach(o=>{o.lineas.forEach(l=>{if(l.st==='rech'||l.cerr){disp++;if(l.cerr){cer++;if(S.orders.some(x=>x.ref===o.folio&&x.tipo==='SR'))ven++}}});if(o.prox&&o.prox.f){disp++;if(o.prox.cerr){cer++;if(S.orders.some(x=>x.ref===o.folio&&x.tipo==='SP'))ven++}}});return{disp,cer,ven,pen:disp-cer}}
+function repSec(L,A){const grp=(f)=>{const m={};L.forEach(o=>{const k=f(o)||'Sin dato',g=m[k]||(m[k]={n:0,aut:0,cot:0,rech:0,ms:0,c:0,ea:0});const t=tot(o);g.n++;g.aut+=t.aut;g.cot+=t.cot;g.rech+=t.rech;if(o.auth)g.ea++;if(o.t&&o.t.acum>0){g.ms+=o.t.acum;g.c++}});return Object.entries(m).sort((a,b)=>b[1].aut-a[1].aut||b[1].n-a[1].n)};
+  const T={cot:0,aut:0,gar:0,rech:0,pend:0};L.forEach(o=>{const t=tot(o);for(const k in T)T[k]+=t[k]});
+  const dec=T.aut+T.rech,tasa=dec?Math.round(T.aut/dec*100):0,con=L.filter(o=>o.t&&o.t.acum>0),tp=con.length?con.reduce((a,o)=>a+o.t.acum,0)/con.length:0,ent=L.filter(o=>o.etapa==='entregado').length;
+  // zonas de la hoja multipuntos: identificación y autorización por color, con y sin foto
+  const Z=[];L.forEach(o=>(o.chk||[]).forEach((c,i)=>{const ls=o.lineas.filter(l=>zonaDe(o,l)===i);Z.push({e:c.e,f:zFoto(c),n:ls.length,a:ls.some(l=>l.st==='aut'||l.st==='gar')})}));
+  const idv=f=>{const z=Z.filter(x=>x.f===f);return RCOL.map(([k,l,c])=>({l,c,v:z.length?pcn(z.filter(x=>x.e===k).length,z.length):null}))};
+  const auv=f=>RCOL.map(([k,l,c])=>{const z=Z.filter(x=>x.e===k&&x.f===f&&x.n>0);return{l,c,v:z.length?pcn(z.filter(x=>x.a).length,z.length):null}});
+  const sg=repSeg(L);
+  if(rp.sec==='tec')return repTbl('Técnicos',['Técnico','Órdenes','Cotizado','Autorizado','Tiempo real prom.'],grp(o=>o.mec).map(([k,g])=>[k,g.n,money(g.cot),money(g.aut),g.c?hms(g.ms/g.c):'—']));
+  if(rp.sec==='ase')return repTbl('Asesores de servicio',['Asesor','Órdenes','Cotizado','Autorizado','Tasa de autorización','Autorizó por enlace'],grp(o=>o.asesor).map(([k,g])=>[k,g.n,money(g.cot),money(g.aut),(g.aut+g.rech?pcn(g.aut,g.aut+g.rech):0)+'%',g.ea]));
+  if(rp.sec==='seg')return`<div class="card"><div class="h">Seguimientos</div><div class="dons">${repDon('Tasa de cierre',pcn(sg.cer,sg.disp),sg.cer+' de '+sg.disp+' cerrados')}${repDon('Tasa de éxito',pcn(sg.ven,sg.cer),sg.ven+' de '+sg.cer+' terminaron en orden')}</div><table class="rt"><tbody><tr><th scope="row">Disponibles</th><td class="num">${sg.disp}</td></tr><tr><th scope="row">Cerrados con orden nueva</th><td class="num">${sg.ven}</td></tr><tr><th scope="row">Cerrados sin orden</th><td class="num">${sg.cer-sg.ven}</td></tr><tr><th scope="row">Pendientes</th><td class="num">${sg.pen}</td></tr></tbody></table></div>`;
+  if(rp.sec==='top'){const m={};L.forEach(o=>o.lineas.forEach(l=>{const k=String(l.desc||'').toUpperCase(),g=m[k]||(m[k]={id:0,vt:0,rc:0,iq:0,vq:0,rq:0});const q=Number(l.cant)||0,v=imp(l);g.id+=v;g.iq+=q;if(l.st==='aut'||l.st==='gar'){g.vt+=v;g.vq+=q}if(l.st==='rech'){g.rc+=v;g.rq+=q}}));
+    const top=(f,q,v)=>Object.entries(m).filter(e=>e[1][f]>0).sort((a,b)=>b[1][f]-a[1][f]).slice(0,10).map(([k,g])=>[k,g[q],money(g[v||f])]);
+    return`<div class="rgs">${repTbl('Top 10 identificadas',['Descripción','Cant.','Total'],top('id','iq'))}${repTbl('Top 10 vendidas',['Descripción','Cant.','Total'],top('vt','vq'))}${repTbl('Top 10 rechazadas',['Descripción','Cant.','Total'],top('rc','rq'))}</div>`}
+  if(rp.sec==='aut'){const lc=L.reduce((a,o)=>a+(o.auth?1:0),0),lv=L.filter(o=>o.vb).length,mr=[...L.flatMap(o=>o.lineas)].filter(l=>l.st==='aut'),cf=mr.filter(l=>l.f).length;
+    return`<div class="kps">${repKp('Enlaces enviados',lv,'visto bueno por WhatsApp')}${repKp('Autorizaron por enlace',lc,pcn(lc,lv)+'% de los enviados')}${repKp('Autorizados con foto',pcn(cf,mr.length)+'%',cf+' de '+mr.length+' conceptos autorizados')}</div>
+    <div class="rgs">${repBars('Autorización por color · con foto',auv(true),'Porcentaje de hallazgos de cada color que terminaron autorizados.')}${repBars('Autorización por color · sin foto',auv(false),'Compara cuánto se autoriza cuando el hallazgo lleva foto.')}</div>
+    ${repTbl('Motivos de rechazo',['Motivo','Conceptos','Importe'],Object.entries(L.flatMap(o=>o.lineas).filter(l=>l.st==='rech').reduce((m,l)=>{const k=l.mot||'Sin motivo',g=m[k]||(m[k]={n:0,v:0});g.n++;g.v+=imp(l);return m},{})).sort((a,b)=>b[1].v-a[1].v).map(([k,g])=>[k,g.n,money(g.v)]))}`}
+  if(rp.sec==='mo')return repMo();
+  return`<div class="kps">${repKp('Órdenes',L.length,ent+' entregadas')}${repKp('Cotizado',money(T.cot),'Garantías aparte: '+money(T.gar))}${repKp('Autorizado',money(T.aut),'Tasa de autorización: '+tasa+'%')}${repKp('Rechazado / diferido',money(T.rech),'')}${repKp('Pendiente de autorizar',money(T.pend),'')}${repKp('Tiempo real promedio',con.length?hms(tp):'—',con.length+' orden(es) con cronómetro')}</div>
+  <div class="rgs"><div class="card"><div class="h">Seguimientos</div><div class="dons">${repDon('Tasa de cierre',pcn(sg.cer,sg.disp),sg.cer+' de '+sg.disp)}${repDon('Tasa de éxito',pcn(sg.ven,sg.cer),sg.ven+' de '+sg.cer)}</div></div>
+  ${repBars('Identificación por color · con foto',idv(true),'Reparto de los puntos de la hoja multipuntos que llevan foto.')}${repBars('Identificación por color · sin foto',idv(false),'Reparto de los puntos que no llevan foto.')}
+  ${repTbl('Por etapa',['Etapa','Órdenes'],ETAPAS.map(e=>[e[1],L.filter(o=>o.etapa===e[0]).length]))}</div>`}
+function reporte(){if(!puedeRep())return'';const L=repOrdenes(),A=sesion?permitidas(sesion.agencia):[];
+  return`<div class="ph"><h2>Reporte</h2><label class="f">Periodo<select data-rp="p">${PER.map(([k,n])=>`<option value="${k}" ${rp.p===k?'selected':''}>${n}</option>`).join('')}</select></label>${A.length>1?`<label class="f">Agencia<select data-rp="ag"><option value="">Todas mis agencias</option>${A.map(a=>`<option ${rp.ag===a?'selected':''}>${esc(a)}</option>`).join('')}</select></label>`:''}<button class="btn" data-a="repcsv">Descargar CSV</button></div>
+  <div class="rd"><nav class="rsb" aria-label="Secciones del reporte">${RSEC.map(([k,n])=>`<button class="${k===rp.sec?'on':''}" data-a="rsec" data-k="${k}" aria-current="${k===rp.sec}">${n}</button>`).join('')}</nav><div class="rmain">${rp.sec==='mo'?'':`<p class="mut">${L.length} orden(es) · ${esc(PER.find(x=>x[0]===rp.p)[1])}${rp.ag?' · '+esc(rp.ag):''}</p>`}${repSec(L,A)}</div></div>`}
 async function subeTarifas(){let r='ok';for(const ag of Object.keys(S.tarPend||{})){
   try{const x=await api.taller({action:'guardarConfig',cfgK:'tarifa_mo|'+ag,cfgV:(S.tarifas||{})[ag]||0});if(x&&x.success)delete S.tarPend[ag];else r=/desconocida/i.test((x&&x.message)||'')?'viejo':'error'}catch{r='error'}}
   save();return r}
@@ -179,6 +245,7 @@ function vinH(o){const r=vinInfo(o.vin);if(!r.n)return'';
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico se asigna al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div>${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor)}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
   <div class="sbh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
+const accH=o=>`<div class="card"><div class="sbh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
 const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro','Recepción'],REC='Recepción',FI='Fotos de ingreso',pfo=new Set();let ds=-1;
 // Fotos de ingreso: puntos de tipo Recepción (varias fotos cada uno) + las fotos generales de órdenes anteriores
 const nRecep=o=>(o.danos||[]).filter(m=>m.t===REC).reduce((a,m)=>a+fotosK(m).filter(u=>src(u)).length,0)+FOTOS_GRAL.filter(x=>o.fotos[x[0]]&&src(o.fotos[x[0]])).length;
@@ -207,26 +274,28 @@ function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"
   <button class="btn" data-a="okall">${IC.ok} Todo OK (marca los que siguen en azul)</button>
   <div class="lgd">${[['nr','Azul · No revisado'],['ok','Verde · OK'],['px','Amarillo · Próximo'],['ur','Rojo · Urgente']].map(([e,t])=>`<span class="lgi lg-${e}"><i>${CI[e]}</i>${t} <b>${cnt(e)}</b></span>`).join('')}</div></div>
   ${SECC.map(([t,ix],si)=>`<div class="sbar">${t}</div>${ix.map(i=>ckRow(o,i)).join('')}`).join('')}
-  ${llH(o)}
   ${bayH(o)}`}
 
-function lineaH(l,i){const mo=l.t==='mo',ic={pend:IC.at,aut:IC.ok,gar:IC.ok,rech:IC.fa}[l.st];
-  return`<div class="qr st-${l.st}"><span class="qi" aria-hidden="true">${ic}</span>
-  <div class="qo"><b>${mo?'Mano de obra':'Refacción'}</b><span class="fol sm">${esc(l.sku)}</span></div>
-  <div class="qd"><div class="qdesc">${esc(l.desc)}</div>${l.f?`<img class="th" data-a="zoom" alt="Evidencia" src="${src(l.f)}">`:''}
-   <div class="row wrap">${mo?'':`<label class="f" style="max-width:90px">Cant.<input data-n data-p="lineas.${i}.cant" inputmode="numeric" value="${l.cant}"></label>`}<label class="f" style="max-width:130px">${mo?'Monto $':'Precio $'}<input data-n data-p="lineas.${i}.precio" inputmode="decimal" value="${l.precio||''}"></label></div>
-   ${!Number(l.precio)&&l.st!=='gar'?`<span class="chip w">${IC.at} Sin precio</span>`:''}</div>
-  <div class="qp"><b class="fol" id="imp-${i}">${money(imp(l))}</b></div>
-  <div class="qa"><button class="qb ok ${l.st==='aut'?'on':''}" data-a="aut" data-i="${i}" data-k="aut" aria-pressed="${l.st==='aut'}">${IC.ok} Aceptar</button><button class="qb no ${l.st==='rech'?'on':''}" data-a="aut" data-i="${i}" data-k="rech" aria-pressed="${l.st==='rech'}">${IC.fa} Rechazar</button><button class="qb gr ${l.st==='gar'?'on':''}" data-a="aut" data-i="${i}" data-k="gar" aria-pressed="${l.st==='gar'}">Garantía</button><button class="qb del" data-a="dl" data-i="${i}" aria-label="Quitar ${esc(l.desc)}">${IC.fa}</button></div>
-  ${l.st==='rech'?(l.rg?`<div class="qx rgs"><span class="chip g">${IC.ok} Rechazo guardado</span><span>Motivo: <b>${esc(l.mot)}</b> · Seguimiento: <b>${esc(fechaMx(l.seg))}</b></span><button class="btn sm" data-a="redit" data-i="${i}">Editar</button></div>`:`<div class="qx g2"><label class="f">Motivo del rechazo<select data-p="lineas.${i}.mot"><option value="">Selecciona…</option>${MOTIVOS.map(m=>`<option ${l.mot===m?'selected':''}>${m}</option>`).join('')}</select></label><label class="f">Dar seguimiento el<input type="date" data-p="lineas.${i}.seg" value="${esc(l.seg||'')}"></label><div class="row" style="grid-column:1/-1"><button class="btn pri" data-a="rguardar" data-i="${i}">Guardar rechazo</button></div></div>`):''}</div>`}
-const totH=o=>{const t=tot(o);return`<div class="row sp"><span>Cotizado</span><span class="fol">${money(t.cot)}</span></div><div class="row sp h"><span>Autorizado (a cobrar)</span><span class="fol">${money(t.aut)}</span></div><div class="row sp"><span>Garantía (sin cargo)</span><span class="fol">${money(t.gar)}</span></div><div class="row sp"><span>Pendiente de autorizar</span><span class="fol">${money(t.pend)}</span></div><div class="row sp"><span>Rechazado / diferido</span><span class="fol">${money(t.rech)}</span></div>`};
+const qopen=new Set(),SEMC={ur:'r',px:'a',ok:'g',nr:'n'},EST=[['pend','Pendiente de autorización'],['aut','Autorizado'],['rech','Rechazado'],['gar','Garantía']];
+const zonaDe=(o,l)=>{if(l.ck!=null&&CATS[l.ck])return l.ck;return CATS.findIndex(c=>String(l.desc).startsWith(c[0]+': '))};
+function lineaH(l,i,o){const mo=l.t==='mo',z=zonaDe(o,l),area=z>=0?CATS[z][0]:(mo?'Mano de obra':'Refacción'),open=qopen.has(i),op=z>=0?String(l.desc).replace(CATS[z][0]+': ',''):l.desc;
+  const inv=!mo&&l.sku&&!/^(HALLAZGO|MANUAL)$/.test(l.sku)?S.inv.find(x=>nSku(x.sku)===nSku(l.sku)):null,st=inv?stockDe(inv,o.suc):null;
+  const pn=l.pc?(Number(l.precio)===l.pc?`<span class="chip g">${IC.ok} Precio de catálogo (IVA incluido): ${money(l.pc)}</span>${l.pf?`<span class="chip w">${IC.at} Viene del inventario: confirma que incluya IVA</span>`:''}`:`<span class="chip w">${IC.at} Precio editado (catálogo: ${money(l.pc)})</span><button class="btn sm" data-a="qpc" data-i="${i}">Volver al precio de catálogo</button>`):'';
+  const det=open?`<div class="q2d"><div class="q2g${mo?' mo':''}">${mo?'':`<label class="f g-sku">SKU<input data-p="lineas.${i}.sku" data-sku="${i}" value="${esc(l.sku)}" autocomplete="off" autocapitalize="characters"></label>`}<label class="f g-desc">Descripción<input data-p="lineas.${i}.desc" value="${esc(l.desc)}"></label>${mo?'':`<label class="f g-cant">Cant.<input data-n data-p="lineas.${i}.cant" inputmode="numeric" value="${l.cant}"></label><div class="f g-ex"><span>Existencia${st&&st.suc!=='todas'?' · '+esc(st.suc):''}</span><div class="ro ${st?(st.n>0?'ok':'no'):''}">${st?(st.n>0?st.n+' pzas':'Sin existencia'):'—'}</div></div>`}<label class="f g-pr">${mo?'Monto $ (IVA incl.)':'P. unit. $ (IVA incl.)'}<input data-n data-p="lineas.${i}.precio" inputmode="decimal" value="${l.precio||''}"></label></div>
+   <div class="row wrap">${pn}${!Number(l.precio)&&l.st!=='gar'?`<span class="chip w">${IC.at} Sin precio</span>`:''}${l.f?`<img class="th" data-a="zoom" alt="Evidencia" src="${src(l.f)}">`:''}<span style="flex:1"></span><button class="btn sm" data-a="dl" data-i="${i}" aria-label="Quitar ${esc(l.desc)}">${IC.fa} Quitar concepto</button></div>
+   ${l.st==='rech'?(l.rg?`<div class="qx rgs"><span class="chip g">${IC.ok} Rechazo guardado</span><span>Motivo: <b>${esc(l.mot)}</b> · Seguimiento: <b>${esc(fechaMx(l.seg))}</b>${l.rea?' · Reagendar: <b>'+esc(l.rea)+'</b>':''}</span><button class="btn sm" data-a="redit" data-i="${i}">Editar</button></div>`:`<div class="qx g2"><label class="f">Motivo del rechazo<select data-p="lineas.${i}.mot"><option value="">Selecciona…</option>${MOTIVOS.map(m=>`<option ${l.mot===m?'selected':''}>${m}</option>`).join('')}</select></label><label class="f">Dar seguimiento el<input type="date" data-p="lineas.${i}.seg" value="${esc(l.seg||'')}"></label><label class="f">¿El cliente desea reagendar?<select data-p="lineas.${i}.rea">${['','Sí','No','Lo pensará'].map(x=>`<option ${l.rea===x?'selected':''}>${x}</option>`).join('')}</select></label><div class="row" style="grid-column:1/-1"><button class="btn pri" data-a="rguardar" data-i="${i}">Guardar rechazo</button></div></div>`):''}</div>`:'';
+  return`<div class="q2 st-${l.st}" data-i="${i}"><div class="q2r"><button class="q2x" data-a="qexp" data-i="${i}" aria-expanded="${open}" aria-label="${open?'Contraer':'Expandir'} ${esc(l.desc)}">${open?'▾':'▸'}</button>
+   <span class="q2a"><i class="sem ${z>=0?SEMC[o.chk[z].e]||'n':''}"></i>${esc(area)}</span><span class="q2o">${esc(op)}</span>
+   <select class="q2e est-${l.st}" data-qest="${i}" aria-label="Estado de autorización: ${esc(l.desc)}">${EST.map(([k,n])=>`<option value="${k}" ${l.st===k?'selected':''}>${n}</option>`).join('')}</select>
+   <b class="q2i fol" id="imp-${i}">${money(imp(l))}</b></div>${det}</div>`}
+const totH=o=>{const t=tot(o);return`<div class="tb"><div><span>Identificado</span><b>${money(t.cot)}</b></div><div class="g"><span>Autorizado (a cobrar)</span><b>${money(t.aut)}</b></div>${t.gar?`<div><span>Garantía (sin cargo)</span><b>${money(t.gar)}</b></div>`:''}<div class="a"><span>Pendiente</span><b>${money(t.pend)}</b></div><div class="m"><span>Rechazado / diferido</span><b>${money(t.rech)}</b></div></div>`};
 const autCard=o=>{const a=o.auth,f=o.firmas.aut,s=f&&src(f);
   return`<div class="cfg-g">Autorización del cliente</div><div class="card"><div class="row sp"><div class="h">Firma de autorización</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>
   ${s?`<img class="pic" alt="Firma de autorización" src="${s}"><div class="mut">${esc((a&&a.n)||f.n||'Cliente')}${a?' · '+new Date(a.t).toLocaleString('es-MX')+' · desde el enlace':''}</div>`:`<p class="mut" style="margin:0">El cliente firma desde el enlace que se manda con “Enviar visto bueno por WhatsApp”.${o.vb?' Enlace enviado el '+new Date(o.vb).toLocaleString('es-MX')+'.':''}</p>`}
   <div class="row wrap"><button class="btn sm" data-a="vblink">Copiar enlace</button><button class="btn sm" data-a="firma" data-k="aut">${s?'Firmar de nuevo en el taller':'Firmar en el taller'}</button></div></div>`};
-function tC(o){return`<div class="qt"><div class="qh"><span></span><span>Operación</span><span>Descripción</span><span>Precio</span><span>Autorización</span></div>${o.lineas.map(lineaH).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
-  <div class="qadd"><label class="f">Agregar a la cotización: busca SKU o refacción (catálogo)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" style="display:flex;flex-direction:column;gap:6px"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div></div>
-  <div class="card" id="tot">${totH(o)}</div>
+function tC(o){return`<div class="q2t"><div class="q2h"><span></span><span>Área</span><span>Operación</span><span>Estado de autorización</span><span class="r">Importe (IVA incl.)</span></div>${o.lineas.map((l,i)=>lineaH(l,i,o)).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
+  <div class="qadd"><label class="f">Agregar a la cotización: busca SKU o refacción (catálogo, precio con IVA)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" class="sugl"></div><div class="row wrap"><button class="btn" data-a="mo">+ Mano de obra</button><button class="btn" data-a="manual">+ Concepto manual</button></div></div></div>
+  <div class="tbw" id="tot">${totH(o)}</div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>
   ${autCard(o)}`}
 function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><button class="btn ${o.lav?'':'pri'}" data-a="lav" aria-pressed="${!!o.lav}">${o.lav?IC.ok+' Moto lavada (tocar para revertir)':'Marcar moto lavada'}</button><div class="mut">Requisito para pasar a Entregado.</div></div>
@@ -256,8 +325,13 @@ const acts={
  tarsave:async()=>{if(!puedeRep()||!S.suc)return;const v=parseFloat(String($('#tar').value).replace(',','.'));if(!(v>=0))return toast('Escribe un monto válido por hora','err');
   S.tarifas=S.tarifas||{};S.tarifas[S.suc]=Math.round(v*100)/100;(S.tarPend=S.tarPend||{})[S.suc]=true;save();renderMain();
   const r=await subeTarifas();if(r==='ok')toast('Tarifa guardada para '+S.suc);else if(r==='viejo')toast('Tarifa guardada en este dispositivo. Falta actualizar el Apps Script (v5) para compartirla con los demás.','err');else toast('Tarifa guardada en este dispositivo; se subirá al sincronizar','inf')},
- tab:d=>{tab=d.k;renderMain()},view:d=>{view=d.v;render()},abrir:d=>{D=d.f;dt='u';keepSc=false;render()},cerrard:()=>{D=null;render()},dtab:d=>{dt=d.k;keepSc=false;renderDrawer()},
+ tab:d=>{tab=d.k;renderMain()},view:d=>{view=d.v;render()},abrir:d=>{D=d.f;dt='u';qopen.clear();keepSc=false;render()},cerrard:()=>{D=null;render()},dtab:d=>{dt=d.k;keepSc=false;renderDrawer()},
  cerrar:(d,e)=>{if(e.target.classList.contains('ov'))$('#modal').innerHTML=''},
+ rsec:d=>{rp.sec=d.k;renderMain()},
+ repcsv:()=>{if(!puedeRep())return;const L=repOrdenes(),h=['Folio','Agencia','Tipo','Etapa','Cliente','Modelo','Técnico','Asesor','Ingreso','Cotizado','Autorizado','Garantía','Rechazado','Pendiente','Tiempo real (min)','Autorizó por enlace'],c=x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"',
+   rows=L.map(o=>{const t=tot(o);return[o.folio,o.suc,TIPOS[o.tipo]||o.tipo,(ETAPAS[idx(o.etapa)]||[])[1]||o.etapa,o.cliente,o.modelo,o.mec,o.asesor,new Date(o.fing||o.cre||0).toLocaleDateString('es-MX'),t.cot,t.aut,t.gar,t.rech,t.pend,Math.round((o.t&&o.t.acum||0)/6e4),o.auth?'Sí':'No'].map(c).join(',')});
+   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+[h.map(c).join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8'}));a.download='reporte-taller-'+iso()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)},
+ tgl:d=>{const o=O(D);o[d.k]=!o[d.k];logH(o,(o[d.k]?'Marcada: ':'Quitada: ')+(d.k==='espRef'?'esperando refacciones':'orden retrasada'));touch(o);renderDrawer()},
  nueva:()=>{if(!S.suc)return acts.agpick();sheet('<div class="h">Tipo de orden</div>'+tipoBtns('crear'))},
  elim:()=>{if(!adminReal()||!D)return;sheet(`<div class="h">¿Eliminar la orden ${esc(D)}?</div><div class="mut">Se borra la orden y su cotización de la hoja del taller. Esta acción no se puede deshacer.</div><div class="row"><button class="btn" data-a="cmod">Cancelar</button><button class="btn red" data-a="elimok">Eliminar</button></div>`)},
  cmod:()=>{$('#modal').innerHTML=''},
@@ -286,16 +360,18 @@ const acts={
  fdel:d=>{const o=O(D),k=d.k==='l'?o.llantas[+d.i]:d.k==='d'?o.danos[+d.i]:o.chk[+d.i],j=+d.j,u=j===0?k.f:(k.fx||[])[j-1];if(typeof u==='string'&&u&&!u.startsWith('data:'))(o.rmf=o.rmf||[]).push(u);if(j===0)k.f=(k.fx||[]).shift()||null;else k.fx.splice(j-1,1);touch(o);renderDrawer()},
  okall:()=>{const o=O(D);normChk(o);o.chk.forEach(x=>{if(x.e==='nr')x.e='ok'});o.inv.forEach(x=>{x.p=true;if(!(x.c>0))x.c=1});touch(o);renderDrawer()},
  cond:d=>{const o=O(D),i=+d.i;o.chk[i].e=d.e;if(d.e!=='nr')CATS[i][2].forEach(n=>{o.inv[n].p=true;if(!(o.inv[n].c>0))o.inv[n].c=1});touch(o);renderDrawer()},
- pc:d=>{const o=O(D),c=o.chk[+d.i];if(enCot(o,+d.i))return toast('Este hallazgo ya está en la cotización');o.lineas.push({t:'ref',sku:'HALLAZGO',ck:+d.i,desc:CATS[+d.i][0]+': '+(c.op?c.op+(c.n?' ('+c.n+')':''):(c.n||COND.find(x=>x[0]===c.e)[2])),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:c.f||null});touch(o);renderDrawer();toast('Agregado a la cotización (pon su precio en la pestaña Cotización)')},
+ pc:d=>{const o=O(D),c=o.chk[+d.i];if(enCot(o,+d.i))return toast('Este hallazgo ya está en la cotización');o.lineas.push({t:'ref',sku:'HALLAZGO',ck:+d.i,desc:CATS[+d.i][0]+': '+(c.op?c.op+(c.n?' ('+c.n+')':''):(c.n||COND.find(x=>x[0]===c.e)[2])),cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend',f:c.f||null});qopen.add(o.lineas.length-1);touch(o);renderDrawer();toast('Agregado a la cotización (pon su precio en la pestaña Cotización)')},
  firma:d=>abrirFirma(u=>{const o=O(D),f=o.firmas[d.k]||{};delete f.u;f.d=u;o.firmas[d.k]=f;touch(o);renderDrawer()}),
- dl:d=>{const o=O(D);o.lineas.splice(+d.i,1);touch(o);renderDrawer()},
+ dl:d=>{const o=O(D);o.lineas.splice(+d.i,1);qopen.clear();touch(o);renderDrawer()},
+ qexp:d=>{const i=+d.i;qopen.has(i)?qopen.delete(i):qopen.add(i);renderDrawer()},
+ qpc:d=>{const o=O(D),l=o.lineas[+d.i];if(l&&l.pc){l.precio=l.pc;touch(o);renderDrawer()}},
  aut:d=>{const o=O(D),l=o.lineas[+d.i],k=(l.st===d.k&&d.k!=='pend')?'pend':d.k;l.st=k;if(k==='rech'){if(!l.seg)l.seg=addD(30)}else{delete l.cerr;delete l.rg}touch(o);renderDrawer()},
  rguardar:d=>{const o=O(D),l=o.lineas[+d.i];if(!l.mot)return toast('Selecciona el motivo del rechazo','err');if(!/^\d{4}-\d{2}-\d{2}$/.test(l.seg||''))return toast('Falta la fecha de seguimiento','err');l.rg=Date.now();touch(o);renderDrawer();sync();toast('Rechazo guardado: aparece en Seguimientos')},
  redit:d=>{const o=O(D);delete o.lineas[+d.i].rg;touch(o);renderDrawer()},
  autall:()=>{const o=O(D);o.lineas.forEach(l=>{if(l.st==='pend')l.st=o.tipo==='G'?'gar':'aut'});touch(o);renderDrawer()},
- manual:async()=>{const s=await ask({t:'Agregar concepto',input:'Concepto',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'ref',sku:'MANUAL',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
- mo:async()=>{const s=await ask({t:'Agregar mano de obra',input:'Operación',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'mo',sku:'MO',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
- add:d=>{const o=O(D),i=sug[+d.i];o.lineas.push({t:'ref',sku:i.sku,desc:i.nombre,cant:1,precio:i.precio,min:0,st:o.tipo==='G'?'gar':'pend'});touch(o);renderDrawer()},
+ manual:async()=>{const s=await ask({t:'Agregar concepto',input:'Concepto',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'ref',sku:'MANUAL',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});qopen.add(o.lineas.length-1);touch(o);renderDrawer()},
+ mo:async()=>{const s=await ask({t:'Agregar mano de obra',input:'Operación',ok:'Agregar'});if(!s)return;const o=O(D);o.lineas.push({t:'mo',sku:'MO',desc:s,cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});qopen.add(o.lineas.length-1);touch(o);renderDrawer()},
+ add:d=>{const o=O(D),i=sug[+d.i];o.lineas.push({t:'ref',sku:i.sku,desc:i.nombre,cant:1,precio:precioDe(i),pc:precioDe(i),pf:pIva(i)==null,min:0,st:o.tipo==='G'?'gar':'pend'});qopen.add(o.lineas.length-1);touch(o);renderDrawer()},
  leg:()=>{const o=O(D);o.leg=!o.leg;touch(o);renderDrawer()},
  wa:async()=>{const o=O(D),L=o.lineas.filter(l=>l.st!=='rech');if(!L.length)return toast('No hay conceptos que enviar');
   if(L.some(l=>!Number(l.precio)&&l.st!=='gar')&&!(await ask({t:'Conceptos sin precio',m:'Hay conceptos sin precio. ¿Enviar de todos modos?',ok:'Enviar',tipo:'err'})))return;
@@ -303,9 +379,11 @@ const acts={
   const w=window.open('about:blank','_blank');   // se abre en el toque (gesto del usuario) y se llena cuando la orden ya está en el servidor
   if(!o.tok)o.tok=nuevoTok();o.vb=Date.now();touch(o);toast('Preparando el enlace…','inf');
   if(!(await subirOrden(o))){if(w)w.close();return toast('No se pudo subir la orden: revisa tu conexión y vuelve a intentar')}
-  const u='https://wa.me/'+(tel.length===10?'52'+tel:tel)+'?text='+encodeURIComponent(`Hola ${o.cliente}, te compartimos el visto bueno de tu ${o.modelo} (${o.folio}) de ${o.suc}. Revisa las fotos, la inspección y la cotización, y autoriza con tu firma aquí:\n${linkCliente(o)}`);
+  const er=await enlaceListo(o);if(er){if(w)w.close();return toast(er)}
+  const u='https://wa.me/'+(tel.length===10?'52'+tel:tel)+'?text='+encodeURIComponent(`Hola ${o.cliente}, te compartimos la orden de trabajo de tu ${o.modelo} (${o.folio}) de ${o.suc}. Revisa los trabajos recomendados y autoriza con tu firma aquí:\n${linkCliente(o)}`);
   if(w)w.location.href=u;else location.href=u;renderDrawer()},
  vblink:async()=>{const o=O(D);if(!o.tok)return toast('Primero envía el visto bueno para generar el enlace');if(!(await subirOrden(o)))return toast('No se pudo subir la orden: revisa tu conexión');
+  {const er=await enlaceListo(o);if(er)return toast(er)}
   try{await navigator.clipboard.writeText(linkCliente(o));toast('Enlace copiado')}catch{toast('No se pudo copiar el enlace: '+linkCliente(o))}},
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
@@ -356,12 +434,17 @@ document.addEventListener('input',e=>{const t=e.target;
    else if(!(r.ok&&r.anio)&&o.anioAuto){o.anio='';delete o.anioAuto;const ai=document.querySelector('[data-p="anio"]');if(ai)ai.value=''}
    if(r.fab&&(!o.marca||o.marcaAuto)){o.marca=r.fab;o.marcaAuto=true;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=o.marca}
    else if(!r.fab&&o.marcaAuto){o.marca='';delete o.marcaAuto;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=''}
-   touch(o);const vh=$('#vinh');if(vh)vh.innerHTML=vinH(o)}
+   touch(o);document.querySelectorAll('#vinh,.vinh').forEach(vh=>vh.innerHTML=vinH(o))}
   if(t.dataset.c){o.chk[+t.dataset.c].n=t.value;touch(o)}
   if(t.id==='q2'){const s=t.value.toLowerCase();sug=s.length<2?[]:S.inv.filter(i=>(i.sku+' '+i.nombre).toLowerCase().includes(s)).slice(0,6);
-   $('#sug').innerHTML=sug.map((i,k)=>`<button class="btn" style="justify-content:space-between" data-a="add" data-i="${k}"><span>${esc(i.nombre)}<br><small class="fol">${esc(i.sku)}</small></span><span class="fol">${money(i.precio)}</span></button>`).join('')||(s.length>1?'<div class="mut">Sin resultados. Conecta el catálogo en Configuración o agrega un concepto manual.</div>':'')}});
+   const os=O(D)&&O(D).suc;$('#sug').innerHTML=sug.map((i,k)=>{const st=stockDe(i,os);return`<button class="btn sg" data-a="add" data-i="${k}"><span class="sd"><b>${esc(i.nombre)}</b><small class="fol">${esc(i.sku)}</small></span><span class="sp"><b class="fol">${money(precioDe(i))}</b><small>${pIva(i)==null?'verifica IVA':'IVA incl.'}</small></span>${st?`<span class="ex ${st.n>0?'ok':'no'}">${st.n>0?st.n+' pzas':'Sin existencia'}</span>`:''}</button>`}).join('')||(s.length>1?'<div class="mut">Sin resultados. Conecta el catálogo en Configuración o agrega un concepto manual.</div>':'')}});
 document.addEventListener('change',async e=>{const t=e.target;
+  if(t.dataset&&t.dataset.qest!=null){acts.aut({i:t.dataset.qest,k:t.value});return}
+  if(t.dataset&&t.dataset.sku!=null){const o=O(D),l=o&&o.lineas[+t.dataset.sku];if(l){const v=t.value.trim(),it=v&&S.inv.find(x=>nSku(x.sku)===nSku(v));l.sku=v;
+    if(it){l.desc=it.nombre;l.pc=precioDe(it);l.pf=pIva(it)==null;l.precio=l.pc;toast('Precio de catálogo aplicado (IVA incluido)','ok')}else if(v)toast('SKU no encontrado en el catálogo: pon el precio a mano','inf');
+    touch(o);renderDrawer()}return}
   if(t.id==='ftipo'){ft=t.value;renderMain();return}
+  if(t.dataset&&t.dataset.rp){rp[t.dataset.rp]=t.value;renderMain();return}
   if(t.dataset.ag){agf[t.dataset.ag]=t.value;renderMain();return}
   if(t.id==='fin-cam'||t.id==='fin-gal'){const fs=[...t.files];t.value='';if(fs.length&&fpT)await subirFotos(fs,fpT)}});
 function comprimir(f,m=1280,q=.7){return new Promise((r,x)=>{const im=new Image,u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);r(c.toDataURL('image/jpeg',q))};im.onerror=()=>{URL.revokeObjectURL(u);x(new Error('imagen no legible'))};im.src=u})}
@@ -425,6 +508,10 @@ const nuevoTok=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(b=>b.toSt
 const linkCliente=o=>new URL('cliente.html',location.href).href+'?o='+encodeURIComponent(o.folio)+'&k='+o.tok;
 async function subirOrden(o){if(!tallerUrl()||!navigator.onLine)return false;for(let n=0;syncing&&n<50;n++)await new Promise(r=>setTimeout(r,300));
   try{const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success)return false;aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==o.folio);save();return true}catch{return false}}
+// Comprueba que el Apps Script ya tiene el enlace del cliente (v6) y que abre esta orden; así no se manda un enlace que no sirve.
+async function enlaceListo(o){let v=null;try{v=await api.taller({action:'verOrden',folio:o.folio,tok:o.tok})}catch{}
+  if(v&&v.success)return'';if(!v)return'No se pudo comprobar el enlace: revisa tu conexión';
+  return/desconocida/i.test(v.message||'')?'Falta actualizar el Apps Script a la versión 6: sin eso el enlace no abre. Pega el código nuevo y publica una nueva versión':'No se pudo comprobar el enlace: '+(v.message||'sin respuesta')}
 // La autorización que el cliente hizo desde el enlace se aplica aunque la orden esté abierta o con cambios pendientes.
 function aplicaAuth(l,ro){const a=ro.auth;if(!a||(l.auth&&l.auth.t>=a.t))return false;l.auth=a;if(ro.firmas&&ro.firmas.aut)(l.firmas=l.firmas||{}).aut=ro.firmas.aut;
   (a.d||[]).forEach(d=>{const x=l.lineas[d.i];if(x&&x.desc===d.desc){x.st=d.st;if(d.mot)x.mot=d.mot;if(d.st==='rech'&&!x.seg)x.seg=d.seg||addD(30)}});return true}
@@ -472,9 +559,17 @@ async function iniciarSesion(){
     $('#lg-p').value='';m.textContent='';pintaLogin();aplicaAg();render();sync();cargaCat(true)
   }catch{m.className='lg-m err';m.textContent='Error de conexión. Intenta de nuevo.'}
   finally{b.disabled=false}}
+const nSku=v=>{const t=String(v==null?'':v).trim();return /^\d+$/.test(t)?t.replace(/^0+(?=\d)/,''):t};
+// Precio público CON IVA (lista del catálogo: obtenerPreciosCatalogo). Si el SKU no está en esa lista se usa el del inventario y se marca para verificar.
+const pIva=i=>{const p=S.pr&&S.pr[nSku(i.sku)];return p>0?p:null};
+const precioDe=i=>pIva(i)??i.precio;
+// Existencia en la sucursal de la orden (si no coincide el nombre, el total de todas)
+const stockDe=(i,suc)=>{if(!i||!i.ex)return null;const k=String(suc||'').toUpperCase(),e=i.ex,ks=Object.keys(e);const hit=ks.find(x=>k&&(k.includes(x.toUpperCase())||x.toUpperCase().includes(k)));return hit!=null?{n:e[hit],suc:hit}:{n:ks.reduce((a,x)=>a+e[x],0),suc:'todas'}};
 async function cargaCat(quiet){if(!sesion)return;
   try{const r=await api.inventario(sesion.correo,sesion.token);if(!r.success){if(!quiet)toast(r.message||'Catálogo no disponible: vuelve a iniciar sesión');return}
-    S.inv=(r.data||[]).map(i=>({sku:String(i.sku||i.SKU||i.Sku||i.Codigo||''),nombre:String(i.nombre||i.Nombre||i.Descripcion||i.Producto||''),precio:Number(i.precio||i.Precio||i.precioPublico||i.PrecioPublico||0)})).filter(i=>i.sku);save();if(!quiet)toast(S.inv.length+' productos cargados')}
+    S.inv=(r.data||[]).map(i=>({sku:String(i.sku||i.SKU||i.Sku||i.Codigo||''),nombre:String(i.nombre||i.Nombre||i.Descripcion||i.Producto||''),precio:Number(i.precio||i.Precio||i.precioPublico||i.PrecioPublico||0),ex:(i.Existencias||[]).reduce((m,e)=>{if(!e.enTransito&&e.sucursal)m[e.sucursal]=(m[e.sucursal]||0)+(Number(e.cantidad)||0);return m},{})})).filter(i=>i.sku);
+    try{const p=await api.precios(sesion.correo,sesion.token);if(p&&p.success){S.pr={};(p.data||[]).forEach(x=>{const v=Number(x.precio);if(v>0)S.pr[nSku(x.sku)]=v})}}catch{}
+    save();if(!quiet)toast(S.inv.length+' productos cargados')}
   catch{if(!quiet)toast('Sin conexión al catálogo')}}
 function migrarLeg(){if(S.suc)S.orders.forEach(o=>{if(LEG.includes(o.suc)){o.suc=S.suc;touch(o)}});save()}
 function pintaHd(){const a=sesion?.agencia||'',el=$('#agn'),lg=$('#hlogo'),m=multi(a),vr=$('#vrep');if(vr)vr.hidden=!puedeRep();
