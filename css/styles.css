@@ -463,3 +463,14 @@ html.dark .dr .drh .btn.red{background:#DC2626;border-color:#DC2626}
 html.dark .q2t .qadd{background:#162032;border-color:#475569}html.dark .qplus{color:#93c5fd}html.dark .qplus:hover{background:#1b283c}
 html.dark .qpi{border-color:#93c5fd}html.dark .qplus[aria-expanded="true"] .qpi{background:#93c5fd;color:#0b1220}
 html.dark .qo2 small{color:#94a3b8}
+
+/* v35: botón Siguiente (con flecha para mover a otra etapa) en el encabezado de la orden */
+.dft:empty{display:none}
+.drh .split{display:inline-flex}
+.drh .split .nxt{border-radius:3px 0 0 3px;gap:6px;font-weight:700}
+.drh .split .nxd{border-radius:0 3px 3px 0;border-left:1px solid #CBD5E1;min-width:38px;padding:0 8px}
+.dr .drh .split .btn{background:#fff;color:var(--nv);border-color:#fff}
+.dr .drh .split .btn:hover:not([disabled]){background:#E9EEF6;color:var(--nv)}
+.dr .drh .split .btn[disabled]{background:rgba(255,255,255,.35);border-color:transparent;color:rgba(255,255,255,.85)}
+html.dark .dr .drh .split .btn{background:#fff;color:#0F2A55;border-color:#fff}
+html.dark .dr .drh .split .btn[disabled]{background:rgba(255,255,255,.25);border-color:transparent;color:rgba(255,255,255,.8)}
