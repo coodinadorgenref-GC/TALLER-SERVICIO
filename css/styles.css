@@ -45,7 +45,7 @@ main{padding:12px 16px 32px}
 .drh{background:#fff;border-bottom:1px solid var(--bd);padding:8px 12px;padding-top:calc(8px + env(safe-area-inset-top));display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .drh .ib{background:#E9EEF6;color:var(--p)}
 .dtabs{display:flex;background:#fff;border-bottom:1px solid var(--bd);overflow-x:auto;scrollbar-width:none}
-.dtabs .tab{flex:1;justify-content:center}
+.dtabs .tab{flex:1 0 auto;justify-content:center;white-space:nowrap}
 .dbody{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
 .dft{background:#fff;border-top:1px solid var(--bd);padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
 .big{font:600 28px "Fira Code",monospace}
@@ -294,8 +294,8 @@ html.dark .tt,html.dark .dlg{background:#162032;border-color:#334155;color:var(-
  .tabs .tab .cnt{font-size:11px;padding:0 6px}
 }
 @media(max-width:560px){
- .dtabs{overflow-x:hidden}
- .dtabs .tab{padding:0 4px;gap:4px;font-size:13px;min-width:0}
+ .dtabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+ .dtabs .tab{padding:0 12px;gap:4px;font-size:13px}
  .dtabs .tab .cnt{padding:0 5px;font-size:11px}
 }
 @media(max-width:340px){.tabs .tab{font-size:11px}}
@@ -369,7 +369,7 @@ html.dark .qt .qadd{background:#1b283c;border-color:#475569}html.dark .qt .qe{bo
 html.dark .dhead{background:#0f172a}
 
 /* ===== Cotización por áreas (estilo Triage) ===== */
-.q2t{background:#fff;border:1px solid var(--bd);border-radius:6px;overflow:hidden}
+.q2t{background:#fff;border:1px solid var(--bd);border-radius:6px;overflow:hidden;flex:none}
 .q2h,.q2r{display:grid;grid-template-columns:34px 200px minmax(0,1fr) 250px 130px;align-items:center;gap:8px;padding:6px 10px}
 .q2h{background:#243447;color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;min-height:38px}
 .q2h .r{text-align:right}
