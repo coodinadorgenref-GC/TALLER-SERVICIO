@@ -434,3 +434,32 @@ html.dark .rsb,html.dark .kp{background:#162032}
 }
 #vinh .btn{display:inline-flex;min-height:30px;height:30px;padding:0 10px;margin:2px 4px;font-size:13px;flex:none;vertical-align:middle}
 #vinh{line-height:2}
+
+/* ===== v32: encabezado de la orden azul, títulos sticky y fila "+" de la cotización ===== */
+.dr .drh{background:var(--nv);border-bottom:0;color:#fff}
+.dr .drh .btn{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.6);color:#fff}
+.dr .drh .btn:hover:not([disabled]){background:rgba(255,255,255,.24);filter:none}
+.dr .drh .btn.red{background:#DC2626;border-color:#DC2626;color:#fff}
+.dr .drh .fol{color:#fff}
+.dr .dtabs{border-bottom:1px solid var(--bd2);box-shadow:0 1px 3px rgba(15,23,42,.08)}
+html.dark .dr .drh{background:#0F2A55}
+html.dark .dr .drh .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.4);color:#fff}
+html.dark .dr .drh .btn.red{background:#DC2626;border-color:#DC2626}
+@supports (overflow:clip){.q2t{overflow:clip}}
+.q2h{position:sticky;top:0;z-index:5}
+.sbar{position:sticky;top:0;z-index:4}
+.q2t .qadd{border-top:1px dashed #94A3B8;background:#fff;padding:0;display:flex;flex-direction:column;gap:0}
+.qplus{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:8px 10px;border:0;background:none;color:var(--nv);font:600 15px "Fira Sans",sans-serif;text-align:left;cursor:pointer;touch-action:manipulation}
+.qplus:hover{background:#F4F6F9}
+.qpi{width:44px;height:44px;border-radius:50%;border:2px solid var(--nv);display:flex;align-items:center;justify-content:center;font:400 28px/1 "Fira Sans",sans-serif;flex:none;padding-bottom:3px}
+.qplus[aria-expanded="true"] .qpi{background:var(--nv);color:#fff;transform:rotate(45deg)}
+@media(prefers-reduced-motion:no-preference){.qpi{transition:transform .18s,background .15s}}
+.qmenu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:0 10px 12px}
+.btn.qo2{flex-direction:column;gap:2px;height:auto;padding:8px 10px;align-items:flex-start;text-align:left}
+.qo2 b{font-size:15px}.qo2 small{font-size:12px;font-weight:500;color:var(--mut)}
+.qref{display:flex;flex-direction:column;gap:8px;padding:0 10px 12px}
+.q2o .mut{font-style:italic}
+@media(max-width:600px){.qmenu{grid-template-columns:1fr}}
+html.dark .q2t .qadd{background:#162032;border-color:#475569}html.dark .qplus{color:#93c5fd}html.dark .qplus:hover{background:#1b283c}
+html.dark .qpi{border-color:#93c5fd}html.dark .qplus[aria-expanded="true"] .qpi{background:#93c5fd;color:#0b1220}
+html.dark .qo2 small{color:#94a3b8}
