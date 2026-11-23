@@ -15,6 +15,24 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v29
+- **Correo electrónico** del cliente en la orden; se guarda en la base de motos y se completa solo la próxima vez (el reporte de ventas no trae correo: se va juntando con las visitas).
+- **Quién trae la moto**: nombre opcional cuando no es el propietario. Es dato de cada visita (sale en la orden impresa), no se guarda en la base.
+- El campo del cliente se rotula "Cliente (propietario)". `base_motos.csv` puede traer una columna `email` opcional.
+
+## Novedades v28
+- **Base de motos** (hoja `MOTOS_TALLER` en la API del taller, `gas/taller_api.gs` v7): una fila por VIN con cliente, teléfono, dirección, marca, modelo con cilindraje, año, placas, fecha de venta, factura, sucursal y origen (VENTA / TALLER / VENTA+TALLER). Kilometraje y combustible no se guardan: se capturan en cada visita.
+- Al completar el **VIN** se llenan solos los datos vacíos de la orden; al escribir el **teléfono** (10 dígitos) se ofrecen las motos de ese cliente. Lo ya capturado nunca se pisa.
+- Cada orden guardada registra su moto en la base: así entra un cliente al que el grupo no le vendió.
+- Importador en Configuración (solo administrador): acepta el reporte de ventas GCVEN02 en CSV o `base_motos.csv`; se queda con la venta vigente más reciente por VIN y no pisa lo capturado en visitas.
+- La marca de la base manda sobre la de la tabla del VIN; si el VIN completo da una marca inequívoca, corrige la marca capturada. Aviso del VIN en una línea con botones pequeños.
+
+### Puesta en marcha de la base de motos
+1. En Apps Script pega `gas/taller_api.gs` (v7), escribe una clave secreta en `TALLER_CLAVE` (la base se niega sin clave porque trae datos personales), ejecuta `setup()` y publica una nueva versión de la implementación.
+2. En la app: Configuración → escribe la misma clave.
+3. Configuración → Importar base de motos (CSV): sube `base_motos.csv` (historial) y después cada mes el GCVEN02 en CSV.
+4. No subas `base_motos.csv` ni el reporte a este repositorio: contienen datos personales de clientes.
+
 ## Novedades v26
 - Tabla de marcas del Serie / VIN rehecha con el reporte de ventas 2023-2026 (~10,300 motos): **98 % se llena sola y correcta**, 2 % pide elegir y 0.06 % se equivoca.
 - Corrección: `3EF…` y varias series `LFF…` son **Carabela** (no Vento); Vento es `3MU…`. Nuevas marcas: Carabela, Veloci, Islo, Motomel, Kurazai, Atul, Benelli, Hercules.

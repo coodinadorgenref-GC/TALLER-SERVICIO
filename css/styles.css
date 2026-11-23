@@ -432,3 +432,5 @@ html.dark .rsb,html.dark .kp{background:#162032}
 @media(min-width:1100px){
   .u-dk{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start}
 }
+#vinh .btn{display:inline-flex;min-height:30px;height:30px;padding:0 10px;margin:2px 4px;font-size:13px;flex:none;vertical-align:middle}
+#vinh{line-height:2}

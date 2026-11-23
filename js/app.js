@@ -124,10 +124,10 @@ function drawer(o){const e=ETAPAS[idx(o.etapa)],cn=x=>o.chk.filter(c=>c.e===x).l
 const fld=(n,l,p,v,x='')=>`<label class="f s${n}">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
 function dhead(o){autoMarca(o);const rec=o.etapa==='recepcion',ro=(n,l,v)=>`<div class="f s${n}"><span>${l}</span><div class="ro">${v}</div></div>`;
   return`<section class="dhead" aria-label="Datos de la orden">
-  <div class="dz za">${fld(4,'Cliente','cliente',o.cliente)}${fld(2,'Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}
-   ${fld(2,'Marca','marca',o.marca,'list="marcas" autocomplete="off"')}${fld(2,'Modelo','modelo',o.modelo)}${fld(2,'Año','anio',o.anio,'inputmode="numeric"')}
-   ${fld(3,'Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${fld(2,'Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${fld(1,'Km','km',o.km,'inputmode="numeric"')}
-   <div class="mut s6 vinh">${vinH(o)}</div></div>
+  <div class="dz za">${fld(2,'Cliente (propietario)','cliente',o.cliente)}${fld(2,'Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}${fld(2,'Correo electrónico','email',o.email,'type="email" inputmode="email" autocomplete="off" autocapitalize="off"')}
+   ${fld(2,'Marca','marca',o.marca,'list="marcas" autocomplete="off"')}${fld(2,'Modelo','modelo',o.modelo)}${fld(1,'Año','anio',o.anio,'inputmode="numeric"')}${fld(1,'Km','km',o.km,'inputmode="numeric"')}
+   ${fld(2,'Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${fld(2,'Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${fld(2,'Quién trae la moto','trae',o.trae,'placeholder="Vacío = el propietario"')}
+   <div class="mut s6 vinh">${vinH(o)}</div><div class="mut s6 vinb">${vinB(o)}</div><div class="s6 motoSug">${sugH(o)}</div></div>
   <div class="dz zb">${ro(2,'Tipo de servicio',esc(TIPOS[o.tipo]))}${ro(1,'Ingreso',esc(new Date(o.fing).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'})))}
    <label class="f s1">Promesa de entrega<input type="datetime-local" data-p="prom" value="${esc(o.prom||'')}"></label>
    <label class="f s1">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label>
@@ -141,9 +141,9 @@ function foot(o){const n=sig(o),b=n?puede(o,n):'';
   <div class="row">${n?`<button class="btn pri" data-a="sig" data-f="${o.folio}" ${b?'disabled':''}>Siguiente etapa: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div>`}
 
 const gfotos=o=>{const n=nRecep(o);return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n?'g':'w'}">${n?n+(n>1?' fotos':' foto')+' de ingreso':'Faltan fotos de ingreso'}</span></div>${danosH(o)}</div>`};
-function tU(o){autoMarca(o);return`<div class="u-dup"><div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}</div>
+function tU(o){autoMarca(o);return`<div class="u-dup"><div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente (propietario)','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}<div class="g2">${inp('Correo electrónico','email',o.email,'type="email" inputmode="email" autocomplete="off" autocapitalize="off"')}${inp('Quién trae la moto (si no es el propietario)','trae',o.trae,'placeholder="Vacío = la trae el propietario"')}</div><div id="motoSug">${sugH(o)}</div></div>
   <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Marca / fabricante','marca',o.marca,'list="marcas" autocomplete="off"')}<datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist>${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${inp('Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
-  <div class="mut" id="vinh">${vinH(o)}</div>
+  <div class="mut" id="vinh">${vinH(o)}</div><div class="mut" id="vinb">${vinB(o)}</div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
   <label class="f">Motivo de ingreso<textarea data-p="motivo">${esc(o.motivo)}</textarea></label><label class="f">Condiciones en las que se recibe la unidad<textarea data-p="cond">${esc(o.cond)}</textarea></label>
   <div class="mut">Ingreso: ${new Date(o.fing).toLocaleString('es-MX')}${o.ref?' · Orden original: '+esc(o.ref):''}</div></div>
@@ -232,16 +232,99 @@ function vinInfo(v){v=String(v||'').toUpperCase().replace(/\s+/g,'');const r={n:
   if(/[IOQ]/.test(v)||!/^[A-Z0-9]+$/.test(v)){r.mal=true;return r}
   const c=v[9],y=/[1-9]/.test(c)?2000+ +c:VINY.indexOf(c)<0?0:2010+VINY.indexOf(c);r.ok=true;r.anio=y;r.fab=WMI[v.slice(0,8)]||WMI[v.slice(0,6)]||WMI[v.slice(0,3)]||'';if(!r.fab)r.amb=VINA[v.slice(0,3)]||null;
   if(!y||y>new Date().getFullYear()+1)r.anio=0;return r}
-function autoMarca(o){if(String(o.marca||'').trim())return;const f=vinInfo(o.vin).fab;if(f){o.marca=f;o.marcaAuto=true}}
+function autoMarca(o){if(String(o.marca||'').trim())return;const f=(MOTOS.cache[o.vin]||{}).marca||vinInfo(o.vin).fab;if(f){o.marca=f;o.marcaAuto=true}}
 function vinH(o){const r=vinInfo(o.vin);if(!r.n)return'';
   if(r.ebike)return`Serie de e-bike (${r.tipo}): no incluye año · marca <b>E-Bike</b>.`;
   if(r.n<17)return`Serie de ${r.n}/17 caracteres: al completarla se detectan año y marca.`;
   if(r.mal)return`${IC.at} La serie tiene caracteres no válidos (el VIN no usa I, O ni Q): revísala.`;
   if(!r.anio)return`${IC.at} No se pudo leer el año en la posición 10 de la serie: revísala o captura el año a mano.`;
-  const dif=Number(o.anio)!==r.anio,mc=String(o.marca||'').trim();
-  const btn=m=>`<button type="button" class="btn sm" data-a="vinmarca" data-m="${m}">Usar ${m}</button>`;
-  const fb=r.fab?' · fabricante <b>'+esc(r.fab)+'</b>'+(mc&&mc!==r.fab?` · la marca capturada (${esc(mc)}) no coincide. ${btn(r.fab)}`:''):r.amb?(mc&&r.amb.includes(mc)?' · marca <b>'+esc(mc)+'</b>':' · esta fábrica arma motos de varias marcas ('+r.amb.join(', ')+'): elige la marca '+r.amb.map(btn).join(' ')):' · fabricante no reconocido (captura la marca a mano)';
-  return`Según la serie: año <b>${r.anio}</b>${fb}${dif?` ${o.anio?'· el año capturado ('+esc(o.anio)+') no coincide. ':''}<button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:' · coincide con el año capturado.'}`}
+  const dif=Number(o.anio)!==r.anio,mc=String(o.marca||'').trim(),fab=(MOTOS.cache[o.vin]||{}).marca||r.fab;
+  const btn=(m,t)=>`<button type="button" class="btn sm" data-a="vinmarca" data-m="${m}">${t||'Usar '+m}</button>`;
+  const pa=dif?`año <b>${r.anio}</b>${o.anio?` (capturaste ${esc(o.anio)})`:''} <button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:`año <b>${r.anio}</b> ✓`;
+  const pm=fab?(mc&&mc!==fab?`marca <b>${esc(fab)}</b> (capturaste ${esc(mc)}) ${btn(fab)}`:`marca <b>${esc(fab)}</b> ✓`):r.amb?(mc&&r.amb.includes(mc)?`marca <b>${esc(mc)}</b> ✓`:`marca: esta fábrica arma varias (${r.amb.join(', ')}), elige ${r.amb.map(m=>btn(m,m)).join(' ')}`):'marca no reconocida: captúrala a mano';
+  return`Según la serie: ${pa} · ${pm}`}
+// ---- Base de motos (hoja MOTOS_TALLER de la API del taller) ----
+// Al completar el VIN o el teléfono se busca la moto y se llenan los datos que estén vacíos. km y combustible nunca se llenan: se capturan en cada visita.
+const MOTOS={cache:{},sug:null,tt:0,aviso:false};
+const nTel=t=>{let d=String(t||'').replace(/\D/g,'');if(d.length===12&&d.startsWith('52'))d=d.slice(2);return d};
+const motoErr=r=>{const m=(r&&r.message)||'';return /desconocida/i.test(m)?'viejo':/clave/i.test(m)?'clave':'error'};
+function avisaMotos(k){if(MOTOS.aviso||k==='error')return;MOTOS.aviso=true;toast(k==='viejo'?'La base de motos necesita actualizar el script del taller (v7)':'La base de motos pide la clave del taller: defínela en el script y en Configuración')}
+const motoH=(m,f)=>`✓ Moto en la base${String(m.origen||'').includes('VENTA')?' (vendida'+(m.fecha_venta?' el '+fechaMx(m.fecha_venta):'')+(m.sucursal_venta?' · '+esc(m.sucursal_venta):'')+')':' (registrada en el taller)'}${f&&f.length?' · se completó: '+f.join(', '):''}`;
+const vinB=o=>{const m=MOTOS.cache[o.vin];return m?motoH(m):''};
+const sugH=o=>{const s=MOTOS.sug;if(!o||o.vin||!s||s.tel!==nTel(o.tel)||!s.motos.length)return'';
+  return'<div class="mut">Motos de este cliente en la base (toca una para completar):</div>'+s.motos.map((m,k)=>`<button type="button" class="btn" style="justify-content:flex-start;text-align:left" data-a="usamoto" data-i="${k}"><span>${esc(m.marca)} ${esc(m.modelo)}${m.anio?' · '+esc(m.anio):''}<br><small class="fol">${esc(m.vin)}${m.placas?' · '+esc(m.placas):''}</small></span></button>`).join('')};
+const pintaSug=()=>{const o=D&&O(D);document.querySelectorAll('#motoSug,.motoSug').forEach(el=>el.innerHTML=sugH(o))};
+// Llena solo lo vacío (cliente, teléfono, dirección, modelo, placas). La marca y el año de la base mandan sobre los de la tabla del VIN.
+function llenaMoto(o,m){const f=[],q=k=>({set value(v){document.querySelectorAll('[data-p="'+k+'"]').forEach(e=>e.value=v)}}),
+  pon=(k,v,rot)=>{v=String(v||'').trim();if(!v||String(o[k]||'').trim())return;o[k]=v;f.push(rot);const el=q(k);if(el)el.value=v};
+  pon('cliente',m.cliente,'cliente');pon('tel',m.tel,'teléfono');pon('email',m.email,'correo');pon('dir',[m.direccion,m.ciudad].filter(Boolean).join(', '),'dirección');pon('modelo',m.modelo,'modelo');pon('placas',m.placas,'placas');
+  if(m.marca&&o.marca!==m.marca){o.marca=m.marca;o.marcaAuto=true;f.push('marca');const el=q('marca');if(el)el.value=m.marca}
+  if(m.anio&&String(o.anio)!==String(m.anio)&&(!String(o.anio||'').trim()||o.anioAuto)){o.anio=String(m.anio);o.anioAuto=true;f.push('año');const el=q('anio');if(el)el.value=o.anio}
+  return f}
+async function buscaMotoVin(o){const vin=o.vin,r0=vinInfo(vin);if(!(r0.ok||r0.ebike))return;
+  let m=MOTOS.cache[vin];
+  if(!m){let r=null;try{r=await api.taller({action:'buscarVin',vin})}catch{}
+    if(!r)return;if(!r.success){avisaMotos(motoErr(r));return}
+    m=r.moto;if(m)MOTOS.cache[vin]=m}
+  if(!D||O(D)!==o||o.vin!==vin)return;                 // la orden o el VIN cambiaron mientras llegaba la respuesta
+  const vbs=document.querySelectorAll('#vinb,.vinb');
+  if(!m){vbs.forEach(vb=>vb.textContent='');return}
+  const f=llenaMoto(o,m);if(f.length)touch(o);
+  document.querySelectorAll('#vinh,.vinh').forEach(vh=>vh.innerHTML=vinH(o));vbs.forEach(vb=>vb.innerHTML=motoH(m,f))}
+async function buscaMotosTel(o,tel){let r=null;try{r=await api.taller({action:'buscarMotos',campo:'tel',q:tel})}catch{}
+  if(!r)return;if(!r.success){avisaMotos(motoErr(r));return}
+  if(!D||O(D)!==o||nTel(o.tel)!==tel)return;
+  MOTOS.sug={tel,motos:r.motos||[]};pintaSug()}
+// ---- Importar el reporte de ventas (GCVEN02 en CSV) o la base ya preparada (base_motos.csv) ----
+const NMARCA={CARABELA:'Carabela',VENTO:'Vento',BAJAJ:'Bajaj',SUZUKI:'Suzuki',VELOCI:'Veloci',ISLO:'Islo',HAOJUE:'Haojue',HERCULES:'Hercules',MOTOMEL:'Motomel',KURAZAI:'Kurazai',ATUL:'Atul',BENELLI:'Benelli','E-BIKES':'E-Bike',TRECKMOTORS:'Treckmotors'};
+const COLORES=new Set('ROJO ROJA NEGRO NEGRA AZUL BLANCO BLANCA GRIS PLATA NARANJA VERDE AMARILLO AMARILLA TITANIO GRAFITO PURPURA MORADO MORADA DORADO DORADA CAFE BEIGE VINO MATE METALIZADO METALIZADA METALICO METALICA BICOLOR CELESTE ROSA AQUA MARINO PERLA ARENA OLIVO'.split(' '));
+// Modelo con cilindraje y año a partir del nombre del producto: "MOTOCICLETA CARABELA HUNTER 125CC ROJO 2026" → HUNTER 125CC · 2026.
+function modeloDe(prod,marca){let q=String(prod||'').replace(/\s+/g,' ').trim().toUpperCase().replace(/^(MOTOCICLETA|MOTOCARRO(?: DE CARGA)?|BICICLETA ELECTRICA)\s+/,'');const M=String(marca||'').toUpperCase();
+  if(M&&q.startsWith(M+' '))q=q.slice(M.length+1);if(M==='HERCULES')q=q.replace(/\bHERCULES\b/g,'').trim();else if(q.startsWith('HERCULES '))q=q.slice(9);
+  const yrs=q.match(/\b20\d\d\b/g),cc=/(\d{2,3}(?:\.\d)?)\s?CC\b/.exec(q);let modelo;
+  if(cc){const antes=q.slice(0,cc.index).replace(/\b(4T|2T|1CIL|2CIL)\b/g,'').trim().replace(/\bHC-\s*$/,'').trim().replace(/\s+/g,' '),desp=q.slice(cc.index+cc[0].length).trim().split(' ').filter(Boolean);
+    if(M==='SUZUKI'||M==='HAOJUE')modelo=((desp[0]?desp[0]+' ':'')+cc[1]+'CC').trim();
+    else{const v=[];for(const t of desp){if(COLORES.has(t)||COLORES.has(t.replace(/,$/,''))||/^20\d\d$/.test(t)||/^\d\dD$/.test(t)||t.includes('/'))break;v.push(t)}modelo=(antes+' '+cc[1]+'CC'+(v.length?' '+v.join(' '):'')).trim()}}
+  else modelo=q.split(' ').filter(w=>w&&!COLORES.has(w)&&!/^20\d\d$/.test(w)&&!/^\d\dD$/.test(w)).join(' ');
+  return{modelo,anio:yrs?+yrs[yrs.length-1]:0}}
+function csvFilas(t,fn){let i=t.charCodeAt(0)===0xFEFF?1:0,row=[],f='',q=false;const n=t.length;
+  for(;i<n;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;
+    else if(c===','){row.push(f);f=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';fn(row);row=[]}
+    else f+=c}
+  if(f!==''||row.length){row.push(f);fn(row)}}
+function motosDeCsv(txt){const out=new Map(),nr=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();let modo=null,ix={};
+  const col=(h,n)=>h.indexOf(n),g=(r,k)=>String(r[ix[k]]===undefined?'':r[ix[k]]).trim();
+  const tel=v=>{const d=nTel(v);return d.length===10?d:''};
+  csvFilas(txt,r=>{
+    if(!modo){const h=r.map(nr);
+      if(h.includes('SERIE')&&h.includes('FAMILIA')){modo='raw';['FAMILIA','PRODUCTO','MARCA','SERIE','FECHA','FACTURA','SUCURSAL','CVE_CLIENTE','CLIENTE','TELEFONO','DIRECCION','CIUDAD','DEVOLUCION'].forEach(k=>ix[k]=col(h,k))}
+      else if(h.includes('VIN')&&h.includes('CLIENTE')){modo='base';['VIN','CLIENTE','TEL','EMAIL','DIRECCION','CIUDAD','MARCA','MODELO','ANIO','PLACAS','FECHA_VENTA','FACTURA','SUCURSAL_VENTA','CVE_CLIENTE'].forEach(k=>ix[k]=col(h,k))}
+      return}
+    if(modo==='base'){const vin=nr(g(r,'VIN')).replace(/\s+/g,'');if(vin.length<8)return;
+      out.set(vin,{vin,cliente:g(r,'CLIENTE'),tel:tel(g(r,'TEL')),email:g(r,'EMAIL'),direccion:g(r,'DIRECCION'),ciudad:g(r,'CIUDAD'),marca:g(r,'MARCA'),modelo:g(r,'MODELO'),anio:g(r,'ANIO'),placas:g(r,'PLACAS'),fecha_venta:g(r,'FECHA_VENTA'),factura:g(r,'FACTURA'),sucursal_venta:g(r,'SUCURSAL_VENTA'),cve_cliente:g(r,'CVE_CLIENTE')});return}
+    if(!/MOTOCICLETAS|MOTOCARROS/.test(nr(g(r,'FAMILIA'))))return;
+    const vin=nr(g(r,'SERIE')).replace(/\s+/g,'');if(vin.length!==17||nr(g(r,'DEVOLUCION'))==='CANCELACION')return;
+    const fm=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(g(r,'FECHA')),fecha=fm?fm[3]+'-'+fm[2].padStart(2,'0')+'-'+fm[1].padStart(2,'0'):'',prev=out.get(vin);
+    if(prev&&prev.fecha_venta>fecha)return;                 // se queda la venta vigente más reciente (refacturaciones)
+    const mar=nr(g(r,'MARCA')),marca=NMARCA[mar]||(mar?mar[0]+mar.slice(1).toLowerCase():''),md=modeloDe(g(r,'PRODUCTO'),mar);
+    out.set(vin,{vin,cliente:g(r,'CLIENTE'),tel:tel(g(r,'TELEFONO')),direccion:g(r,'DIRECCION'),ciudad:g(r,'CIUDAD'),marca,modelo:md.modelo,anio:String(md.anio||vinInfo(vin).anio||''),placas:'',fecha_venta:fecha,factura:g(r,'FACTURA'),sucursal_venta:g(r,'SUCURSAL'),cve_cliente:g(r,'CVE_CLIENTE')})});
+  return[...out.values()]}
+async function importaMotos(file){if(!file)return;const st=$('#impst'),msg=t=>{if(st)st.textContent=t};
+  try{msg('Leyendo archivo…');const buf=await file.arrayBuffer();let txt;
+    try{txt=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch{txt=new TextDecoder('windows-1252').decode(buf)}
+    const filas=motosDeCsv(txt);
+    if(!filas.length){msg('No encontré motos con serie de 17 caracteres. Sube el reporte GCVEN02 en CSV o base_motos.csv.');return}
+    let nue=0,act=0,omi=0;
+    for(let i=0;i<filas.length;i+=1500){msg('Subiendo '+Math.min(i+1500,filas.length)+' de '+filas.length+'…');
+      const r=await api.taller({action:'importarMotos',filas:filas.slice(i,i+1500)});
+      if(!r||!r.success){const k=motoErr(r);msg(k==='viejo'?'Actualiza el script del taller a la v7 y vuelve a intentar.':k==='clave'?'Define TALLER_CLAVE en el script y escribe la misma en Configuración de la app.':'No se pudo subir: '+((r&&r.message)||'sin respuesta'));return}
+      nue+=r.nuevas;act+=r.actualizadas;omi+=r.omitidas}
+    MOTOS.cache={};msg('Listo: '+nue+' nuevas, '+act+' actualizadas, '+omi+' omitidas ('+filas.length+' motos en el archivo).');toast('Base de motos importada')}
+  catch(e){msg('No se pudo leer el archivo: '+String(e&&e.message||e))}}
+// ---- fin base de motos ----
 const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignación en taller</div><p class="mut" style="margin:0">El técnico se asigna al pasar la orden a Taller.</p></div>`:`<div class="card"><div class="h">Asignación en taller</div>${inp('Técnico asignado','mec',o.mec,'list="mecs"')}<datalist id="mecs">${[...new Set(S.orders.map(x=>x.mec).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist></div>`;
 const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor)}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div><datalist id="asr">${[...new Set(S.orders.map(x=>x.asesorRef).filter(Boolean))].map(m=>`<option value="${esc(m)}">`).join('')}</datalist>
   <div class="sbh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
@@ -319,6 +402,8 @@ function sheet(h){$('#modal').innerHTML=`<div class="ov" data-a="cerrar"><div cl
 const tipoBtns=(a,x='')=>Object.entries(TIPOS).map(([k,v])=>`<button class="btn" data-a="${a}" data-t="${k}" ${x}><span class="fol">${k}</span> ${v}</button>`).join('');
 function setPath(o,p,v){const a=p.split('.');let r=o;for(let i=0;i<a.length-1;i++){if(r[a[i]]==null)r[a[i]]={};r=r[a[i]]}r[a[a.length-1]]=v}
 const acts={
+ usamoto:d=>{const o=D&&O(D),m=MOTOS.sug&&MOTOS.sug.motos[+d.i];if(!o||!m)return;o.vin=m.vin;MOTOS.cache[m.vin]=m;llenaMoto(o,m);const r=vinInfo(o.vin);if(r.anio&&!String(o.anio||'').trim()){o.anio=String(r.anio);o.anioAuto=true}touch(o);renderDrawer()},
+ impmotos:()=>{const f=$('#fmotos');if(f)f.click()},
  vinanio:d=>{const o=O(D);o.anio=String(d.y);o.anioAuto=true;touch(o);renderDrawer()},
  vinmarca:d=>{const o=O(D);o.marca=d.m;delete o.marcaAuto;touch(o);renderDrawer()},
  bdel:d=>{const o=O(D),f=o.fotos[d.foto],u=f&&(f.u||'');if(u&&!u.startsWith('data:'))(o.rmf=o.rmf||[]).push(u);delete o.fotos[d.foto];touch(o);renderDrawer()},
@@ -388,12 +473,12 @@ const acts={
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
  fin:()=>{const o=O(D);o.t.acum=ms(o);o.t.ini=null;touch(o);renderDrawer();renderMain();toast('Tiempo real: '+hms(o.t.acum)+(est(o)?' · estándar '+est(o)+' min':''))},
- clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
+ clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
  print:()=>imprimir(O(D)),
  sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+o.prox.km+' km)':''}. ¿Te agendamos una cita en ${o.suc}?`)},
  sgre:async d=>{const o=O(d.f),l=o.lineas[+d.i],v=await ask({t:'Nueva fecha de seguimiento',input:'Fecha',type:'date',def:l.seg||addD(15),ok:'Guardar'});if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
- sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
- sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio})},
+ sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
+ sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio})},
  sgx:d=>{const o=O(d.f);if(d.k==='l')o.lineas[+d.i].cerr=true;else o.prox.cerr=true;touch(o);renderMain()},
  cfg:()=>{const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG();
   sheet(`<div class="h">Configuración</div>
@@ -404,6 +489,7 @@ const acts={
 <div class="cfg-g">Cuenta y versión</div>
 <div class="mut">Pendientes de sincronizar: ${S.dirty.length}</div><div class="mut">${S.inv.length?S.inv.length+' productos en el catálogo':'Sin catálogo cargado'}</div>
 <div class="mut">Identificador de versión</div><div class="ver">${esc(APP_BUILD)}</div>
+${adminReal()?`<div class="cfg-g">Base de motos</div><div class="mut">Sube el reporte de ventas GCVEN02 en CSV (o base_motos.csv). Solo entran motos con serie de 17 caracteres y venta vigente; lo que el taller ya capturó en visitas no se pisa.</div><button class="btn" data-a="impmotos">Importar base de motos (CSV)</button><input type="file" id="fmotos" accept=".csv,text/csv" hidden><div class="mut" id="impst"></div>`:''}
 <button class="btn" data-a="catup">Actualizar catálogo</button>
 <button class="btn" data-a="recarga">Forzar recarga (limpiar caché de esta pestaña)</button>
 <button class="btn red" data-a="salir">Cerrar sesión</button>`)},
@@ -430,11 +516,13 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.dataset.p){setPath(o,t.dataset.p,t.hasAttribute('data-n')?(parseFloat(String(t.value).replace(',','.'))||0):t.value);touch(o);
    if(t.dataset.p.startsWith('lineas.')){const i=t.dataset.p.split('.')[1],el=$('#imp-'+i);if(el&&o.lineas[i])el.textContent=money(imp(o.lineas[i]));const tt=$('#tot');if(tt)tt.innerHTML=totH(o)}}
   if(t.dataset.p==='vin'){const r=vinInfo(o.vin);
-   if(r.ok&&r.anio&&(!o.anio||o.anioAuto)){o.anio=String(r.anio);o.anioAuto=true;const ai=document.querySelector('[data-p="anio"]');if(ai)ai.value=o.anio}
-   else if(!(r.ok&&r.anio)&&o.anioAuto){o.anio='';delete o.anioAuto;const ai=document.querySelector('[data-p="anio"]');if(ai)ai.value=''}
-   if(r.fab&&(!o.marca||o.marcaAuto)){o.marca=r.fab;o.marcaAuto=true;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=o.marca}
-   else if(!r.fab&&o.marcaAuto){o.marca='';delete o.marcaAuto;const mi=document.querySelector('[data-p="marca"]');if(mi)mi.value=''}
-   touch(o);document.querySelectorAll('#vinh,.vinh').forEach(vh=>vh.innerHTML=vinH(o))}
+   if(r.ok&&r.anio&&(!o.anio||o.anioAuto)){o.anio=String(r.anio);o.anioAuto=true;document.querySelectorAll('[data-p="anio"]').forEach(ai=>ai.value=o.anio)}
+   else if(!(r.ok&&r.anio)&&o.anioAuto){o.anio='';delete o.anioAuto;document.querySelectorAll('[data-p="anio"]').forEach(ai=>ai.value='')}
+   const fb=(MOTOS.cache[o.vin]||{}).marca||r.fab;
+   if(fb){if(o.marca!==fb){o.marca=fb;document.querySelectorAll('[data-p="marca"]').forEach(mi=>mi.value=o.marca)}o.marcaAuto=true}
+   else if(!fb&&o.marcaAuto){o.marca='';delete o.marcaAuto;document.querySelectorAll('[data-p="marca"]').forEach(mi=>mi.value='')}
+   touch(o);document.querySelectorAll('#vinh,.vinh').forEach(vh=>vh.innerHTML=vinH(o));document.querySelectorAll('#vinb,.vinb').forEach(vb=>vb.innerHTML=vinB(o));buscaMotoVin(o)}
+  if(t.dataset.p==='tel'&&!o.vin){clearTimeout(MOTOS.tt);const tl=nTel(o.tel);if(tl.length===10)MOTOS.tt=setTimeout(()=>buscaMotosTel(o,tl),350);else{MOTOS.sug=null;pintaSug()}}
   if(t.dataset.c){o.chk[+t.dataset.c].n=t.value;touch(o)}
   if(t.id==='q2'){const s=t.value.toLowerCase();sug=s.length<2?[]:S.inv.filter(i=>(i.sku+' '+i.nombre).toLowerCase().includes(s)).slice(0,6);
    const os=O(D)&&O(D).suc;$('#sug').innerHTML=sug.map((i,k)=>{const st=stockDe(i,os);return`<button class="btn sg" data-a="add" data-i="${k}"><span class="sd"><b>${esc(i.nombre)}</b><small class="fol">${esc(i.sku)}</small></span><span class="sp"><b class="fol">${money(precioDe(i))}</b><small>${pIva(i)==null?'verifica IVA':'IVA incl.'}</small></span>${st?`<span class="ex ${st.n>0?'ok':'no'}">${st.n>0?st.n+' pzas':'Sin existencia'}</span>`:''}</button>`}).join('')||(s.length>1?'<div class="mut">Sin resultados. Conecta el catálogo en Configuración o agrega un concepto manual.</div>':'')}});
@@ -443,6 +531,7 @@ document.addEventListener('change',async e=>{const t=e.target;
   if(t.dataset&&t.dataset.sku!=null){const o=O(D),l=o&&o.lineas[+t.dataset.sku];if(l){const v=t.value.trim(),it=v&&S.inv.find(x=>nSku(x.sku)===nSku(v));l.sku=v;
     if(it){l.desc=it.nombre;l.pc=precioDe(it);l.pf=pIva(it)==null;l.precio=l.pc;toast('Precio de catálogo aplicado (IVA incluido)','ok')}else if(v)toast('SKU no encontrado en el catálogo: pon el precio a mano','inf');
     touch(o);renderDrawer()}return}
+  if(t.id==='fmotos'){const f=t.files[0];t.value='';importaMotos(f);return}
   if(t.id==='ftipo'){ft=t.value;renderMain();return}
   if(t.dataset&&t.dataset.rp){rp[t.dataset.rp]=t.value;renderMain();return}
   if(t.dataset.ag){agf[t.dataset.ag]=t.value;renderMain();return}
@@ -536,7 +625,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v27 · 21-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v29 · 22-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
