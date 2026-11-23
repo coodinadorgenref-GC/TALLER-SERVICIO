@@ -15,6 +15,10 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v37
+- **Cotización**: Identificado (subtotal), Autorizado (a cobrar, resaltado como total), Garantía, Pendiente y Rechazado / diferido ahora son el pie de la misma tabla, alineados bajo la columna Importe, en lugar de una barra aparte.
+- **Faltan datos del vehículo**: cuando aparece ese aviso, el borde de cada campo que falta (Marca, Modelo, Año, Serie / VIN, Km, Combustible) se marca en rojo y se quita al capturarlo. El aviso de abajo y el botón Siguiente también se actualizan al momento, sin tener que salir del campo.
+
 ## Novedades v36
 - **Serie / VIN**: círculo verde con paloma junto al rótulo cuando ya se capturaron los 17 caracteres. Al dar clic o entrar al campo, o al presionar Enter, se vuelven a traer todos los datos de la serie (año, marca, modelo) y de la base de motos (cliente, teléfono, dirección, fecha de compra...).
 - Se quitó la tarjeta **Hoja multipuntos** de Inspección (contador de revisados, botón Todo OK y leyenda de colores); los puntos de revisión siguen igual.
