@@ -15,7 +15,7 @@ const H = {
   CONFIG_TALLER: ['clave','valor','actualizado'],
   // Una fila por moto (VIN). origen: VENTA (la vendió el grupo), TALLER (se registró en una orden) o VENTA+TALLER.
   // km y combustible NO van aquí: se capturan en cada visita. fecha_venta queda lista para validar garantías.
-  MOTOS_TALLER: ['vin','cliente','tel','direccion','ciudad','marca','modelo','anio','placas','fecha_venta','factura','sucursal_venta','cve_cliente','origen','actualizado']
+  MOTOS_TALLER: ['vin','cliente','tel','email','direccion','ciudad','marca','modelo','anio','placas','fecha_venta','factura','sucursal_venta','cve_cliente','origen','actualizado']
 };
 function setup() { Object.keys(H).forEach(function (n) { sheet_(n); }); }
 function sheet_(n) {
@@ -175,10 +175,11 @@ function guardarConfig_(k, v) {
 
 // ---------- Base de motos (MOTOS_TALLER) ----------
 var MOTO_CAMPOS_VENTA = ['fecha_venta', 'factura', 'sucursal_venta', 'cve_cliente'];
-var MOTO_CAMPOS_PERSONA = ['cliente', 'tel', 'direccion', 'ciudad', 'marca', 'modelo', 'anio', 'placas'];
+var MOTO_CAMPOS_PERSONA = ['cliente', 'tel', 'email', 'direccion', 'ciudad', 'marca', 'modelo', 'anio', 'placas'];
 function nVin_(v) { return String(v || '').toUpperCase().replace(/\s+/g, ''); }
 function nPlacas_(v) { return String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
 function nTel_(v) { var d = String(v || '').replace(/\D/g, ''); if (d.length === 12 && d.indexOf('52') === 0) d = d.slice(2); return d; }
+function nEmail_(v) { var e = String(v || '').trim().toLowerCase(); return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e) && e.length <= 120 ? e : ''; }
 function txt_(v) { return String(v === null || v === undefined ? '' : v).replace(/\s+/g, ' ').trim().slice(0, 200); }
 function motoObj_(r) { var o = {}; H.MOTOS_TALLER.forEach(function (k, i) { o[k] = r[i] === null || r[i] === undefined ? '' : String(r[i]); }); return o; }
 function motoFila_(o) { return H.MOTOS_TALLER.map(function (k) { return o[k] === undefined || o[k] === null ? '' : o[k]; }); }
@@ -204,7 +205,7 @@ function buscarVin_(vin) {
 }
 // Busca por teléfono (10 dígitos) o por placas. Devuelve hasta 8 motos, la venta más reciente primero.
 function buscarMotos_(campo, q) {
-  var col = campo === 'placas' ? 9 : campo === 'tel' ? 3 : 0;
+  var col = campo === 'placas' ? H.MOTOS_TALLER.indexOf('placas') + 1 : campo === 'tel' ? H.MOTOS_TALLER.indexOf('tel') + 1 : 0;
   if (!col) return { success: false, message: 'Campo inválido' };
   q = campo === 'tel' ? nTel_(q) : nPlacas_(q);
   if (q.length < (campo === 'tel' ? 10 : 4)) return { success: true, motos: [] };
@@ -225,7 +226,7 @@ function importarMotos_(filas) {
   var nuevas = [], cambiadas = {}, ahora = new Date().toISOString(), nNue = 0, nAct = 0, omit = 0;
   filas.forEach(function (f) {
     var vin = nVin_(f.vin); if (vin.length < 8) { omit++; return; }
-    var inc = { vin: vin, cliente: txt_(f.cliente), tel: nTel_(f.tel), direccion: txt_(f.direccion), ciudad: txt_(f.ciudad), marca: txt_(f.marca), modelo: txt_(f.modelo), anio: txt_(f.anio), placas: nPlacas_(f.placas),
+    var inc = { vin: vin, cliente: txt_(f.cliente), tel: nTel_(f.tel), email: nEmail_(f.email), direccion: txt_(f.direccion), ciudad: txt_(f.ciudad), marca: txt_(f.marca), modelo: txt_(f.modelo), anio: txt_(f.anio), placas: nPlacas_(f.placas),
       fecha_venta: txt_(f.fecha_venta), factura: txt_(f.factura), sucursal_venta: txt_(f.sucursal_venta), cve_cliente: txt_(f.cve_cliente) };
     var i = idx[vin];
     if (i === undefined) {
@@ -248,17 +249,17 @@ function importarMotos_(filas) {
   if (nuevas.length) escribirMotos_(s, 2 + data.length, nuevas.map(motoFila_));
   return { success: true, nuevas: nNue, actualizadas: nAct, omitidas: omit, total: data.length + nuevas.length };
 }
-// Cada orden guardada deja (o completa) su moto en la base: cliente, teléfono, dirección, marca, modelo, año y placas. km y combustible no.
+// Cada orden guardada deja (o completa) su moto en la base: cliente, teléfono, correo, dirección, marca, modelo, año y placas. km, combustible y quién trae la moto no (son de cada visita).
 function registrarMotoDeOrden_(o) {
   var vin = nVin_(o.vin); if (vin.length < 8) return;
   var s = sheet_('MOTOS_TALLER'), f = filaDeVin_(s, vin), ahora = new Date().toISOString();
-  var inc = { cliente: txt_(o.cliente), tel: nTel_(o.tel), direccion: txt_(o.dir), marca: txt_(o.marca), modelo: txt_(o.modelo), anio: txt_(o.anio), placas: nPlacas_(o.placas) };
+  var inc = { cliente: txt_(o.cliente), tel: nTel_(o.tel), email: nEmail_(o.email), direccion: txt_(o.dir), marca: txt_(o.marca), modelo: txt_(o.modelo), anio: txt_(o.anio), placas: nPlacas_(o.placas) };
   if (f < 0) {
-    var nu = { vin: vin, cliente: inc.cliente, tel: inc.tel, direccion: inc.direccion, ciudad: '', marca: inc.marca, modelo: inc.modelo, anio: inc.anio, placas: inc.placas, fecha_venta: '', factura: '', sucursal_venta: '', cve_cliente: '', origen: 'TALLER', actualizado: ahora };
+    var nu = { vin: vin, cliente: inc.cliente, tel: inc.tel, email: inc.email, direccion: inc.direccion, ciudad: '', marca: inc.marca, modelo: inc.modelo, anio: inc.anio, placas: inc.placas, fecha_venta: '', factura: '', sucursal_venta: '', cve_cliente: '', origen: 'TALLER', actualizado: ahora };
     escribirMotos_(s, s.getLastRow() + 1, [motoFila_(nu)]); return;
   }
   var old = motoObj_(s.getRange(f, 1, 1, H.MOTOS_TALLER.length).getValues()[0]);
-  ['cliente', 'tel', 'marca', 'modelo', 'anio', 'placas'].forEach(function (k) { if (inc[k]) old[k] = inc[k]; });
+  ['cliente', 'tel', 'email', 'marca', 'modelo', 'anio', 'placas'].forEach(function (k) { if (inc[k]) old[k] = inc[k]; });
   // La app arma la dirección como "dirección, ciudad": si no la cambiaron, se deja tal cual está en la base.
   var dirBase = [old.direccion, old.ciudad].filter(function (x) { return x; }).join(', ');
   if (inc.direccion && inc.direccion !== dirBase) { old.direccion = inc.direccion; old.ciudad = ''; }

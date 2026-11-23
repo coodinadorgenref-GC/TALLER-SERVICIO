@@ -121,7 +121,7 @@ function foot(o){const n=sig(o),b=n?puede(o,n):'';
   <div class="row">${n?`<button class="btn pri" data-a="sig" data-f="${o.folio}" ${b?'disabled':''}>Siguiente etapa: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div>`}
 
 const gfotos=o=>{const n=nRecep(o);return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n?'g':'w'}">${n?n+(n>1?' fotos':' foto')+' de ingreso':'Faltan fotos de ingreso'}</span></div>${danosH(o)}</div>`};
-function tU(o){autoMarca(o);return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}<div id="motoSug">${sugH(o)}</div></div>
+function tU(o){autoMarca(o);return`<div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente (propietario)','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}<div class="g2">${inp('Correo electrónico','email',o.email,'type="email" inputmode="email" autocomplete="off" autocapitalize="off"')}${inp('Quién trae la moto (si no es el propietario)','trae',o.trae,'placeholder="Vacío = la trae el propietario"')}</div><div id="motoSug">${sugH(o)}</div></div>
   <div class="card"><div class="h">Datos del vehículo</div><div class="g2">${inp('Marca / fabricante','marca',o.marca,'list="marcas" autocomplete="off"')}<datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist>${inp('Modelo','modelo',o.modelo)}${inp('Año','anio',o.anio,'inputmode="numeric"')}${inp('Serie / VIN','vin',o.vin,'autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="17" style="text-transform:uppercase"')}${inp('Placas','placas',o.placas,'autocapitalize="characters" autocomplete="off" spellcheck="false" style="text-transform:uppercase"')}${inp('Motor','motor',o.motor)}${inp('Kilometraje','km',o.km,'inputmode="numeric"')}<label class="f">Combustible<select data-p="comb">${['','Reserva','1/4','1/2','3/4','Lleno'].map(x=>`<option ${o.comb===x?'selected':''}>${x}</option>`).join('')}</select></label></div>
   <div class="mut" id="vinh">${vinH(o)}</div><div class="mut" id="vinb">${vinB(o)}</div>
   <div class="mut">¿Es garantía?</div><div class="seg" style="max-width:240px"><button class="${o.gar?'s-ok':''}" data-a="gar" data-k="1" aria-pressed="${!!o.gar}">Sí</button><button class="${!o.gar?'s-nr':''}" data-a="gar" data-k="0" aria-pressed="${!o.gar}">No</button></div>
@@ -191,7 +191,7 @@ const pintaSug=()=>{const el=$('#motoSug'),o=D&&O(D);if(el)el.innerHTML=sugH(o)}
 // Llena solo lo vacío (cliente, teléfono, dirección, modelo, placas). La marca y el año de la base mandan sobre los de la tabla del VIN.
 function llenaMoto(o,m){const f=[],q=k=>document.querySelector('[data-p="'+k+'"]'),
   pon=(k,v,rot)=>{v=String(v||'').trim();if(!v||String(o[k]||'').trim())return;o[k]=v;f.push(rot);const el=q(k);if(el)el.value=v};
-  pon('cliente',m.cliente,'cliente');pon('tel',m.tel,'teléfono');pon('dir',[m.direccion,m.ciudad].filter(Boolean).join(', '),'dirección');pon('modelo',m.modelo,'modelo');pon('placas',m.placas,'placas');
+  pon('cliente',m.cliente,'cliente');pon('tel',m.tel,'teléfono');pon('email',m.email,'correo');pon('dir',[m.direccion,m.ciudad].filter(Boolean).join(', '),'dirección');pon('modelo',m.modelo,'modelo');pon('placas',m.placas,'placas');
   if(m.marca&&o.marca!==m.marca){o.marca=m.marca;o.marcaAuto=true;f.push('marca');const el=q('marca');if(el)el.value=m.marca}
   if(m.anio&&String(o.anio)!==String(m.anio)&&(!String(o.anio||'').trim()||o.anioAuto)){o.anio=String(m.anio);o.anioAuto=true;f.push('año');const el=q('anio');if(el)el.value=o.anio}
   return f}
@@ -235,10 +235,10 @@ function motosDeCsv(txt){const out=new Map(),nr=s=>String(s||'').normalize('NFD'
   csvFilas(txt,r=>{
     if(!modo){const h=r.map(nr);
       if(h.includes('SERIE')&&h.includes('FAMILIA')){modo='raw';['FAMILIA','PRODUCTO','MARCA','SERIE','FECHA','FACTURA','SUCURSAL','CVE_CLIENTE','CLIENTE','TELEFONO','DIRECCION','CIUDAD','DEVOLUCION'].forEach(k=>ix[k]=col(h,k))}
-      else if(h.includes('VIN')&&h.includes('CLIENTE')){modo='base';['VIN','CLIENTE','TEL','DIRECCION','CIUDAD','MARCA','MODELO','ANIO','PLACAS','FECHA_VENTA','FACTURA','SUCURSAL_VENTA','CVE_CLIENTE'].forEach(k=>ix[k]=col(h,k))}
+      else if(h.includes('VIN')&&h.includes('CLIENTE')){modo='base';['VIN','CLIENTE','TEL','EMAIL','DIRECCION','CIUDAD','MARCA','MODELO','ANIO','PLACAS','FECHA_VENTA','FACTURA','SUCURSAL_VENTA','CVE_CLIENTE'].forEach(k=>ix[k]=col(h,k))}
       return}
     if(modo==='base'){const vin=nr(g(r,'VIN')).replace(/\s+/g,'');if(vin.length<8)return;
-      out.set(vin,{vin,cliente:g(r,'CLIENTE'),tel:tel(g(r,'TEL')),direccion:g(r,'DIRECCION'),ciudad:g(r,'CIUDAD'),marca:g(r,'MARCA'),modelo:g(r,'MODELO'),anio:g(r,'ANIO'),placas:g(r,'PLACAS'),fecha_venta:g(r,'FECHA_VENTA'),factura:g(r,'FACTURA'),sucursal_venta:g(r,'SUCURSAL_VENTA'),cve_cliente:g(r,'CVE_CLIENTE')});return}
+      out.set(vin,{vin,cliente:g(r,'CLIENTE'),tel:tel(g(r,'TEL')),email:g(r,'EMAIL'),direccion:g(r,'DIRECCION'),ciudad:g(r,'CIUDAD'),marca:g(r,'MARCA'),modelo:g(r,'MODELO'),anio:g(r,'ANIO'),placas:g(r,'PLACAS'),fecha_venta:g(r,'FECHA_VENTA'),factura:g(r,'FACTURA'),sucursal_venta:g(r,'SUCURSAL_VENTA'),cve_cliente:g(r,'CVE_CLIENTE')});return}
     if(!/MOTOCICLETAS|MOTOCARROS/.test(nr(g(r,'FAMILIA'))))return;
     const vin=nr(g(r,'SERIE')).replace(/\s+/g,'');if(vin.length!==17||nr(g(r,'DEVOLUCION'))==='CANCELACION')return;
     const fm=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(g(r,'FECHA')),fecha=fm?fm[3]+'-'+fm[2].padStart(2,'0')+'-'+fm[1].padStart(2,'0'):'',prev=out.get(vin);
@@ -395,12 +395,12 @@ const acts={
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
  fin:()=>{const o=O(D);o.t.acum=ms(o);o.t.ini=null;touch(o);renderDrawer();renderMain();toast('Tiempo real: '+hms(o.t.acum)+(est(o)?' · estándar '+est(o)+' min':''))},
- clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
+ clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
  print:()=>imprimir(O(D)),
  sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+o.prox.km+' km)':''}. ¿Te agendamos una cita en ${o.suc}?`)},
  sgre:async d=>{const o=O(d.f),l=o.lineas[+d.i],v=await ask({t:'Nueva fecha de seguimiento',input:'Fecha',type:'date',def:l.seg||addD(15),ok:'Guardar'});if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
- sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
- sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio})},
+ sgok:d=>{const o=O(d.f),l=o.lineas[+d.i];l.cerr=true;touch(o);crear('SR',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio,lineas:[Object.assign({},l,{st:'aut',cerr:false,mot:'',seg:''})]})},
+ sgcita:d=>{const o=O(d.f);o.prox.cerr=true;touch(o);crear('SP',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,ref:o.folio})},
  sgx:d=>{const o=O(d.f);if(d.k==='l')o.lineas[+d.i].cerr=true;else o.prox.cerr=true;touch(o);renderMain()},
  cfg:()=>{const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG();
   sheet(`<div class="h">Configuración</div>
@@ -538,7 +538,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v28 · 22-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v29 · 22-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
