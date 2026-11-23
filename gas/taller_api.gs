@@ -1,9 +1,9 @@
 /**
- * API del taller (Google Apps Script) — v7 (base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v8 (colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
- * Hojas: ORDENES_TALLER, COTIZACIONES_TALLER, AGENDA_TALLER, CONFIG_TALLER, MOTOS_TALLER. Fotos y firmas: Drive/TALLER_FOTOS/<folio>.
+ * Hojas: ORDENES_TALLER, COTIZACIONES_TALLER, AGENDA_TALLER, CONFIG_TALLER, MOTOS_TALLER, COLABORADORES_TALLER. Fotos y firmas: Drive/TALLER_FOTOS/<folio>.
  * IMPORTANTE: la base de motos trae nombres, teléfonos y direcciones de clientes. Sus acciones se niegan si TALLER_CLAVE está vacía:
  * escribe una clave (cualquier texto secreto) aquí y la misma en Configuración de la app.
  */
@@ -13,6 +13,8 @@ const H = {
   COTIZACIONES_TALLER: ['folio','tipo','sku','descripcion','cantidad','precio','importe','minutos','estado','motivo_rechazo','seguimiento'],
   AGENDA_TALLER: ['folio','fecha','hora','bahia','mecanico'],
   CONFIG_TALLER: ['clave','valor','actualizado'],
+  // Colaboradores por agencia (sugerencias de Asesor de servicio, Asesor de refacciones y Técnico). activo: SI / NO (la baja no borra la fila).
+  COLABORADORES_TALLER: ['agencia','puesto','nombre','activo','actualizado'],
   // Una fila por moto (VIN). origen: VENTA (la vendió el grupo), TALLER (se registró en una orden) o VENTA+TALLER.
   // km y combustible NO van aquí: se capturan en cada visita. fecha_venta queda lista para validar garantías.
   MOTOS_TALLER: ['vin','cliente','tel','email','direccion','ciudad','marca','modelo','anio','placas','fecha_venta','factura','sucursal_venta','cve_cliente','origen','actualizado']
@@ -28,7 +30,7 @@ function sheet_(n) {
   return s;
 }
 function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function doGet() { return out_({ success: true, servicio: 'taller', version: 7 }); }
+function doGet() { return out_({ success: true, servicio: 'taller', version: 8 }); }
 function doPost(e) {
   var b;
   try { b = JSON.parse(e.postData.contents); } catch (err) { return out_({ success: false, message: String(err) }); }
@@ -57,6 +59,9 @@ function doPost(e) {
     if (b.action === 'guardarConfig') return out_(guardarConfig_(b.cfgK, b.cfgV));
     if (b.action === 'autorizarCliente') return out_(autorizarCliente_(b));
     if (b.action === 'importarMotos') return out_(importarMotos_(b.filas));
+    if (b.action === 'listarColaboradores') return out_(listarColaboradores_());
+    if (b.action === 'guardarColaborador') return out_(guardarColaborador_(b.agencia, b.puesto, b.nombre, b.activo !== false));
+    if (b.action === 'importarColaboradores') return out_(importarColaboradores_(b.filas));
     return out_({ success: false, message: 'Acción desconocida' });
   } catch (err) { return out_({ success: false, message: String(err) }); }
   finally { lock.releaseLock(); }
@@ -171,6 +176,46 @@ function guardarConfig_(k, v) {
   v = Number(v); if (!(v >= 0)) return { success: false, message: 'Valor inválido' };
   upsert_(sheet_('CONFIG_TALLER'), String(k), [String(k), v, new Date()]);
   return { success: true };
+}
+
+// ---------- Colaboradores (COLABORADORES_TALLER) ----------
+var PUESTOS_COL = ['ASESOR DE SERVICIO', 'ASESOR DE REFACCIONES', 'MECANICO'];
+function colNorm_(v) { return String(v === null || v === undefined ? '' : v).replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 80); }
+function listarColaboradores_() {
+  var out = [];
+  sheet_('COLABORADORES_TALLER').getDataRange().getValues().slice(1).forEach(function (r) {
+    if (r[0] && r[2] && colNorm_(r[3]) !== 'NO') out.push({ a: colNorm_(r[0]), p: colNorm_(r[1]), n: colNorm_(r[2]) });
+  });
+  return { success: true, colaboradores: out };
+}
+// Alta (activo = true) o baja (activo = false) de un colaborador. La baja solo marca NO: las órdenes viejas conservan el nombre.
+function guardarColaborador_(agencia, puesto, nombre, activo) {
+  var a = colNorm_(agencia), p = colNorm_(puesto), n = colNorm_(nombre);
+  if (!a || PUESTOS_COL.indexOf(p) < 0 || n.length < 3) return { success: false, message: 'Datos de colaborador inválidos' };
+  var s = sheet_('COLABORADORES_TALLER'), v = s.getDataRange().getValues();
+  for (var i = 1; i < v.length; i++) {
+    if (colNorm_(v[i][0]) === a && colNorm_(v[i][1]) === p && colNorm_(v[i][2]) === n) {
+      s.getRange(i + 1, 4, 1, 2).setValues([[activo ? 'SI' : 'NO', new Date()]]);
+      return { success: true };
+    }
+  }
+  if (activo) s.appendRow([a, p, n, 'SI', new Date()]);
+  return { success: true };
+}
+// Carga masiva (CSV con AGENCIA, PUESTO, NOMBRE). No duplica: reactiva a quien estaba dado de baja.
+function importarColaboradores_(filas) {
+  var s = sheet_('COLABORADORES_TALLER'), v = s.getDataRange().getValues(), idx = {}, nuevas = [], nue = 0, rea = 0, omi = 0;
+  for (var i = 1; i < v.length; i++) idx[colNorm_(v[i][0]) + '|' + colNorm_(v[i][1]) + '|' + colNorm_(v[i][2])] = i;
+  (filas || []).forEach(function (f) {
+    var a = colNorm_(f && f.agencia), p = colNorm_(f && f.puesto), n = colNorm_(f && f.nombre);
+    if (!a || PUESTOS_COL.indexOf(p) < 0 || n.length < 3) { omi++; return; }
+    var k = a + '|' + p + '|' + n;
+    if (idx[k] === undefined) { nuevas.push([a, p, n, 'SI', new Date()]); idx[k] = -1; nue++; }
+    else if (idx[k] > 0 && colNorm_(v[idx[k]][3]) === 'NO') { s.getRange(idx[k] + 1, 4, 1, 2).setValues([['SI', new Date()]]); v[idx[k]][3] = 'SI'; rea++; }
+    else omi++;
+  });
+  if (nuevas.length) s.getRange(s.getLastRow() + 1, 1, nuevas.length, 5).setValues(nuevas);
+  return { success: true, nuevos: nue, reactivados: rea, omitidos: omi };
 }
 
 // ---------- Base de motos (MOTOS_TALLER) ----------

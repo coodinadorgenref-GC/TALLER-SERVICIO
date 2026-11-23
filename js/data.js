@@ -5,6 +5,8 @@ const FOTOS_GRAL=[['g_tablero','Tablero / km',0],['g_izq','Lado izquierdo',1],['
 // Agencias (cuenta → columna AGENCIA de Usuarios_Autorizados) y su logo
 const AGENCIAS_TALLER=['BAJAJ CANCUN','BAJAJ TIZIMIN','BAJAJ VALLADOLID','CARABELA V1','CAUCEL VENTO','PISTE VENTO','SUZUKI TIZIMIN','SUZUKI VALLADOLID','TICUL VENTO','TIZIMIN VENTO','UMAN VENTO','PISTE MUEBLES'];
 const ZONA_AG={'UMAN VENTO':'MERIDA','CAUCEL VENTO':'MERIDA','TICUL VENTO':'MERIDA'};   // las demás son de VALLADOLID
+// Puestos de colaboradores que alimentan las sugerencias de la orden: [clave, plural, singular, campo de la orden]
+const PUESTOS=[['ASESOR DE SERVICIO','Asesores de servicio','Asesor de servicio','asesor'],['ASESOR DE REFACCIONES','Asesores de refacciones','Asesor de refacciones','asesorRef'],['MECANICO','Técnicos','Técnico','mec']];
 const LEG=['Valladolid','Tizimín','Kantunilkin'];   // sucursales de la versión anterior
 const LOGO_BASE='https://coodinadorgenref-gc.github.io/CATALOGO-DE-INVENTARIO/logo-';
 const multi=a=>a==='TODAS'||/^ZONA /.test(a||'');
