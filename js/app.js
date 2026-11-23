@@ -90,6 +90,7 @@ function renderMain(){$('#app').innerHTML=view==='ag'?agenda():view==='seg'?segu
 function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.dbody')?.scrollTop||0;
   el.innerHTML=o?drawer(o):'';document.body.classList.toggle('lock',!!o);
   if(o){const b=el.querySelector('.dbody');if(b&&keepSc)b.scrollTop=sc;if(lastD!==D)el.querySelector('.drh .ib')?.focus()}
+  if(o)el.querySelector('.dtabs .tab.on')?.scrollIntoView({inline:'center',block:'nearest'});
   lastD=D;keepSc=true}
 const match=o=>{if(ft&&o.tipo!==ft)return false;if(!q)return true;const s=[o.folio,o.cliente,o.modelo,o.vin,o.placas,o.tel,o.motor].join(' ').toLowerCase();return q.toLowerCase().split(/\s+/).every(w=>s.includes(w))};
 function board(){const L=mine().filter(match);
@@ -625,7 +626,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v30 · 22-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v31 · 22-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};

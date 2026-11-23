@@ -145,3 +145,8 @@ dialog#lb img{position:absolute;inset:56px 8px 8px;width:calc(100% - 16px);heigh
   .ln .mot{grid-column:1/-1}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Estados de inspección en color: leyenda y borde de cada concepto */
+.leg .lg-ur{color:#B91C1C}.leg .lg-px{color:#92400E}.leg .lg-ok{color:#15803D}.leg .lg-nr{color:#1D4ED8}
+.ln.sv-ur{border-left:5px solid #DC2626}.ln.sv-px{border-left:5px solid #EAB308}.ln.sv-ok{border-left:5px solid #16A34A}.ln.sv-nr{border-left:5px solid #2563EB}
+@media(prefers-color-scheme:dark){.leg .lg-ur{color:#FCA5A5}.leg .lg-px{color:#FCD34D}.leg .lg-ok{color:#86EFAC}.leg .lg-nr{color:#93C5FD}}

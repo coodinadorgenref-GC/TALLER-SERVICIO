@@ -29,7 +29,7 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 
 ### Puesta en marcha de la base de motos
 1. En Apps Script pega `gas/taller_api.gs` (v7), escribe una clave secreta en `TALLER_CLAVE` (la base se niega sin clave porque trae datos personales), ejecuta `setup()` y publica una nueva versión de la implementación.
-2. En la app: Configuración → escribe la misma clave.
+2. En la app: toca Sincronizar (ícono de la barra superior); cuando pida la clave del taller, escribe la misma y Guardar.
 3. Configuración → Importar base de motos (CSV): sube `base_motos.csv` (historial) y después cada mes el GCVEN02 en CSV.
 4. No subas `base_motos.csv` ni el reporte a este repositorio: contienen datos personales de clientes.
 
