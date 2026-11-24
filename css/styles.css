@@ -539,3 +539,13 @@ html.dark .qpi{background:#93c5fd;color:#0b1220}html.dark .qplus:hover{backgroun
 .mmenu .mi.on{background:#E8EEF9;cursor:default;opacity:1;color:#0F172A}
 .mmenu .mi.blk{color:#64748B}
 html.dark .mmenu{background:#162032;border-color:#334155}html.dark .mmenu .mi{color:#E5EAF2}html.dark .mmenu .mi:hover:not(.on){background:#1b283c}html.dark .mmenu .mi.on{background:#1e2c45;color:#E5EAF2}html.dark .mmenu .mh,html.dark .mmenu .mi small,html.dark .mmenu .mi.blk{color:#94A3B8}
+
+/* v42 · celular: ventanas con botón Cerrar visible, altura real de pantalla y deslizar entre pestañas */
+#modal .sh{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px - env(safe-area-inset-top,0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.sh-h{position:sticky;top:-16px;z-index:3;display:flex;justify-content:flex-end;margin:-16px -16px 0;padding:10px 12px;background:inherit;border-bottom:1px solid var(--bd)}
+.sh-h .btn{min-height:40px}
+@keyframes swl{from{opacity:.25;transform:translateX(32px)}to{opacity:1;transform:none}}
+@keyframes swr{from{opacity:.25;transform:translateX(-32px)}to{opacity:1;transform:none}}
+.sw-l{animation:swl .2s ease-out}.sw-r{animation:swr .2s ease-out}
+@media(prefers-reduced-motion:reduce){.sw-l,.sw-r{animation:none}}
+.dbody{overscroll-behavior-x:none}

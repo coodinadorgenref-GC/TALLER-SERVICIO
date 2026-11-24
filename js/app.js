@@ -20,8 +20,15 @@ const TI={ok:IC.ok,err:IC.at,inf:'<svg width="16" height="16" viewBox="0 0 24 24
 const toast=(t,tipo)=>{tipo=tipo||(/no se pudo|error|falta|inv[aá]lid|sin internet|memoria llena|captura|describe/i.test(t)?'err':/sincronizad|agregad|guardad|lista|copiad|enviad/i.test(t)?'ok':'inf');const e=$('#toast');e.innerHTML=`<div class="tt ${tipo}" role="${tipo==='err'?'alert':'status'}"><span class="ti">${TI[tipo]}</span><span class="tm">${esc(t)}</span><button class="tc" data-a="tcerrar" aria-label="Cerrar aviso">✕</button></div>`;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',tipo==='err'?7000:3800)};
 function ask(o){return new Promise(res=>{let d=$('#dlg');if(!d){d=document.createElement('div');d.id='dlg';document.body.appendChild(d)}askRes=res;const tp=o.tipo||'inf';
   d.innerHTML=`<div class="dov2" data-a="dno"><div class="dlg ${tp}" role="alertdialog" aria-modal="true" aria-labelledby="dlgt" data-a="dnop"><div class="dlgh"><span class="ti">${TI[tp]}</span><b id="dlgt">${esc(o.t)}</b></div>${o.m?`<p class="dlgm">${esc(o.m)}</p>`:''}${o.input?`<label class="f">${esc(o.input)}<input id="dlgi" type="${o.type||'text'}" value="${esc(o.def||'')}" autocomplete="off"></label>`:''}<div class="dlgb"><button type="button" class="btn" data-a="dno">${esc(o.no||'Cancelar')}</button><button type="button" class="btn pri" data-a="dsi">${esc(o.ok||'Aceptar')}</button></div></div></div>`;
-  setTimeout(()=>($('#dlgi')||$('.dlg .btn.pri')).focus(),30)})}
-function cerrarAsk(v){const d=$('#dlg');if(d)d.innerHTML='';const r=askRes;askRes=null;if(r)r(v)}
+  navSync();setTimeout(()=>($('#dlgi')||$('.dlg .btn.pri')).focus(),30)})}
+function cerrarAsk(v){const d=$('#dlg');if(d)d.innerHTML='';const r=askRes;askRes=null;if(r)r(v);navSync()}
+/* Botón Atrás del celular: cada capa abierta (orden, ventana, aviso, visor de fotos) es un paso del historial */
+let NAVn=0,NAVskip=0,NAVlock=false;
+function navLayers(){return(D?1:0)+(document.querySelector('#modal .ov')?1:0)+(document.querySelector('#dlg .dlg')?1:0)+(document.querySelector('#visor:not([hidden])')?1:0)}
+function navSync(){if(NAVlock)return;const w=navLayers();if(w>NAVn){while(NAVn<w)history.pushState({taller:++NAVn},'')}else if(w<NAVn){const d=NAVn-w;NAVn=w;NAVskip++;history.go(-d)}}
+function navCierraTope(){if($('#dlg .dlg')){cerrarAsk(null);return true}const v=$('#visor');if(v&&!v.hidden){cerrarVisor();return true}if($('#modal .ov')){$('#modal').innerHTML='';return true}if(D){D=null;render();return true}return false}
+addEventListener('popstate',e=>{if(NAVskip>0){NAVskip--;return}const n=(e.state&&e.state.taller)||0;NAVlock=true;NAVn=n;let g=8;while(navLayers()>n&&g-->0&&navCierraTope());NAVlock=false;navSync()});
+(function(){const ini=()=>{try{history.replaceState({taller:0},'')}catch{}const m=document.getElementById('modal');if(m)new MutationObserver(()=>navSync()).observe(m,{childList:true})};document.readyState==='loading'?addEventListener('DOMContentLoaded',ini):ini()})();
 document.addEventListener('keydown',e=>{if(!$('#dlg .dlg'))return;if(e.key==='Escape')cerrarAsk(null);else if(e.key==='Enter'&&e.target.id==='dlgi'){e.preventDefault();cerrarAsk(e.target.value.trim())}});
 const iso=(d=new Date())=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const addD=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
@@ -93,7 +100,7 @@ function mover(o,dest){const e=puede(o,dest);if(e)return toast(e);
 function render(){
   if(view==='rep'&&!puedeRep())view='board';
   document.querySelectorAll('.vn button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));pintaHd();
-  renderMain();renderDrawer()}
+  renderMain();renderDrawer();navSync()}
 function renderMain(){$('#app').innerHTML=view==='ag'?agenda():view==='seg'?seguimientos():view==='rep'&&puedeRep()?reporte():board()}
 function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.dbody')?.scrollTop||0;
   el.innerHTML=o?drawer(o):'';document.body.classList.toggle('lock',!!o);
@@ -460,7 +467,7 @@ function seguimientos(){const hoy=iso(),w=addD(7),it=segItems().filter(x=>match(
   return`<div class="ph"><h2>Seguimientos: trabajos diferidos y próximos servicios</h2></div>${G.map(([n,L])=>L.length?`<h3 class="h" style="margin:14px 0 8px">${n} <span class="cnt">${L.length}</span></h3><div class="sgg">${L.map(x=>`<div class="card"><div class="row sp"><span class="fol">${esc(x.o.folio)}</span><span class="chip ${x.f&&x.f<hoy?'r':'n'}">${x.f||'Sin fecha'}</span></div><div class="ttl">${esc(x.o.cliente||'Sin cliente')} · ${esc(x.o.modelo)}</div><div>${x.k==='l'?esc(x.l.desc)+' · '+money(imp(x.l)):'Próximo servicio'+(x.o.prox.km?' · '+esc(fmtKm(x.o.prox.km))+' km':'')}</div>${x.k==='l'?`<div class="mut">Motivo: ${esc(x.l.mot||'No registrado')}</div>`:''}
    <div class="row wrap"><button class="btn sm" style="flex:1" data-a="sgwa" data-f="${x.o.folio}" data-i="${x.i??''}" data-k="${x.k}">WhatsApp</button>${x.k==='l'?`<button class="btn sm" style="flex:1" data-a="sgre" data-f="${x.o.folio}" data-i="${x.i}">Reprogramar</button><button class="btn sm pri" style="flex:1" data-a="sgok" data-f="${x.o.folio}" data-i="${x.i}">Aceptar y crear orden</button>`:`<button class="btn sm pri" style="flex:1" data-a="sgcita" data-f="${x.o.folio}">Crear orden</button>`}<button class="btn sm" style="flex:1" data-a="sgx" data-f="${x.o.folio}" data-i="${x.i??''}" data-k="${x.k}">Descartar</button></div></div>`).join('')}</div>`:'').join('')||'<p class="mut">No hay seguimientos pendientes. Los conceptos rechazados y los próximos servicios aparecerán aquí.</p>'}`}
 
-function sheet(h){$('#modal').innerHTML=`<div class="ov" data-a="cerrar"><div class="sh" role="dialog" aria-modal="true">${h}</div></div>`}
+function sheet(h){$('#modal').innerHTML=`<div class="ov" data-a="cerrar"><div class="sh" role="dialog" aria-modal="true"><div class="sh-h"><button type="button" class="btn sm" data-a="cerrarx" aria-label="Cerrar">✕ Cerrar</button></div>${h}</div></div>`}
 const tipoBtns=(a,x='')=>Object.entries(TIPOS).map(([k,v])=>`<button class="btn" data-a="${a}" data-t="${k}" ${x}><span class="fol">${k}</span> ${v}</button>`).join('');
 function setPath(o,p,v){const a=p.split('.');let r=o;for(let i=0;i<a.length-1;i++){if(r[a[i]]==null)r[a[i]]={};r=r[a[i]]}r[a[a.length-1]]=v}
 const acts={
@@ -474,7 +481,7 @@ const acts={
   S.tarifas=S.tarifas||{};S.tarifas[S.suc]=Math.round(v*100)/100;(S.tarPend=S.tarPend||{})[S.suc]=true;save();renderMain();
   const r=await subeTarifas();if(r==='ok')toast('Tarifa guardada para '+S.suc);else if(r==='viejo')toast('Tarifa guardada en este dispositivo. Falta actualizar el Apps Script (v5) para compartirla con los demás.','err');else toast('Tarifa guardada en este dispositivo; se subirá al sincronizar','inf')},
  tab:d=>{tab=d.k;renderMain()},view:d=>{view=d.v;render()},abrir:d=>{D=d.f;dt='u';qopen.clear();keepSc=false;render()},cerrard:()=>{D=null;render()},dtab:d=>{dt=d.k;keepSc=false;renderDrawer()},
- cerrar:(d,e)=>{if(e.target.classList.contains('ov'))$('#modal').innerHTML=''},
+ cerrar:(d,e)=>{if(e.target.classList.contains('ov'))$('#modal').innerHTML=''},cerrarx:()=>{$('#modal').innerHTML=''},
  rsec:d=>{rp.sec=d.k;renderMain()},
  repcsv:()=>{if(!puedeRep())return;const L=repOrdenes(),h=['Folio','Agencia','Tipo','Etapa','Cliente','Modelo','Técnico','Asesor','Ingreso','Cotizado','Autorizado','Garantía','Rechazado','Pendiente','Tiempo real (min)','Autorizó por enlace'],c=x=>'"'+String(x==null?'':x).replace(/"/g,'""')+'"',
    rows=L.map(o=>{const t=tot(o);return[o.folio,o.suc,TIPOS[o.tipo]||o.tipo,(ETAPAS[idx(o.etapa)]||[])[1]||o.etapa,o.cliente,o.modelo,o.mec,o.asesor,new Date(o.fing||o.cre||0).toLocaleDateString('es-MX'),t.cot,t.aut,t.gar,t.rech,t.pend,Math.round((o.t&&o.t.acum||0)/6e4),o.auth?'Sí':'No'].map(c).join(',')});
@@ -670,9 +677,9 @@ function visorEl(){let v=$('#visor');if(v)return v;v=document.createElement('div
   v.innerHTML='<div class="vz-top"><span class="vz-n" id="vz-n"></span><button type="button" class="vz-chg" id="vz-chg" data-a="vzcambiar" hidden>'+IC.cam+' Cambiar foto</button><button type="button" data-a="vzcerrar" aria-label="Cerrar visor">✕</button></div><div class="vz-stage" id="vz-st"><img class="vz-img" id="vz-im" alt="Foto ampliada" draggable="false"></div><button type="button" class="vz-nav prev" data-a="vzprev" aria-label="Foto anterior">‹</button><button type="button" class="vz-nav next" data-a="vznext" aria-label="Foto siguiente">›</button><div class="vz-bar"><button type="button" data-a="vzmenos" aria-label="Alejar">−</button><button type="button" data-a="vzreset" id="vz-pct" aria-label="Tamaño original">100%</button><button type="button" data-a="vzmas" aria-label="Acercar">+</button></div>';
   document.body.appendChild(v);vzEventos(v.querySelector('#vz-st'));return v}
 function vzMuestra(){const v=visorEl();$('#vz-im').src=VW.L[VW.i];VW.s=1;VW.x=0;VW.y=0;vzPinta();$('#vz-n').textContent=VW.L.length>1?(VW.i+1)+' / '+VW.L.length:'Foto';
-  v.querySelector('.prev').hidden=v.querySelector('.next').hidden=VW.L.length<2;$('#vz-chg').hidden=!VW.T;v.hidden=false}
+  v.querySelector('.prev').hidden=v.querySelector('.next').hidden=VW.L.length<2;$('#vz-chg').hidden=!VW.T;v.hidden=false;navSync()}
 function abrirVisor(L,i,T){VW.L=L;VW.i=i;VW.T=T;const tt=$('#toast');if(tt)tt.style.display='none';vzMuestra()}
-function cerrarVisor(){const v=$('#visor');if(v)v.hidden=true}
+function cerrarVisor(){const v=$('#visor');if(v)v.hidden=true;navSync()}
 /* arrastrar y soltar: complemento en escritorio */
 document.addEventListener('dragstart',e=>{const k=e.target.closest&&e.target.closest('.k');if(!k)return;dragF=k.dataset.f;e.dataTransfer.setData('text/plain',dragF);k.classList.add('dg')});
 document.addEventListener('dragend',()=>{dragF=null;document.querySelectorAll('.dg,.over').forEach(x=>x.classList.remove('dg','over'))});
@@ -728,7 +735,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v41 · 23-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v42 · 24-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
@@ -781,3 +788,15 @@ IDB.open().then(async ok=>{
   $('#ftipo').innerHTML='<option value="">Todos los tipos</option>'+Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
   S.orders=S.orders||[];S.dirty=S.dirty||[];S.inv=S.inv||[];S.seq=S.seq||{};S.del=S.del||[];S.tarifas=S.tarifas||{};S.tarPend=S.tarPend||{};S.colab=S.colab||[];S.orders.forEach(migEt);
   sesion=leerSes();aplicarTema();pintaLogin();aplicaAg();render();sync();if(sesion)cargaCat(true)});
+
+/* Deslizar a izquierda / derecha para cambiar de pestaña (orden abierta y etapas del Panel en el celular) */
+(function(){let sx=0,sy=0,t0=0,ok=false,tg=null;
+ const NO='input,textarea,select,canvas,[contenteditable],[data-noswipe],#visor,.sig';
+ const libre=el=>{for(let n=el;n&&n!==document.body;n=n.parentElement){if(n.matches&&n.matches(NO))return false;if(n.scrollWidth>n.clientWidth+4&&/(auto|scroll)/.test(getComputedStyle(n).overflowX)&&!n.matches('.dtabs,.tabs'))return false}return true};
+ document.addEventListener('touchstart',e=>{ok=false;if(e.touches.length!==1)return;const t=e.touches[0];sx=t.clientX;sy=t.clientY;t0=Date.now();tg=e.target;ok=sx>24&&sx<innerWidth-24&&!document.querySelector('#modal .ov,#dlg .dlg,#visor:not([hidden])')&&libre(tg)},{passive:true});
+ document.addEventListener('touchend',e=>{if(!ok)return;ok=false;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6||Date.now()-t0>700)return;
+  const dr=!!(D&&tg.closest&&tg.closest('#drawer .dbody')),pn=!D&&!!(tg.closest&&tg.closest('#app'));if(!dr&&!pn)return;
+  const nav=document.querySelector(dr?'#drawer .dtabs':'#app .tabs');if(!nav||nav.offsetParent===null)return;
+  const L=[...nav.querySelectorAll('[data-a="dtab"],[data-a="tab"]')],i=L.findIndex(b=>b.classList.contains('on')),j=i+(dx<0?1:-1);if(i<0||j<0||j>=L.length)return;
+  L[j].click();const c=document.querySelector(dr?'#drawer .dbody':'#app .col.on');if(c){c.classList.add(dx<0?'sw-l':'sw-r');c.addEventListener('animationend',()=>c.classList.remove('sw-l','sw-r'),{once:true})}
+ },{passive:true})})();

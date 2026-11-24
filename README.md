@@ -15,6 +15,11 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v42
+- **Celular · botón Atrás**: cada capa abierta (orden, ventana, aviso, visor de fotos) es un paso del historial. Atrás cierra la ventana o el visor; desde una orden regresa al Panel sin importar la pestaña.
+- **Celular · ventanas**: encabezado fijo con botón **Cerrar** siempre visible (Configuración, Mover a…, etc.), altura ajustada a la pantalla real del teléfono y respeto del borde inferior del iPhone.
+- **Pestañas deslizables**: en la orden, deslizar a izquierda o derecha cambia entre Cliente y unidad, Inspección, Llantas, Carrocería, Cotización, Cierre e Historial; en el Panel, entre las etapas. No se activa sobre firma, campos de texto, tablas con desplazamiento horizontal ni a menos de 24 px del borde (gesto de regreso de iOS).
+
 ## Novedades v41
 - **Mover a…** ahora es una lista desplegable bajo la flecha junto a **Siguiente** (en la orden abierta): muestra las etapas con su color, marca la actual y se cierra al elegir, al tocar fuera o con Esc. Las etapas bloqueadas (por requisitos o por firma del cliente) se ven atenuadas y al elegirlas la app explica por qué.
 
