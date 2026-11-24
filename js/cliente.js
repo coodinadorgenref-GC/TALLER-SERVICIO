@@ -132,8 +132,8 @@
     const filas = con.map(({ x, i }) => `<div class="zr">${ico(x.e)}<div><b>${esc(CATS[i][0])}</b>${x.op ? `<small>Recomendado: ${esc(x.op)}</small>` : ''}${x.n ? `<small>${esc(x.n)}</small>` : ''}${thumbs(fx(x), CATS[i][0])}</div></div>`).join('');
     const okz = sin.length ? `<details class="okz"><summary>Puntos sin observaciones (${sin.length})</summary><ul class="zl">${sin.map(({ x, i }) => `<li>${ico(x.e)}${esc(CATS[i][0])}</li>`).join('')}</ul></details>` : '';
     const llan = ll.filter(l => l.e !== 'nr' || l.med).map(l => `<div class="zr">${ico(l.e)}<div><b>Llanta ${esc(String(l.p).toLowerCase())}</b><div class="ll">${l.med ? `<span>Medida <b>${esc(l.med)}</b></span>` : ''}${l.des ? `<span>Desgaste <b>${esc(l.des)} mm</b></span>` : ''}${l.psi ? `<span>Presión <b>${esc(l.psi)} PSI</b></span>` : ''}</div>${l.op ? `<small>Recomendado: ${esc(l.op)}</small>` : ''}${l.n ? `<small>${esc(l.n)}</small>` : ''}${thumbs(fx(l), 'Llanta ' + l.p)}</div></div>`).join('');
-    const ace = bk.length ? `<div class="zr">${generico.replace('<svg', '<svg class="ico"')}<div><b>Aceite del motor</b><small>Bayoneta / drenado</small>${thumbs(bk.map(k => o.fotos[k].u), 'Aceite')}</div></div>` : '';
-    return sec('ins', 'Inspección de tu moto', resumen, filas + okz + llan + ace + (o.diag ? `<div class="zr"><div><b>Diagnóstico del técnico</b><small>${esc(o.diag)}</small></div></div>` : ''), true);
+    const ace = bk.length && c.length < CATS.length ? `<div class="zr">${generico.replace('<svg', '<svg class="ico"')}<div><b>Aceite del motor</b><small>Bayoneta / drenado</small>${thumbs(bk.map(k => o.fotos[k].u), 'Aceite')}</div></div>` : '';
+    return sec('ins', 'Inspección de tu moto', resumen, filas + okz + llan + ace, true);
   }
   function carroceria(o) {
     const d = o.danos || [], ing = ingreso(o), danos = d.map((m, i) => ({ m, i })).filter(x => x.m.t !== REC);

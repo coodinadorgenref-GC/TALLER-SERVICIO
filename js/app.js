@@ -32,6 +32,45 @@ addEventListener('popstate',e=>{if(NAVskip>0){NAVskip--;return}const n=(e.state&
 document.addEventListener('keydown',e=>{if(!$('#dlg .dlg'))return;if(e.key==='Escape')cerrarAsk(null);else if(e.key==='Enter'&&e.target.id==='dlgi'){e.preventDefault();cerrarAsk(e.target.value.trim())}});
 const iso=(d=new Date())=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
 const addD=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
+
+/* ---------- Citas: viven en la Agenda (cualquier día); la columna Citas del Panel muestra las de hoy de la agencia ---------- */
+const CT=()=>{S.citas=S.citas||[];S.cdirty=S.cdirty||[];return S.citas};
+const conCita=o=>!!(o&&(o.conCita||o.citaId||o.cita));
+const ctTouch=c=>{CT();c.upd=Date.now();if(!S.cdirty.includes(c.id))S.cdirty.push(c.id);save();syncSoon(4000)};
+const ctNuevoId=()=>'CT'+Date.now().toString(36).toUpperCase()+Math.floor(Math.random()*1296).toString(36).toUpperCase().padStart(2,'0');
+const sumD=(f,n)=>{const x=new Date(f+'T12:00:00');x.setDate(x.getDate()+n);return iso(x)};
+const ctDia=f=>CT().filter(c=>c.suc===S.suc&&c.f===f&&c.est!=='cancel').sort((a,b)=>String(a.t).localeCompare(String(b.t)));
+const ctHoy=()=>ctDia(iso());
+const ctFecha=f=>{const d=new Date(f+'T12:00:00');return isNaN(d)?f:d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})};
+const ctMatch=c=>!q||[c.cliente,c.tel,c.modelo,c.nota].join(' ').toLowerCase().includes(String(q).toLowerCase());
+const ctChip=c=>c.est==='llego'?`<span class="chip g">${IC.ok} Llegó</span>`:c.est==='no'?'<span class="chip r">No llegó</span>':'<span class="chip n">Programada</span>';
+let agd=iso(),CTD=null;
+function ctCard(c,ag){const hoy=c.f===iso(),btn=(a,t,x='')=>`<button class="btn sm ${x}" data-a="${a}" data-id="${esc(c.id)}">${t}</button>`;
+  return`<article class="cita ${c.est}" aria-label="Cita de las ${esc(c.t)}: ${esc(c.cliente)}"><div class="row sp wrap"><b class="cth fol">${esc(c.t)}</b>${ctChip(c)}</div><div class="kn">${esc(c.cliente||'Sin nombre')}</div><div class="kv">${esc(c.modelo||'Sin modelo')} · ${esc(TIPOS[c.tipo]||c.tipo)}${c.b?' · Bahía '+esc(c.b):''}</div>${c.nota?`<div class="kv mut">${esc(c.nota)}</div>`:''}${c.tel?`<div class="kv">${esc(c.tel)}</div>`:''}
+  <div class="row wrap">${c.est==='prog'?`<button class="btn sm pri" data-a="ctrecibir" data-id="${esc(c.id)}" ${hoy?'':'disabled title="Solo se recibe el día de la cita"'}>Recibir</button>`:''}${c.est==='llego'&&c.folio?`<button class="btn sm" data-a="abrir" data-f="${esc(c.folio)}">Abrir ${esc(c.folio)}</button>`:''}${c.est==='prog'||c.est==='no'?btn('ctedit',c.est==='no'?'Reprogramar':'Editar'):''}${ag&&c.est==='prog'?btn('ctwa','WhatsApp')+btn('ctno','No llegó')+btn('ctcancel','Cancelar cita'):''}</div></article>`}
+function citaTab(np){return`<button class="tab ${tab==='citas'?'on':''}" role="tab" aria-selected="${tab==='citas'}" data-a="tab" data-k="citas">Citas <span class="cnt">${np}</span></button>`}
+function citaCol(C,np){return`<section class="col ${tab==='citas'?'on':''}" style="--c:#CA8A04" aria-label="Citas de hoy"><h2 class="ch"><span>Citas de hoy</span><span class="cnt">${np}</span></h2><div class="cl">${C.map(c=>ctCard(c,false)).join('')||'<p class="mut cvac">Sin citas para hoy.</p>'}<div class="row wrap"><button class="btn sm" style="flex:1" data-a="ctnueva">+ Nueva cita</button><button class="btn sm" style="flex:1" data-a="view" data-v="ag">Ver agenda</button></div></div></section>`}
+function agenda(){const hoy=iso(),d=agd,C=ctDia(d),L=mine(),bs=BAHIAS.filter(b=>!agf.b||String(b)===agf.b);
+  return`<div class="ph"><h2>Agenda</h2><div class="agd"><button class="btn sm" data-a="agdia" data-n="-1" aria-label="Día anterior">‹</button><button class="btn sm ${d===hoy?'pri':''}" data-a="agdia" data-n="0">Hoy</button><button class="btn sm" data-a="agdia" data-n="1" aria-label="Día siguiente">›</button><input type="date" data-agd value="${d}" aria-label="Fecha de la agenda"></div><label class="f">Bahía<select data-ag="b"><option value="">Todas</option>${BAHIAS.map(b=>`<option ${agf.b===String(b)?'selected':''}>${b}</option>`).join('')}</select></label><button class="btn pri" data-a="ctnueva">+ Nueva cita</button></div>
+  <p class="agt"><b>${esc(ctFecha(d))}</b> · ${C.length} cita${C.length===1?'':'s'}${d===hoy?'':' · programa citas de hoy o de días posteriores'}</p>
+  <div class="ag" style="grid-template-columns:52px repeat(${bs.length},minmax(0,1fr))"><div></div>${bs.map(b=>`<div class="agh">Bahía ${b}</div>`).join('')}
+  ${HORAS.map(h=>`<div class="hr">${String(h).padStart(2,'0')}:00</div>`+bs.map(b=>{const c=C.find(c=>+c.b===b&&+String(c.t).slice(0,2)===h),o=L.find(o=>o.cita&&o.cita.f===d&&o.cita.h===h&&+o.cita.b===b&&!o.citaId);
+   return`<div>${c?(c.est==='llego'&&c.folio?`<button class="slot occ llego" data-a="abrir" data-f="${esc(c.folio)}">${esc(c.t)} · ${esc(c.cliente||'Cita')}<br><span class="mut">Llegó · ${esc(c.folio)}</span></button>`:`<button class="slot occ ${c.est}" data-a="ctedit" data-id="${esc(c.id)}">${esc(c.t)} · ${esc(c.cliente||'Cita')}<br><span class="mut">${esc(c.modelo||'')}</span></button>`):o?`<button class="slot occ" data-a="abrir" data-f="${o.folio}">${esc(o.folio)} · ${esc(o.modelo)}<br><span class="mut">${esc(o.mec||'')}</span></button>`:`<button class="slot" data-a="cita" data-h="${h}" data-b="${b}">Libre</button>`}</div>`}).join('')).join('')}</div>
+  <h3 class="h" style="margin:14px 0 8px">Citas del día <span class="cnt">${C.length}</span></h3>${C.length?`<div class="sgg">${C.map(c=>ctCard(c,true)).join('')}</div>`:'<p class="mut">No hay citas para este día. Toca un horario libre o «Nueva cita».</p>'}`}
+function ctForm(c){CTD=c;const hoy=iso();
+  sheet(`<div class="h">${CT().some(x=>x.id===c.id)?'Editar cita':'Nueva cita'}</div>
+  <div class="g2"><label class="f">Fecha<input id="ct-f" type="date" min="${hoy}" value="${esc(c.f)}"></label><label class="f">Hora<input id="ct-t" type="time" step="900" value="${esc(c.t||'')}"></label></div>
+  <div class="g2"><label class="f">Tipo de servicio<select id="ct-tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${(c.tipo||'SP')===k?'selected':''}>${esc(v)}</option>`).join('')}</select></label><label class="f">Bahía<select id="ct-b"><option value="">Sin asignar</option>${BAHIAS.map(b=>`<option ${String(c.b)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div>
+  <label class="f">Cliente<input id="ct-cli" value="${esc(c.cliente||'')}" autocomplete="off"></label>
+  <div class="g2"><label class="f">WhatsApp<input id="ct-tel" inputmode="tel" value="${esc(c.tel||'')}" autocomplete="off"></label><label class="f">Moto (marca y modelo)<input id="ct-mod" value="${esc(c.modelo||'')}" autocomplete="off"></label></div>
+  <label class="f">Nota<textarea id="ct-nota">${esc(c.nota||'')}</textarea></label>
+  <div class="row wrap"><button class="btn pri" style="flex:1" data-a="ctsave" data-id="${esc(c.id)}">Guardar cita</button></div>`)}
+const repD0=()=>{const h=new Date();h.setHours(0,0,0,0);return rp.p==='hoy'?+h:rp.p==='7'?h-6*864e5:rp.p==='30'?h-29*864e5:rp.p==='mes'?+new Date(h.getFullYear(),h.getMonth(),1):0};
+function repCita(L){const A=sesion?permitidas(sesion.agencia):[],d0=repD0(),hoy=iso(),
+  C=CT().filter(c=>A.includes(c.suc)&&(!rp.ag||c.suc===rp.ag)&&(c.f<hoy||c.est!=='prog')&&+new Date(c.f+'T00:00:00')>=d0),
+  cc=L.filter(conCita),sc=L.filter(o=>!conCita(o)),au=a=>money(a.reduce((t,o)=>t+tot(o).aut,0)),p=n=>(L.length?Math.round(n/L.length*100):0)+'%',
+  pr=C.filter(c=>c.est!=='cancel'),ll=pr.filter(c=>c.est==='llego').length;
+  return repTbl('Órdenes con cita y sin cita',['Origen','Órdenes','% del total','Autorizado'],[['Con cita',cc.length,p(cc.length),au(cc)],['Sin cita',sc.length,p(sc.length),au(sc)]])+(C.length?repTbl('Citas del periodo',['Estado','Citas'],[['Programadas',pr.length],['Llegaron',ll],['No llegaron',pr.length-ll],['Canceladas',C.length-pr.length]]):'')}
 // Fotos de Drive (drive.google.com/uc?id=…): el navegador de PC ya no las muestra directo en <img>. Cadena de respaldo:
 // miniatura grande de Drive → lh3.googleusercontent.com → proxy del Apps Script (base64, guardado en memoria y en Cache API).
 const FC=new Map(),driveId=u=>{const m=/drive\.google\.com\/(?:uc\?(?:export=\w+&)?id=|file\/d\/|thumbnail\?id=)([\w-]+)/.exec(u||'');return m&&m[1]};
@@ -65,11 +104,11 @@ const wa=(tel,m)=>{let t=String(tel||'').replace(/\D/g,'');if(!t){toast('Captura
 async function folio(t){try{const r=await api.taller({action:'siguienteFolio',tipo:t});if(r.folio)return r.folio}catch{}
   S.seq[t]=(S.seq[t]||0)+1;return t+'-'+String(S.seq[t]).padStart(4,'0')+'L'}
 async function crear(t,x={}){
-    const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,lav:false,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',marca:'',anio:'',motor:'',vin:'',placas:'',asesor:sesion?(sesion.nombre||sesion.correo||''):'',asesorRef:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
+    const o=Object.assign({folio:await folio(t),tipo:t,etapa:'recepcion',suc:S.suc,lav:false,conCita:false,cliente:'',tel:'',dir:'',fcompra:'',modelo:'',marca:'',anio:'',motor:'',vin:'',placas:'',asesor:sesion?(sesion.nombre||sesion.correo||''):'',asesorRef:'',km:'',comb:'',gar:t==='G',motivo:'',cond:'',mec:'',bahia:'',
    inv:INV32.map(()=>({p:false,c:1})),chk:CATS.map(()=>({e:'nr',n:'',f:null})),fotos:{},firmas:{},recibe:'',diag:'',leg:false,
    lineas:[],
    t:{acum:0,ini:null},cita:null,ref:'',prox:{f:'',km:''},fing:Date.now(),cre:Date.now(),listo:false},x);
-  logH(o,'Orden creada · '+TIPOS[t]);S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync()}
+  logH(o,'Orden creada · '+TIPOS[t]);S.orders.unshift(o);touch(o);D=o.folio;dt='u';tab='recepcion';view='board';keepSc=false;render();sync();return o}
 
 const vehFalta=o=>[['marca','Marca / fabricante'],['modelo','Modelo'],['anio','Año'],['vin','Serie / VIN'],['km','Kilometraje'],['comb','Combustible']].filter(([k])=>!String(o[k]||'').trim());
 // Con el aviso "Faltan datos del vehículo" a la vista, marca en rojo el borde de cada campo que falta; se quita en cuanto se captura. También mantiene al día el aviso de abajo y el botón Siguiente.
@@ -84,16 +123,16 @@ function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<i&&o.aut
     if(fv.length)return'Faltan datos del vehículo: '+fv.join(', ');
     if(!nRecep(o))return'Faltan las fotos de ingreso: en Daños y detalles marca un punto, elige Recepción y toma las fotos'}
   if(j>=2&&!o.mec)return'Asigna el técnico en Unidad › Asignación en taller';
-  if(j>=2&&!bayK(o).length)return'Falta la foto de la bayoneta / drenado de aceite';
-  if(j>=2){const f=[];o.chk.forEach((c,k)=>{if(c.e==='nr')f.push(k+1)});o.llantas.forEach(l=>{if(l.e==='nr'||!l.med||!l.des||!l.psi)f.push('llanta '+l.p.toLowerCase())});if(f.length)return'Falta clasificar (azul) o capturar en Inspección: '+f.join(', ')}
+  if(j>=2&&!(o.chk[12]&&fotosK(o.chk[12]).some(u=>src(u))))return'Falta la foto de la bayoneta / drenado de aceite (Inspección › Motor y combustible)';
+  if(j>=2){const f=[];o.chk.forEach((c,k)=>{if(c.e==='nr')f.push(CATS[k][0])});o.llantas.forEach(l=>{if(l.e==='nr'||!l.med||!l.des||!l.psi)f.push('llanta '+l.p.toLowerCase())});if(f.length)return'Falta clasificar (azul) o capturar en Inspección: '+f.join(', ')}
   const L=o.lineas;
   if(j>=3){if(!L.length)return'Agrega la cotización';if(L.some(l=>l.st==='pend'))return'Hay conceptos pendientes de autorización'}
-  if(j===4){if(!o.lav)return'Marca que la moto fue lavada (Cierre)'}
+  if(j===5&&i<4&&!o.lav)return'La moto debe pasar por Lavado antes de entregarse';
   return''}
 const logH=(o,x)=>{(o.hist=o.hist||[]).push({t:Date.now(),u:(sesion&&(sesion.nombre||sesion.correo))||'',x})};
 function mover(o,dest){const e=puede(o,dest);if(e)return toast(e);
   if(idx(o.etapa)===0&&idx(dest)>0&&!o.firmas.entrega)return abrirFirma(u=>{o.firmas.entrega={d:u};touch(o);mover(o,dest)});
-  if(dest==='entregado'&&o.t.ini){o.t.acum=ms(o);o.t.ini=null}
+  if(dest==='entregado'){o.lav=true;if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}}
   logH(o,'Etapa: '+ETAPAS[idx(dest)][1]);o.etapa=dest;touch(o);tab=dest;render();sync()}
 
 /* ---------- render ---------- */
@@ -109,16 +148,16 @@ function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.db
   if(o)pintaFaltas(o);
   lastD=D;keepSc=true}
 const match=o=>{if(ft&&o.tipo!==ft)return false;if(!q)return true;const s=[o.folio,o.cliente,o.modelo,o.vin,o.placas,o.tel,o.motor].join(' ').toLowerCase();return q.toLowerCase().split(/\s+/).every(w=>s.includes(w))};
-function board(){const L=mine().filter(match);
-  return`<div class="tabs" role="tablist" aria-label="Etapas">${ETAPAS.map(([k,n])=>`<button class="tab ${k===tab?'on':''}" role="tab" aria-selected="${k===tab}" data-a="tab" data-k="${k}">${n} <span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button>`).join('')}</div>
+function board(){const L=mine().filter(match),C=ctHoy().filter(ctMatch),np=C.filter(c=>c.est==='prog').length;
+  return`<div class="tabs" role="tablist" aria-label="Etapas">${citaTab(np)}${ETAPAS.map(([k,n])=>`<button class="tab ${k===tab?'on':''}" role="tab" aria-selected="${k===tab}" data-a="tab" data-k="${k}">${n} <span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button>`).join('')}</div>
   ${q?`<p class="mut">${L.length} resultado(s) para «${esc(q)}»</p>`:''}
-  <div class="kan">${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')}</div></section>`}).join('')}</div>`}
+  <div class="kan">${citaCol(C,np)}${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')}</div></section>`}).join('')}</div>`}
 const ICU='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',ICC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4h6v3H9zM6 6h12v15H6zM9 12h6M9 16h6"/></svg>';
 const bd=(c,i,t,n)=>`<span class="bd ${c}" title="${t}" role="img" aria-label="${t}">${i}${n?`<b>${n}</b>`:''}</span>`;
 function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length,
   gf=nRecep(o)>0;
   return`<article class="card k" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
-  <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span></div>
+  <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span>${conCita(o)?'<span class="chip g">Con cita</span>':''}</div>
   <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}${o.auth?bd('ok',IC.ok,'El cliente autorizó desde el enlace'):''}${o.espRef?bd('wa',IC.at,'Esperando refacciones'):''}${o.ret?bd('al',IC.fa,'Orden retrasada'):''}</div>
   <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc([o.marca,o.modelo].filter(Boolean).join(' ')||'Sin modelo')}${o.anio?' '+esc(o.anio):''}</div>${o.placas?`<div class="kv pl">${esc(o.placas)}</div>`:''}<div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
@@ -134,12 +173,12 @@ const ICN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="c
 const sm=(c,n,t)=>n?`<span class="sm ${c}" title="${t}">${n}</span>`:'';
 function drawer(o){const e=ETAPAS[idx(o.etapa)],nx=sig(o),nb=nx?puede(o,nx):'',cn=x=>o.chk.filter(c=>c.e===x).length,ln=x=>(o.llantas||[]).filter(l=>l.e===x).length,
   nd=(o.danos||[]).filter(d=>d.t!==REC).length,pa=o.lineas.filter(l=>l.st==='pend').length,au=o.lineas.filter(l=>l.st==='aut'||l.st==='gar').length;
-  const T=[['u','Cliente y unidad',''],['i','Inspección',sm('r',cn('ur'),'Urgentes')+sm('a',cn('px'),'Próximos')],['l','Llantas',sm('r',ln('ur'),'Urgentes')+sm('a',ln('px'),'Próximas')],['r','Carrocería',sm('n',nd,'Daños marcados')],['c','Cotización',sm('g',au,'Autorizados')+sm('a',pa,'Por autorizar')],['z','Cierre',''],['h','Historial','']];
+  const T=[['u','Cliente y unidad',''],['i','Inspección',sm('r',cn('ur'),'Urgentes')+sm('a',cn('px'),'Próximos')],['l','Llantas',sm('r',ln('ur'),'Urgentes')+sm('a',ln('px'),'Próximas')],['r','Carrocería',sm('n',nd,'Daños marcados')],['c','Cotización',sm('g',au,'Autorizados')+sm('a',pa,'Por autorizar')],['h','Historial','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
   <header class="drh"><button class="btn sm" data-a="cerrard" aria-label="Volver al panel general">${IC.back}<span> Panel</span></button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span>${nx?`<span class="split"><button class="btn sm nxt" data-a="sig" data-f="${o.folio}" ${nb?'disabled':''} title="${esc(nb||'Siguiente etapa: '+ETAPAS[idx(nx)][1])}">Siguiente ${ICN}</button><button class="btn sm nxd" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}" aria-label="Mover a otra etapa" title="Mover a otra etapa">${ICD}</button></span>`:''}<span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print" aria-label="Imprimir">${IC.pr}<span class="bt"> Imprimir</span></button>${nx?'':`<span class="mvw"><button class="btn sm" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}">Mover a… ${ICD}</button></span>`}</header>
   ${dhead(o)}
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
-  <div class="dbody">${dt==='u'?'':heroH(o)}${{u:tU,i:tI,l:tL,r:tR,c:tC,z:tZ,h:tH}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
+  <div class="dbody">${dt==='u'?'':heroH(o)}${({u:tU,i:tI,l:tL,r:tR,c:tC,h:tH}[dt]||tU)(o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
 // Encabezado compacto de la orden (solo computadora): cliente y unidad a la izquierda, datos de la orden al centro, equipo a la derecha.
 const fld=(n,l,p,v,x='')=>`<label class="f s${n}">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
 function dhead(o){autoMarca(o);autoModelo(o);const rec=o.etapa==='recepcion',ro=(n,l,v)=>`<div class="f s${n}"><span>${l}</span><div class="ro">${v}</div></div>`;
@@ -172,12 +211,12 @@ function tU(o){autoMarca(o);autoModelo(o);return`<div class="u-dup"><div class="
 const tL=o=>{normChk(o);return llH(o)};
 const tR=o=>gfotos(o);
 // Historial: lo que registra la app (creación y cambios de etapa) más el visto bueno y la autorización del cliente
-function tH(o){const ev=[...(o.hist||[]).map(h=>({t:h.t,u:h.u,x:h.x}))];
-  if(!ev.some(h=>/creada/i.test(h.x)))ev.push({t:o.fing,u:'',x:'Orden creada · '+TIPOS[o.tipo]});
-  if(o.vb)ev.push({t:o.vb,u:'',x:'Visto bueno enviado por WhatsApp'});
-  if(o.auth)ev.push({t:o.auth.t,u:o.auth.n,x:'El cliente autorizó desde el enlace ('+((o.auth.d||[]).filter(d=>d.st==='aut').length)+' autorizados, '+((o.auth.d||[]).filter(d=>d.st==='rech').length)+' para después)'});
-  ev.sort((a,b)=>b.t-a.t);
-  return`<div class="card"><div class="h">Historial de la orden</div><ol class="hist">${ev.map(h=>`<li><time>${esc(new Date(h.t).toLocaleString('es-MX',{dateStyle:'medium',timeStyle:'short'}))}</time><span>${esc(h.x)}</span>${h.u?`<small>${esc(h.u)}</small>`:''}</li>`).join('')}</ol></div>`}
+const vinN=v=>String(v||'').replace(/\s/g,'').toUpperCase(),plN=p=>{p=String(p||'').replace(/[\s-]/g,'').toUpperCase();return /^(SN|S\/N|NA|N\/A|SINPLACAS|0*)$/.test(p)?'':p};
+const visitas=o=>{const v=vinN(o.vin),p=plN(o.placas),V=S.orders.filter(x=>(v.length>=8&&vinN(x.vin)===v)||(p&&plN(x.placas)===p&&(!v||!vinN(x.vin)||vinN(x.vin).length<8)));if(!V.some(x=>x.folio===o.folio))V.push(o);return V.sort((a,b)=>(b.fing||b.cre||0)-(a.fing||a.cre||0))};
+function tH(o){const V=visitas(o),sin=!vinN(o.vin)&&!plN(o.placas);
+  const fila=x=>{const t=tot(x),au=x.lineas.filter(l=>l.st==='aut'||l.st==='gar'),e=ETAPAS[idx(x.etapa)]||[0,x.etapa,'#475569'],ya=x.folio===o.folio;
+    return`<li class="vis${ya?' now':''}"><div class="row sp wrap"><b class="fol">${esc(x.folio)}</b><span class="chip" style="background:${e[2]};color:#fff">${esc(e[1])}</span></div><time>${esc(new Date(x.fing||x.cre||Date.now()).toLocaleDateString('es-MX',{dateStyle:'long'}))}</time><div class="mut">${esc(TIPOS[x.tipo]||x.tipo)}${x.km?' · '+esc(fmtKm(x.km))+' km':''}${x.mec?' · '+esc(x.mec):''}${x.suc&&x.suc!==o.suc?' · '+esc(x.suc):''}</div>${au.length?`<div class="vtr">${au.slice(0,4).map(l=>esc(String(l.desc).slice(0,60))).join(' · ')}${au.length>4?' · +'+(au.length-4)+' más':''}</div>`:'<div class="mut">Sin trabajos autorizados</div>'}<div class="row sp"><span class="mut">Cobrado</span><b class="fol">${money(t.aut)}</b></div>${ya?'<span class="chip g">Esta visita</span>':`<button class="btn sm" data-a="abrir" data-f="${esc(x.folio)}">Abrir orden</button>`}</li>`};
+  return`<div class="card"><div class="h">Historial de visitas de esta moto</div>${sin?'<p class="mut" style="margin:0">Captura el VIN o las placas para ver las visitas anteriores.</p>':`<p class="mut" style="margin:0">${V.length>1?V.length+' visitas registradas':'Es la primera visita registrada de esta moto.'}</p>`}<ol class="vlist">${V.map(fila).join('')}</ol></div>`}
 function firmaCard(o,k,t){const f=o.firmas[k],s=f&&src(f);
   return`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>${k!=='entrega'?`<label class="f">Nombre<input data-p="firmas.${k}.n" value="${esc(f?.n||'')}"></label>`:''}${s?`<img class="pic" data-a="zoom" alt="Firma ${t}" src="${s}">`:''}<button class="btn" data-a="firma" data-k="${k}">${s?'Firmar de nuevo':'Capturar firma'}</button></div>`}
 const fechaIso=v=>{v=String(v||'').trim();let m=/^(\d{4})-(\d{2})-(\d{2})/.exec(v);if(m)return m[1]+'-'+m[2]+'-'+m[3];m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(v);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''};
@@ -231,7 +270,7 @@ function repSec(L,A){const grp=(f)=>{const m={};L.forEach(o=>{const k=f(o)||'Sin
   return`<div class="kps">${repKp('Órdenes',L.length,ent+' entregadas')}${repKp('Cotizado',money(T.cot),'Garantías aparte: '+money(T.gar))}${repKp('Autorizado',money(T.aut),'Tasa de autorización: '+tasa+'%')}${repKp('Rechazado / diferido',money(T.rech),'')}${repKp('Pendiente de autorizar',money(T.pend),'')}${repKp('Tiempo real promedio',con.length?hms(tp):'—',con.length+' orden(es) con cronómetro')}</div>
   <div class="rgs"><div class="card"><div class="h">Seguimientos</div><div class="dons">${repDon('Tasa de cierre',pcn(sg.cer,sg.disp),sg.cer+' de '+sg.disp)}${repDon('Tasa de éxito',pcn(sg.ven,sg.cer),sg.ven+' de '+sg.cer)}</div></div>
   ${repBars('Identificación por color · con foto',idv(true),'Reparto de los puntos de la hoja multipuntos que llevan foto.')}${repBars('Identificación por color · sin foto',idv(false),'Reparto de los puntos que no llevan foto.')}
-  ${repTbl('Por etapa',['Etapa','Órdenes'],ETAPAS.map(e=>[e[1],L.filter(o=>o.etapa===e[0]).length]))}</div>`}
+  ${repCita(L)}${repTbl('Por etapa',['Etapa','Órdenes'],ETAPAS.map(e=>[e[1],L.filter(o=>o.etapa===e[0]).length]))}</div>`}
 function reporte(){if(!puedeRep())return'';const L=repOrdenes(),A=sesion?permitidas(sesion.agencia):[];
   return`<div class="ph"><h2>Reporte</h2><label class="f">Periodo<select data-rp="p">${PER.map(([k,n])=>`<option value="${k}" ${rp.p===k?'selected':''}>${n}</option>`).join('')}</select></label>${A.length>1?`<label class="f">Agencia<select data-rp="ag"><option value="">Todas mis agencias</option>${A.map(a=>`<option ${rp.ag===a?'selected':''}>${esc(a)}</option>`).join('')}</select></label>`:''}<button class="btn" data-a="repcsv">Descargar CSV</button></div>
   <div class="rd"><nav class="rsb" aria-label="Secciones del reporte">${RSEC.map(([k,n])=>`<button class="${k===rp.sec?'on':''}" data-a="rsec" data-k="${k}" aria-current="${k===rp.sec}">${n}</button>`).join('')}</nav><div class="rmain">${rp.sec==='mo'?'':`<p class="mut">${L.length} orden(es) · ${esc(PER.find(x=>x[0]===rp.p)[1])}${rp.ag?' · '+esc(rp.ag):''}</p>`}${repSec(L,A)}</div></div>`}
@@ -398,7 +437,7 @@ const asigH=o=>o.etapa==='recepcion'?`<div class="card"><div class="h">Asignaci�
 const asesH=o=>`<div class="card"><div class="h">Datos del asesor de servicio</div><div class="g2">${inp('Asesor de servicio','asesor',o.asesor,'list="ass"')}${inp('Asesor de refacciones','asesorRef',o.asesorRef,'list="asr"')}</div>${dlColab('ass','ASESOR DE SERVICIO',o)}${dlColab('asr','ASESOR DE REFACCIONES',o)}
   <div class="sbh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
 const accH=o=>`<div class="card"><div class="sbh" style="margin-top:14px">Accesorios y documentos</div><div class="mut">Marca lo que se recibe junto con la moto.</div><div class="pts">${ACCES.map(n=>{const x=o.inv[n];return`<button class="tg ${x.p?'on':''}" data-a="inv" data-n="${n}" aria-pressed="${x.p}">${x.p?IC.ok:''}<span>${INV32[n]}</span></button>`}).join('')}</div></div>`;
-const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro','Recepción'],REC='Recepción',FI='Fotos de ingreso',pfo=new Set();let ds=-1;
+const SECC=[['Frente y dirección',[0,1,2]],['Motor y combustible',[3,4,12,5]],['Eléctrico y carrocería',[6,7,8]],['Tren trasero',[9,10,11]]],DANOS=['Rayado','Golpeado','Roto','Faltante','Desgaste','Otro','Recepción'],REC='Recepción',FI='Fotos de ingreso',pfo=new Set();let ds=-1;
 // Fotos de ingreso: puntos de tipo Recepción (varias fotos cada uno) + las fotos generales de órdenes anteriores
 const nRecep=o=>(o.danos||[]).filter(m=>m.t===REC).reduce((a,m)=>a+fotosK(m).filter(u=>src(u)).length,0)+FOTOS_GRAL.filter(x=>o.fotos[x[0]]&&src(o.fotos[x[0]])).length;
 const heroSrc=o=>{if(o.fotos.g_frente&&src(o.fotos.g_frente))return src(o.fotos.g_frente);for(const m of o.danos||[])if(m.t===REC){const u=fotosK(m)[0];if(u)return src(u)}return''};
@@ -412,7 +451,7 @@ function llH(o){return`<div class="sbar">Llantas</div><div class="card llc">`+o.
   ${bad?`<label class="f llop"><span>Operación recomendada</span><input data-p="llantas.${i}.op" list="opl" value="${esc(l.op||'')}" placeholder="Elige o escribe la operación"></label>`:''}${galH(l,'l',i)}</div>`}).join('')+`<datalist id="opl">${OPL.map(x=>`<option value="${x}">`).join('')}</datalist></div>`}
 const enCot=(o,i)=>o.lineas.some(l=>l.ck===i||(l.sku==='HALLAZGO'&&String(l.desc).startsWith(CATS[i][0]+': ')));
 function ckRow(o,i){const c=CATS[i],k=o.chk[i],bad=k.e==='px'||k.e==='ur';
-  return`<div class="ckr"><div class="ckt"><b>${i+1}. ${c[0]}</b><span class="mut">${c[1]}</span></div>${sqH(k,'cond',i,c[0])}${galH(k,'c',i)}
+  return`<div class="ckr"><div class="ckt"><b>${(SECC.flatMap(x=>x[1]).indexOf(i)+1)||i+1}. ${c[0]}</b><span class="mut">${c[1]}</span></div>${sqH(k,'cond',i,c[0])}${galH(k,'c',i)}
   ${bad?`<div class="ckx"><label class="f">Operación recomendada<input data-p="chk.${i}.op" list="op${i}" value="${esc(k.op||'')}" placeholder="Elige o escribe la operación"></label><datalist id="op${i}">${OPS[i].map(x=>`<option value="${x}">`).join('')}</datalist><label class="f">Nota técnica<textarea data-c="${i}">${esc(k.n)}</textarea></label>${enCot(o,i)?`<button class="btn" disabled>${IC.ok} Ya está en la cotización</button>`:`<button class="btn" data-a="pc" data-i="${i}">Pasar a cotización</button>`}</div>`:''}</div>`}
 function danosH(o){const d=o.danos||[],leg=FOTOS_GRAL.filter(x=>o.fotos[x[0]]&&src(o.fotos[x[0]]));
   return`<div class="sbh" style="margin-top:14px">Daños y detalles</div><div class="mut">Toca la moto donde haya un daño o detalle (lateral, frente o arriba): se numera y eliges el tipo en la lista. Para las fotos de ingreso elige <b>Recepción</b>: el detalle se llena solo y puedes tomar o elegir varias fotos.</div>
@@ -422,8 +461,7 @@ function danosH(o){const d=o.danos||[],leg=FOTOS_GRAL.filter(x=>o.fotos[x[0]]&&s
 
 function tI(o){const np=o.inv.filter(i=>i.p).length,fo=(k,t)=>`<div class="card"><div class="row sp"><div class="h">${t}</div><span class="chip ${o.fotos[k]?'g':'w'}">${o.fotos[k]?IC.ok+' Cargada':'Obligatoria'}</span></div>${o.fotos[k]?`<img class="pic" data-a="zoom" alt="${t}" src="${src(o.fotos[k])}">`:''}<button type="button" class="btn" data-a="fpick" data-foto="${k}">${IC.cam} ${o.fotos[k]?'Reemplazar foto':'Tomar o elegir foto'}</button></div>`;
   normChk(o);
-  return`${SECC.map(([t,ix],si)=>`<div class="sbar">${t}</div>${ix.map(i=>ckRow(o,i)).join('')}`).join('')}
-  ${bayH(o)}`}
+  return`${SECC.map(([t,ix],si)=>`<div class="sbar">${t}</div>${ix.map(i=>ckRow(o,i)).join('')}`).join('')}`}
 
 const qopen=new Set(),SEMC={ur:'r',px:'a',ok:'g',nr:'n'},EST=[['pend','Pendiente de autorización'],['aut','Autorizado'],['rech','Rechazado'],['gar','Garantía']];
 const zonaDe=(o,l)=>{if(l.ck!=null&&CATS[l.ck])return l.ck;return CATS.findIndex(c=>String(l.desc).startsWith(c[0]+': '))};
@@ -449,18 +487,10 @@ const qaddH=()=>`<div class="qadd"><button class="qplus" data-a="qmenu" aria-exp
 function tC(o){return`<div class="q2t"><div class="q2h"><span></span><span>Concepto</span><span>Estado de autorización</span><span class="r">Importe (IVA incl.)</span></div>${o.lineas.map((l,i)=>lineaH(l,i,o)).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
   ${qaddH()}<div class="q2f" id="tot" role="group" aria-label="Totales de la cotización">${totH(o)}</div></div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button></div>
-  ${autCard(o)}`}
-function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><button class="btn ${o.lav?'':'pri'}" data-a="lav" aria-pressed="${!!o.lav}">${o.lav?IC.ok+' Moto lavada (tocar para revertir)':'Marcar moto lavada'}</button><div class="mut">Requisito para pasar a Entregado.</div></div>
-  <div class="card"><div class="h">Diagnóstico del técnico</div><label class="f"><span class="sr">Diagnóstico</span><textarea data-p="diag" style="min-height:110px">${esc(o.diag)}</textarea></label></div>
-  <div class="card"><div class="h">Aviso legal</div><p style="margin:0;font-size:14px">${LEYENDA}</p><button class="btn ${o.leg?'':'pri'}" data-a="leg" aria-pressed="${!!o.leg}">${o.leg?IC.ok+' Cliente informado (tocar para revertir)':'El cliente fue informado'}</button></div>
+  ${autCard(o)}${tFin(o)}`}
+function tFin(o){return`<div class="card"><div class="h">Aviso legal</div><p style="margin:0;font-size:14px">${LEYENDA}</p><button class="btn ${o.leg?'':'pri'}" data-a="leg" aria-pressed="${!!o.leg}">${o.leg?IC.ok+' Cliente informado (tocar para revertir)':'El cliente fue informado'}</button></div>
   <div class="card"><div class="h">Próximo servicio</div><div class="g2">${inp('Fecha','prox.f',o.prox.f,'type="date"')}${inp('Kilometraje','prox.km',fmtKm(o.prox.km),'inputmode="numeric" autocomplete="off"')}</div></div>
-  <div class="row wrap"><button class="btn amb" data-a="walisto">Avisar por WhatsApp: unidad lista</button><button class="btn" data-a="print">${IC.pr} Imprimir / PDF</button></div>`}
-
-function agenda(){const hoy=iso(),L=mine(),mecs=[...new Set(L.map(o=>o.mec).filter(Boolean))],bs=BAHIAS.filter(b=>!agf.b||String(b)===agf.b);
-  return`<div class="ph"><h2>Agenda de hoy</h2><label class="f">Bahía<select data-ag="b"><option value="">Todas</option>${BAHIAS.map(b=>`<option ${agf.b===String(b)?'selected':''}>${b}</option>`).join('')}</select></label><label class="f">Mecánico<select data-ag="m"><option value="">Todos</option>${mecs.map(m=>`<option ${agf.m===m?'selected':''}>${esc(m)}</option>`).join('')}</select></label></div>
-  <div class="ag" style="grid-template-columns:52px repeat(${bs.length},minmax(0,1fr))"><div></div>${bs.map(b=>`<div class="agh">Bahía ${b}</div>`).join('')}
-  ${HORAS.map(h=>`<div class="hr">${String(h).padStart(2,'0')}:00</div>`+bs.map(b=>{const o=L.find(o=>o.cita&&o.cita.f===hoy&&o.cita.h===h&&o.cita.b===b);
-   return`<div>${o?(agf.m&&o.mec!==agf.m?`<div class="slot dim">Ocupada</div>`:`<button class="slot occ" data-a="abrir" data-f="${o.folio}">${esc(o.folio)} · ${esc(o.modelo)}<br><span class="mut">${esc(o.mec||'')}</span></button>`):`<button class="slot" data-a="cita" data-h="${h}" data-b="${b}">Libre</button>`}</div>`}).join('')).join('')}</div>`}
+  ${idx(o.etapa)>=idx('lavado')?'<div class="row wrap"><button class="btn amb" data-a="walisto">Avisar por WhatsApp: unidad lista</button></div>':''}`}
 
 function segItems(){const r=[];mine().forEach(o=>{o.lineas.forEach((l,i)=>{if(l.st==='rech'&&!l.cerr)r.push({k:'l',o,i,l,f:l.seg||''})});if(o.prox&&o.prox.f&&!o.prox.cerr)r.push({k:'p',o,f:o.prox.f})});return r.sort((a,b)=>(a.f||'9').localeCompare(b.f||'9'))}
 function seguimientos(){const hoy=iso(),w=addD(7),it=segItems().filter(x=>match(x.o)),G=[['Vencidos',it.filter(x=>x.f&&x.f<hoy)],['Esta semana',it.filter(x=>x.f&&x.f>=hoy&&x.f<=w)],['Más adelante',it.filter(x=>x.f&&x.f>w)],['Sin fecha',it.filter(x=>!x.f)]];
@@ -501,8 +531,6 @@ const acts={
  lav:()=>{const o=O(D);o.lav=!o.lav;touch(o);renderDrawer()},
  agpick:()=>{if(!sesion||!multi(sesion.agencia))return;sheet('<div class="h">Agencia de trabajo</div><div class="mut">Elige la agencia en la que vas a trabajar.</div>'+permitidas(sesion.agencia).map(a=>`<button class="btn ${a===S.suc?'pri':''}" data-a="agset" data-k="${esc(a)}">${esc(a)}</button>`).join(''))},
  agset:d=>{S.suc=d.k;migrarLeg();$('#modal').innerHTML='';D=null;render()},crear:d=>{$('#modal').innerHTML='';crear(d.t)},
- cita:d=>sheet(`<div class="h">Nueva cita ${d.h}:00 · Bahía ${d.b}</div>`+tipoBtns('crearc',`data-h="${d.h}" data-b="${d.b}"`)),
- crearc:d=>{$('#modal').innerHTML='';crear(d.t,{bahia:d.b,cita:{f:iso(),h:+d.h,b:+d.b}})},
  mv:d=>sheet('<div class="h">Mover a…</div>'+ETAPAS.map(([k,n])=>`<button class="btn ${O(d.f).etapa===k?'pri':''}" data-a="mvto" data-f="${d.f}" data-k="${k}">${n}</button>`).join('')),
  mvto:d=>{$('#modal').innerHTML='';document.querySelectorAll('.mmenu').forEach(m=>m.remove());mover(O(d.f),d.k)},
  mvmenu:(d,e)=>{const w=e.target.closest('.split,.mvw');if(!w)return;const abierto=!!w.querySelector('.mmenu');document.querySelectorAll('.mmenu').forEach(m=>m.remove());document.querySelectorAll('[data-a="mvmenu"]').forEach(x=>x.setAttribute('aria-expanded','false'));if(abierto)return;const o=O(d.f);if(!o)return;
@@ -683,9 +711,9 @@ function cerrarVisor(){const v=$('#visor');if(v)v.hidden=true;navSync()}
 /* arrastrar y soltar: complemento en escritorio */
 document.addEventListener('dragstart',e=>{const k=e.target.closest&&e.target.closest('.k');if(!k)return;dragF=k.dataset.f;e.dataTransfer.setData('text/plain',dragF);k.classList.add('dg')});
 document.addEventListener('dragend',()=>{dragF=null;document.querySelectorAll('.dg,.over').forEach(x=>x.classList.remove('dg','over'))});
-document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.closest('.col');if(c&&dragF){e.preventDefault();c.classList.add('over')}});
+document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.closest('.col');if(c&&c.dataset.drop&&dragF){e.preventDefault();c.classList.add('over')}});
 document.addEventListener('dragleave',e=>{const c=e.target.closest&&e.target.closest('.col');if(c)c.classList.remove('over')});
-document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('.col');if(!c||!dragF)return;e.preventDefault();const o=O(dragF);dragF=null;document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));if(o&&c.dataset.drop!==o.etapa)mover(o,c.dataset.drop)});
+document.addEventListener('drop',e=>{const c=e.target.closest&&e.target.closest('.col');if(!c||!c.dataset.drop||!dragF)return;e.preventDefault();const o=O(dragF);dragF=null;document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));if(o&&c.dataset.drop!==o.etapa)mover(o,c.dataset.drop)});
 
 function aplicarUrls(o,u){for(const k in u){const[a,b,c]=k.split('.');if(a==='fotos'&&o.fotos[b])o.fotos[b]={u:u[k]};else if(a==='firmas'&&o.firmas[b])o.firmas[b]={n:o.firmas[b].n,u:u[k]};else if(a==='chk'&&o.chk[b])o.chk[b].f=u[k];else if(a==='chkx'&&o.chk[b]&&o.chk[b].fx)o.chk[b].fx[c]=u[k];else if(a==='ll'&&o.llantas&&o.llantas[b])o.llantas[b].f=u[k];else if(a==='llx'&&o.llantas&&o.llantas[b]&&o.llantas[b].fx)o.llantas[b].fx[c]=u[k];else if(a==='dan'&&o.danos&&o.danos[b])o.danos[b].f=u[k];else if(a==='danx'&&o.danos&&o.danos[b]&&o.danos[b].fx)o.danos[b].fx[c]=u[k];else if(a==='lineas'&&o.lineas[b])o.lineas[b].f=u[k]}}
 let syncMsg='',syT=0,pendDr=false;
@@ -727,15 +755,19 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
    try{const c=await api.taller({action:'leerConfig'});if(c&&c.success&&c.config){S.tarifas=S.tarifas||{};let ct=false;for(const k in c.config){const m=/^tarifa_mo\|(.+)$/.exec(k);if(m&&!(S.tarPend||{})[m[1]]&&S.tarifas[m[1]]!==Number(c.config[k])){S.tarifas[m[1]]=Number(c.config[k])||0;ct=true}}if(ct&&view==='rep'&&!escribiendo())renderMain()}
     if(Object.keys(S.tarPend||{}).length)await subeTarifas()}catch{}
    if(!S.colabT||Date.now()-S.colabT>3e5)await leeColab();
+   await syncCitas();
    // 2) subir lo pendiente
    for(const f of [...S.dirty]){const o=O(f);if(!o){S.dirty=S.dirty.filter(x=>x!==f);continue}const u0=o.upd,r=await api.taller({action:'guardarOrden',orden:o});if(!r.success){err=(r.message||'error del servidor')+' ('+f+')';continue}aplicarUrls(o,r.urls||{});if(o.upd===u0)S.dirty=S.dirty.filter(x=>x!==f)}
    save()}catch(e){err=String(e&&e.message||e)}syncMsg=err;syncing=false;pintaSyn();
   if(fotoPend){if(!err&&!S.dirty.length){fotoPend=false;fotoErr=false;toast('Foto sincronizada: ya se puede ver en la PC')}else if(err&&!fotoErr){fotoErr=true;toast('La foto quedó guardada en este dispositivo, pero no se pudo subir: '+err)}}
   if(!err&&S.dirty.length)syncSoon(2500)}
+async function syncCitas(){try{const rc=await api.taller({action:'listarCitas'});if(!rc||!rc.success)return;let ch=false;CT();(rc.citas||[]).forEach(r=>{if(!r||!r.id)return;const l=S.citas.find(x=>x.id===r.id);if(!l){S.citas.push(r);ch=true}else if((r.upd||0)>(l.upd||0)&&!S.cdirty.includes(l.id)){Object.assign(l,r);ch=true}});
+  for(const id of [...S.cdirty]){const c=S.citas.find(x=>x.id===id);if(!c){S.cdirty=S.cdirty.filter(x=>x!==id);continue}const u0=c.upd,r=await api.taller({action:'guardarCita',cita:c});if(r&&r.success&&c.upd===u0)S.cdirty=S.cdirty.filter(x=>x!==id)}
+  save();if(ch&&(view==='ag'||view==='board')&&!escribiendo())renderMain()}catch{}}
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v42 · 24-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v43 · 24-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
@@ -788,6 +820,25 @@ IDB.open().then(async ok=>{
   $('#ftipo').innerHTML='<option value="">Todos los tipos</option>'+Object.entries(TIPOS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
   S.orders=S.orders||[];S.dirty=S.dirty||[];S.inv=S.inv||[];S.seq=S.seq||{};S.del=S.del||[];S.tarifas=S.tarifas||{};S.tarPend=S.tarPend||{};S.colab=S.colab||[];S.orders.forEach(migEt);
   sesion=leerSes();aplicarTema();pintaLogin();aplicaAg();render();sync();if(sesion)cargaCat(true)});
+
+Object.assign(acts,{
+ ctnueva:()=>{if(!S.suc)return acts.agpick();ctForm({id:ctNuevoId(),f:agd<iso()?iso():agd,t:'',b:'',tipo:'SP'})},
+ cita:d=>{if(!S.suc)return acts.agpick();ctForm({id:ctNuevoId(),f:agd<iso()?iso():agd,t:String(d.h).padStart(2,'0')+':00',b:d.b,tipo:'SP'})},
+ ctedit:d=>{const c=CT().find(x=>x.id===d.id);if(c)ctForm(Object.assign({},c))},
+ ctsave:d=>{const g=i=>(($('#'+i)||{}).value||'').trim(),f=g('ct-f'),t=g('ct-t'),cl=g('ct-cli'),tel=g('ct-tel');
+  if(!f||!t)return toast('Elige la fecha y la hora');if(f<iso())return toast('La fecha no puede ser anterior a hoy');if(!cl&&!tel)return toast('Captura el cliente o su WhatsApp');
+  let c=CT().find(x=>x.id===d.id);if(!c){c={id:d.id,suc:S.suc,est:'prog',folio:'',cre:Date.now(),por:sesion&&(sesion.nombre||sesion.correo)||''};S.citas.push(c)}
+  Object.assign(c,{f,t,tipo:g('ct-tipo')||'SP',b:g('ct-b'),cliente:cl,tel,modelo:g('ct-mod'),nota:g('ct-nota')});if(c.est==='no')c.est='prog';
+  ctTouch(c);agd=f;$('#modal').innerHTML='';renderMain();toast('Cita guardada','ok')},
+ agdia:d=>{agd=+d.n===0?iso():sumD(agd,+d.n);renderMain()},
+ ctrecibir:async d=>{const c=CT().find(x=>x.id===d.id);if(!c)return;if(c.f!==iso())return toast('Solo se recibe el día de la cita');if(!S.suc)return acts.agpick();
+  const o=await crear(c.tipo||'SP',{cliente:c.cliente,tel:c.tel,modelo:c.modelo,motivo:c.nota||'',bahia:c.b?+c.b:'',conCita:true,citaId:c.id,cita:{f:c.f,h:+String(c.t).slice(0,2),b:c.b?+c.b:0}});
+  if(o){c.est='llego';c.folio=o.folio;ctTouch(c)}},
+ ctno:d=>{const c=CT().find(x=>x.id===d.id);if(!c)return;c.est='no';ctTouch(c);renderMain()},
+ ctcancel:async d=>{const c=CT().find(x=>x.id===d.id);if(!c)return;if(!(await ask({t:'Cancelar cita',m:'¿Cancelar la cita de '+(c.cliente||'este cliente')+' a las '+c.t+'?',ok:'Cancelar cita',tipo:'err'})))return;c.est='cancel';ctTouch(c);renderMain()},
+ ctwa:d=>{const c=CT().find(x=>x.id===d.id);if(c)wa(c.tel,`Hola ${c.cliente}, te esperamos el ${ctFecha(c.f)} a las ${c.t} en ${S.suc} para tu servicio (${TIPOS[c.tipo]||c.tipo}). Si no puedes asistir, avísanos para reprogramar.`)}
+});
+document.addEventListener('change',e=>{const t=e.target;if(t&&t.matches&&t.matches('[data-agd]')){agd=t.value||iso();renderMain()}});
 
 /* Deslizar a izquierda / derecha para cambiar de pestaña (orden abierta y etapas del Panel en el celular) */
 (function(){let sx=0,sy=0,t0=0,ok=false,tg=null;
