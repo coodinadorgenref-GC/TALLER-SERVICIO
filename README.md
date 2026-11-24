@@ -15,6 +15,13 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v44
+- **Columna Citas** del Panel: solo lista las citas de hoy (sin botones ni textos de ayuda). Una orden nueva en el día es, por definición, **sin cita**; las citas se programan desde la Agenda.
+- **Agenda por técnico**: línea de tiempo con el técnico en la primera columna y la hora de 08:00 am a 07:00 pm en saltos de 15 minutos. Se agenda tocando un horario libre; las citas aparecen como bloques por color (programada, llegó, no llegó) y la línea roja marca la hora actual.
+- **Nueva cita**: fecha, hora, tipo de servicio, cliente (propietario), teléfono (WhatsApp), correo, serie / VIN, marca, modelo, año y nota, más técnico y duración (opcionales). Al capturar un VIN ya conocido se completan los datos de la moto y del cliente. Recibir la cita pasa todos esos datos a la orden.
+- **Llantas**: lista de medidas comunes para delantera y trasera, y atajos con las medidas ya usadas en esa moto o en ese modelo.
+- **Apps Script v13**: pegar `gas/taller_api.gs` y publicar una nueva versión.
+
 ## Novedades v43
 - **Citas**: viven en la **Agenda** (se programan para hoy o días posteriores, con fecha, hora, bahía, tipo, cliente, WhatsApp, moto y nota). La columna **Citas** del Panel, a la izquierda de Recepción, muestra las de hoy de la agencia; **Recibir** abre la orden en Recepción con los datos ya llenos (orden *con cita*). Un cliente que llega sin cita se atiende con **Nueva orden** (orden *sin cita*). Solo se recibe el día de la cita.
 - **Reporte**: nueva tabla **Órdenes con cita y sin cita** (órdenes, % y autorizado) y **Citas del periodo** (programadas, llegaron, no llegaron, canceladas).

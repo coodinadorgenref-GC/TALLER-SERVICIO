@@ -42,28 +42,46 @@ const sumD=(f,n)=>{const x=new Date(f+'T12:00:00');x.setDate(x.getDate()+n);retu
 const ctDia=f=>CT().filter(c=>c.suc===S.suc&&c.f===f&&c.est!=='cancel').sort((a,b)=>String(a.t).localeCompare(String(b.t)));
 const ctHoy=()=>ctDia(iso());
 const ctFecha=f=>{const d=new Date(f+'T12:00:00');return isNaN(d)?f:d.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})};
-const ctMatch=c=>!q||[c.cliente,c.tel,c.modelo,c.nota].join(' ').toLowerCase().includes(String(q).toLowerCase());
+const ctMatch=c=>!q||[c.cliente,c.tel,c.marca,c.modelo,c.vin,c.nota].join(' ').toLowerCase().includes(String(q).toLowerCase());
 const ctChip=c=>c.est==='llego'?`<span class="chip g">${IC.ok} Llegó</span>`:c.est==='no'?'<span class="chip r">No llegó</span>':'<span class="chip n">Programada</span>';
 let agd=iso(),CTD=null;
 function ctCard(c,ag){const hoy=c.f===iso(),btn=(a,t,x='')=>`<button class="btn sm ${x}" data-a="${a}" data-id="${esc(c.id)}">${t}</button>`;
-  return`<article class="cita ${c.est}" aria-label="Cita de las ${esc(c.t)}: ${esc(c.cliente)}"><div class="row sp wrap"><b class="cth fol">${esc(c.t)}</b>${ctChip(c)}</div><div class="kn">${esc(c.cliente||'Sin nombre')}</div><div class="kv">${esc(c.modelo||'Sin modelo')} · ${esc(TIPOS[c.tipo]||c.tipo)}${c.b?' · Bahía '+esc(c.b):''}</div>${c.nota?`<div class="kv mut">${esc(c.nota)}</div>`:''}${c.tel?`<div class="kv">${esc(c.tel)}</div>`:''}
+  return`<article class="cita ${c.est}" aria-label="Cita de las ${esc(c.t)}: ${esc(c.cliente)}"><div class="row sp wrap"><b class="cth fol">${esc(c.t)}</b>${ctChip(c)}</div><div class="kn">${esc(c.cliente||'Sin nombre')}</div><div class="kv">${esc(ctMoto(c)||'Sin moto')} · ${esc(TIPOS[c.tipo]||c.tipo)}${c.mec?' · '+esc(c.mec):''}</div>${c.nota?`<div class="kv mut">${esc(c.nota)}</div>`:''}${c.tel?`<div class="kv">${esc(c.tel)}</div>`:''}
   <div class="row wrap">${c.est==='prog'?`<button class="btn sm pri" data-a="ctrecibir" data-id="${esc(c.id)}" ${hoy?'':'disabled title="Solo se recibe el día de la cita"'}>Recibir</button>`:''}${c.est==='llego'&&c.folio?`<button class="btn sm" data-a="abrir" data-f="${esc(c.folio)}">Abrir ${esc(c.folio)}</button>`:''}${c.est==='prog'||c.est==='no'?btn('ctedit',c.est==='no'?'Reprogramar':'Editar'):''}${ag&&c.est==='prog'?btn('ctwa','WhatsApp')+btn('ctno','No llegó')+btn('ctcancel','Cancelar cita'):''}</div></article>`}
 function citaTab(np){return`<button class="tab ${tab==='citas'?'on':''}" role="tab" aria-selected="${tab==='citas'}" data-a="tab" data-k="citas">Citas <span class="cnt">${np}</span></button>`}
-function citaCol(C,np){return`<section class="col ${tab==='citas'?'on':''}" style="--c:#CA8A04" aria-label="Citas de hoy"><h2 class="ch"><span>Citas de hoy</span><span class="cnt">${np}</span></h2><div class="cl">${C.map(c=>ctCard(c,false)).join('')||'<p class="mut cvac">Sin citas para hoy.</p>'}<div class="row wrap"><button class="btn sm" style="flex:1" data-a="ctnueva">+ Nueva cita</button><button class="btn sm" style="flex:1" data-a="view" data-v="ag">Ver agenda</button></div></div></section>`}
-function agenda(){const hoy=iso(),d=agd,C=ctDia(d),L=mine(),bs=BAHIAS.filter(b=>!agf.b||String(b)===agf.b);
-  return`<div class="ph"><h2>Agenda</h2><div class="agd"><button class="btn sm" data-a="agdia" data-n="-1" aria-label="Día anterior">‹</button><button class="btn sm ${d===hoy?'pri':''}" data-a="agdia" data-n="0">Hoy</button><button class="btn sm" data-a="agdia" data-n="1" aria-label="Día siguiente">›</button><input type="date" data-agd value="${d}" aria-label="Fecha de la agenda"></div><label class="f">Bahía<select data-ag="b"><option value="">Todas</option>${BAHIAS.map(b=>`<option ${agf.b===String(b)?'selected':''}>${b}</option>`).join('')}</select></label><button class="btn pri" data-a="ctnueva">+ Nueva cita</button></div>
+function citaCol(C,np){return`<section class="col ${tab==='citas'?'on':''}" style="--c:#CA8A04" aria-label="Citas de hoy"><h2 class="ch"><span>Citas de hoy</span><span class="cnt">${np}</span></h2><div class="cl">${C.map(c=>ctCard(c,false)).join('')}</div></section>`}
+const CT_I=480,CT_F=1140,CT_N=(CT_F-CT_I)/15;
+const ctMin=t=>{const m=/^(\d{2}):(\d{2})$/.exec(t||'');return m?+m[1]*60+ +m[2]:0};
+const hm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+const h12=m=>{const h=Math.floor(m/60);return String(h%12||12).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(h<12?' am':' pm')};
+const ctMecs=()=>{const st=new Set(colDe('MECANICO',S.suc));mine().forEach(o=>o.mec&&st.add(o.mec));CT().forEach(c=>c.suc===S.suc&&c.mec&&st.add(c.mec));return[...st].filter(Boolean).sort((a,b)=>a.localeCompare(b,'es'))};
+const ctMoto=c=>[c.marca,c.modelo,c.anio].filter(Boolean).join(' ');
+function agenda(){const hoy=iso(),d=agd,C=ctDia(d),L=mine(),mecs=ctMecs(),n=new Date(),nm=n.getHours()*60+n.getMinutes(),now=d===hoy&&nm>=CT_I&&nm<=CT_F?(nm-CT_I)/15:-1;
+  const its=[...C.map(c=>({mec:c.mec||'',s:ctMin(c.t),dur:+c.dur||60,t:c.t,l1:c.cliente||'Cita',l2:ctMoto(c),est:c.est,a:c.est==='llego'&&c.folio?`data-a="abrir" data-f="${esc(c.folio)}"`:`data-a="ctedit" data-id="${esc(c.id)}"`})),
+   ...L.filter(o=>o.cita&&o.cita.f===d&&!o.citaId).map(o=>({mec:o.mec||'',s:(+o.cita.h||8)*60,dur:60,t:hm((+o.cita.h||8)*60),l1:o.folio,l2:o.modelo||'',est:'ord',a:`data-a="abrir" data-f="${esc(o.folio)}"`}))];
+  its.forEach(x=>{x.si=Math.max(0,Math.min(CT_N-1,Math.floor((x.s-CT_I)/15)));x.n=Math.max(1,Math.min(CT_N-x.si,Math.ceil(x.dur/15)))});
+  const foco=now>=0?Math.max(0,Math.floor(now)):its.length?Math.min(...its.map(x=>x.si)):0;
+  const fila=m=>{const I=its.filter(x=>(x.mec||'')===m).sort((a,b)=>a.s-b.s),lanes=[];I.forEach(x=>{let k=lanes.findIndex(e=>e<=x.si);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x.si+x.n;x.k=k});
+   return`<div class="tl-r" role="row" style="--ln:${Math.max(1,lanes.length)}"><div class="tl-n" role="rowheader">${m?esc(m):'Sin asignar'}<small>${m?I.length+' cita'+(I.length===1?'':'s'):'Sin técnico'}</small></div>${Array.from({length:CT_N},(_,i)=>`<button type="button" class="tl-s${i%4===0?' h':''}" style="grid-column:${i+2}" data-a="ctslot" data-t="${hm(CT_I+i*15)}" data-m="${esc(m)}" aria-label="Nueva cita ${m?esc(m)+' ':''}${h12(CT_I+i*15)}"></button>`).join('')}${I.map(x=>`<button type="button" class="tl-b ${x.est}" style="grid-column:${x.si+2}/span ${x.n};grid-row:${x.k+1}" ${x.a} title="${esc(x.t+' · '+x.l1+(x.l2?' · '+x.l2:''))}"><b>${esc(x.t)}</b><span>${esc(x.l1)}</span>${x.l2?`<small>${esc(x.l2)}</small>`:''}</button>`).join('')}</div>`};
+  return`<div class="ph"><h2>Agenda</h2><div class="agd"><button class="btn sm" data-a="agdia" data-n="-1" aria-label="Día anterior">‹</button><button class="btn sm ${d===hoy?'pri':''}" data-a="agdia" data-n="0">Hoy</button><button class="btn sm" data-a="agdia" data-n="1" aria-label="Día siguiente">›</button><input type="date" data-agd value="${d}" aria-label="Fecha de la agenda"></div><button class="btn pri" data-a="ctnueva">+ Nueva cita</button></div>
   <p class="agt"><b>${esc(ctFecha(d))}</b> · ${C.length} cita${C.length===1?'':'s'}${d===hoy?'':' · programa citas de hoy o de días posteriores'}</p>
-  <div class="ag" style="grid-template-columns:52px repeat(${bs.length},minmax(0,1fr))"><div></div>${bs.map(b=>`<div class="agh">Bahía ${b}</div>`).join('')}
-  ${HORAS.map(h=>`<div class="hr">${String(h).padStart(2,'0')}:00</div>`+bs.map(b=>{const c=C.find(c=>+c.b===b&&+String(c.t).slice(0,2)===h),o=L.find(o=>o.cita&&o.cita.f===d&&o.cita.h===h&&+o.cita.b===b&&!o.citaId);
-   return`<div>${c?(c.est==='llego'&&c.folio?`<button class="slot occ llego" data-a="abrir" data-f="${esc(c.folio)}">${esc(c.t)} · ${esc(c.cliente||'Cita')}<br><span class="mut">Llegó · ${esc(c.folio)}</span></button>`:`<button class="slot occ ${c.est}" data-a="ctedit" data-id="${esc(c.id)}">${esc(c.t)} · ${esc(c.cliente||'Cita')}<br><span class="mut">${esc(c.modelo||'')}</span></button>`):o?`<button class="slot occ" data-a="abrir" data-f="${o.folio}">${esc(o.folio)} · ${esc(o.modelo)}<br><span class="mut">${esc(o.mec||'')}</span></button>`:`<button class="slot" data-a="cita" data-h="${h}" data-b="${b}">Libre</button>`}</div>`}).join('')).join('')}</div>
+  <div class="tl-leg" aria-hidden="true"><span><i style="background:#0284C7"></i>Programada</span><span><i style="background:#059669"></i>Llegó</span><span><i style="background:#94A3B8"></i>No llegó</span><span class="mut">Toca un horario libre para agendar</span></div>
+  <div class="tl" data-d="${d}" data-f="${foco}" role="table" aria-label="Agenda por técnico"><div class="tl-in" ${now>=0?`style="--now:${now}"`:''}>
+   <div class="tl-hd" role="row"><div class="tl-c0" role="columnheader">Técnico</div>${Array.from({length:CT_N/4},(_,i)=>`<div class="tl-hh" style="grid-column:${2+i*4}/span 4" role="columnheader">${h12(CT_I+i*60)}</div>`).join('')}<div class="tl-hh tl-he" style="grid-column:${CT_N+2}" role="columnheader">${h12(CT_F)}</div>${Array.from({length:CT_N},(_,i)=>`<div class="tl-hm${i%4===0?' q':''}" style="grid-column:${i+2}" aria-hidden="true">${String((i%4)*15).padStart(2,'0')}</div>`).join('')}</div>
+   ${[...mecs,''].map(fila).join('')}${now>=0?'<div class="tl-now" aria-hidden="true"></div>':''}</div></div>
   <h3 class="h" style="margin:14px 0 8px">Citas del día <span class="cnt">${C.length}</span></h3>${C.length?`<div class="sgg">${C.map(c=>ctCard(c,true)).join('')}</div>`:'<p class="mut">No hay citas para este día. Toca un horario libre o «Nueva cita».</p>'}`}
-function ctForm(c){CTD=c;const hoy=iso();
-  sheet(`<div class="h">${CT().some(x=>x.id===c.id)?'Editar cita':'Nueva cita'}</div>
-  <div class="g2"><label class="f">Fecha<input id="ct-f" type="date" min="${hoy}" value="${esc(c.f)}"></label><label class="f">Hora<input id="ct-t" type="time" step="900" value="${esc(c.t||'')}"></label></div>
-  <div class="g2"><label class="f">Tipo de servicio<select id="ct-tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${(c.tipo||'SP')===k?'selected':''}>${esc(v)}</option>`).join('')}</select></label><label class="f">Bahía<select id="ct-b"><option value="">Sin asignar</option>${BAHIAS.map(b=>`<option ${String(c.b)===String(b)?'selected':''}>${b}</option>`).join('')}</select></label></div>
-  <label class="f">Cliente<input id="ct-cli" value="${esc(c.cliente||'')}" autocomplete="off"></label>
-  <div class="g2"><label class="f">WhatsApp<input id="ct-tel" inputmode="tel" value="${esc(c.tel||'')}" autocomplete="off"></label><label class="f">Moto (marca y modelo)<input id="ct-mod" value="${esc(c.modelo||'')}" autocomplete="off"></label></div>
+function agScroll(prev){const tl=document.querySelector('.tl');if(!tl)return;if(prev!=null){tl.scrollLeft=prev;return}const sw=(tl.querySelector('.tl-s')||{}).offsetWidth||34;tl.scrollLeft=Math.max(0,((+tl.dataset.f||0)-2)*sw)}
+const DURS=[[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30 min'],[120,'2 h'],[180,'3 h'],[240,'4 h']];
+function ctForm(c){CTD=c;const hoy=iso(),nuevo=!CT().some(x=>x.id===c.id),mecs=ctMecs();if(c.mec&&!mecs.includes(c.mec))mecs.push(c.mec);
+  sheet(`<div class="h">${nuevo?'Nueva cita':'Editar cita'}</div>
+  <div class="g2"><label class="f">Fecha<input id="ct-f" type="date" min="${hoy}" value="${esc(c.f)}"></label><label class="f">Hora<input id="ct-t" type="time" step="900" min="08:00" max="18:45" value="${esc(c.t||'')}"></label></div>
+  <label class="f">Tipo de servicio<select id="ct-tipo">${Object.entries(TIPOS).map(([k,v])=>`<option value="${k}" ${(c.tipo||'SP')===k?'selected':''}>${esc(v)}</option>`).join('')}</select></label>
+  <label class="f">Cliente (propietario)<input id="ct-cli" value="${esc(c.cliente||'')}" autocomplete="off"></label>
+  <div class="g2"><label class="f">Teléfono (WhatsApp)<input id="ct-tel" type="tel" inputmode="tel" value="${esc(c.tel||'')}" autocomplete="off"></label><label class="f">Correo electrónico<input id="ct-mail" type="email" inputmode="email" value="${esc(c.email||'')}" autocomplete="off"></label></div>
+  <label class="f">Serie / VIN <span class="mut">(si cuenta con ello)</span><input id="ct-vin" value="${esc(c.vin||'')}" maxlength="17" autocapitalize="characters" autocomplete="off"></label>
+  <div class="g3"><label class="f">Marca<input id="ct-marca" value="${esc(c.marca||'')}" autocomplete="off"></label><label class="f">Modelo<input id="ct-mod" value="${esc(c.modelo||'')}" autocomplete="off"></label><label class="f">Año<input id="ct-anio" inputmode="numeric" maxlength="4" value="${esc(c.anio||'')}" autocomplete="off"></label></div>
   <label class="f">Nota<textarea id="ct-nota">${esc(c.nota||'')}</textarea></label>
+  <div class="g2"><label class="f">Técnico <span class="mut">(opcional)</span><select id="ct-mec"><option value="">Sin asignar</option>${mecs.map(m=>`<option ${c.mec===m?'selected':''}>${esc(m)}</option>`).join('')}</select></label><label class="f">Duración estimada<select id="ct-dur">${DURS.map(([m,t])=>`<option value="${m}" ${(+c.dur||60)===m?'selected':''}>${t}</option>`).join('')}</select></label></div>
   <div class="row wrap"><button class="btn pri" style="flex:1" data-a="ctsave" data-id="${esc(c.id)}">Guardar cita</button></div>`)}
 const repD0=()=>{const h=new Date();h.setHours(0,0,0,0);return rp.p==='hoy'?+h:rp.p==='7'?h-6*864e5:rp.p==='30'?h-29*864e5:rp.p==='mes'?+new Date(h.getFullYear(),h.getMonth(),1):0};
 function repCita(L){const A=sesion?permitidas(sesion.agencia):[],d0=repD0(),hoy=iso(),
@@ -140,7 +158,7 @@ function render(){
   if(view==='rep'&&!puedeRep())view='board';
   document.querySelectorAll('.vn button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));pintaHd();
   renderMain();renderDrawer();navSync()}
-function renderMain(){$('#app').innerHTML=view==='ag'?agenda():view==='seg'?seguimientos():view==='rep'&&puedeRep()?reporte():board()}
+function renderMain(){const old=document.querySelector('.tl'),sl=old&&old.dataset.d===agd?old.scrollLeft:null;$('#app').innerHTML=view==='ag'?agenda():view==='seg'?seguimientos():view==='rep'&&puedeRep()?reporte():board();if(view==='ag')agScroll(sl)}
 function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.dbody')?.scrollTop||0;
   el.innerHTML=o?drawer(o):'';document.body.classList.toggle('lock',!!o);
   if(o){const b=el.querySelector('.dbody');if(b&&keepSc)b.scrollTop=sc;if(lastD!==D)el.querySelector('.drh .ib')?.focus()}
@@ -447,8 +465,10 @@ const camB=(k,att,i)=>{const n=fotosK(k).length;return`<button type="button" cla
 const galH=(k,t,i)=>{const L=fotosK(k);return L.length?`<div class="ckx fgal">${L.map((u,j)=>`<span class="fgi"><img alt="Foto ${j+1}" src="${src(u)}" data-a="zoom"><button class="fgx" data-a="fdel" data-k="${t}" data-i="${i}" data-j="${j}" aria-label="Quitar foto ${j+1}">✕</button></span>`).join('')}</div>`:''};
 const sqH=(k,a,i,n)=>`<div class="cqs" role="group" aria-label="${n}">${COND.map(([e,t,lb])=>`<button class="cq cq-${e}${k.e===e?' on':''}" data-a="${a}" data-i="${i}" data-e="${e}" aria-pressed="${k.e===e}" aria-label="${lb}" title="${t}">${k.e===e?IC.ok:''}</button>`).join('')}${camB(k,a==='cond'?'data-ffoto':'data-fll',i)}</div>`;
 function llH(o){return`<div class="sbar">Llantas</div><div class="card llc">`+o.llantas.map((l,i)=>{const bad=l.e==='px'||l.e==='ur';
-  return`<div class="llr"><b class="llp">${l.p}</b><label class="f"><span>Medida</span><input data-p="llantas.${i}.med" value="${esc(l.med)}" placeholder="90/90-17"></label><label class="f"><span>Desgaste (mm)</span><input inputmode="decimal" data-p="llantas.${i}.des" value="${esc(l.des)}"></label><label class="f"><span>PSI</span><input inputmode="numeric" data-p="llantas.${i}.psi" value="${esc(l.psi)}"></label>${sqH(l,'lcond',i,'Llanta '+l.p)}
-  ${bad?`<label class="f llop"><span>Operación recomendada</span><input data-p="llantas.${i}.op" list="opl" value="${esc(l.op||'')}" placeholder="Elige o escribe la operación"></label>`:''}${galH(l,'l',i)}</div>`}).join('')+`<datalist id="opl">${OPL.map(x=>`<option value="${x}">`).join('')}</datalist></div>`}
+  return`<div class="llr"><b class="llp">${l.p}</b><label class="f"><span>Medida</span><input data-p="llantas.${i}.med" list="medl${i}" value="${esc(l.med)}" placeholder="90/90-17" autocomplete="off">${medSug(o,i).length?`<span class="medch" role="group" aria-label="Medidas usadas en esta moto">${medSug(o,i).map(m=>`<button type="button" class="medb${String(l.med).trim().toUpperCase()===m?' on':''}" data-a="llmed" data-i="${i}" data-v="${esc(m)}">${esc(m)}</button>`).join('')}</span>`:''}</label><label class="f"><span>Desgaste (mm)</span><input inputmode="decimal" data-p="llantas.${i}.des" value="${esc(l.des)}"></label><label class="f"><span>PSI</span><input inputmode="numeric" data-p="llantas.${i}.psi" value="${esc(l.psi)}"></label>${sqH(l,'lcond',i,'Llanta '+l.p)}
+  ${bad?`<label class="f llop"><span>Operación recomendada</span><input data-p="llantas.${i}.op" list="opl" value="${esc(l.op||'')}" placeholder="Elige o escribe la operación"></label>`:''}${galH(l,'l',i)}</div>`}).join('')+`<datalist id="opl">${OPL.map(x=>`<option value="${x}">`).join('')}</datalist>${MEDIDAS_LL.map((L,i)=>`<datalist id="medl${i}">${L.map(x=>`<option value="${x}">`).join('')}</datalist>`).join('')}</div>`}
+// Medidas ya usadas en la misma moto (VIN) o en el mismo modelo, las más repetidas primero
+const medSug=(o,i)=>{const m=new Map(),v=vinN(o.vin),md=String(o.modelo||'').trim().toLowerCase();S.orders.forEach(x=>{if(x.folio===o.folio||!x.llantas)return;const l=x.llantas[i];if(!l||!String(l.med||'').trim())return;const mv=v.length>=8&&vinN(x.vin)===v,mm=!!md&&String(x.modelo||'').trim().toLowerCase()===md;if(!mv&&!mm)return;const k=String(l.med).trim().toUpperCase();m.set(k,(m.get(k)||0)+(mv?5:1))});return[...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0])};
 const enCot=(o,i)=>o.lineas.some(l=>l.ck===i||(l.sku==='HALLAZGO'&&String(l.desc).startsWith(CATS[i][0]+': ')));
 function ckRow(o,i){const c=CATS[i],k=o.chk[i],bad=k.e==='px'||k.e==='ur';
   return`<div class="ckr"><div class="ckt"><b>${(SECC.flatMap(x=>x[1]).indexOf(i)+1)||i+1}. ${c[0]}</b><span class="mut">${c[1]}</span></div>${sqH(k,'cond',i,c[0])}${galH(k,'c',i)}
@@ -767,7 +787,7 @@ async function syncCitas(){try{const rc=await api.taller({action:'listarCitas'})
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v43 · 24-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v44 · 24-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
@@ -822,22 +842,29 @@ IDB.open().then(async ok=>{
   sesion=leerSes();aplicarTema();pintaLogin();aplicaAg();render();sync();if(sesion)cargaCat(true)});
 
 Object.assign(acts,{
- ctnueva:()=>{if(!S.suc)return acts.agpick();ctForm({id:ctNuevoId(),f:agd<iso()?iso():agd,t:'',b:'',tipo:'SP'})},
- cita:d=>{if(!S.suc)return acts.agpick();ctForm({id:ctNuevoId(),f:agd<iso()?iso():agd,t:String(d.h).padStart(2,'0')+':00',b:d.b,tipo:'SP'})},
+ ctnueva:()=>{if(!S.suc)return acts.agpick();ctForm({id:ctNuevoId(),f:agd<iso()?iso():agd,t:'',mec:'',tipo:'SP',dur:60})},
+ ctslot:d=>{if(!S.suc)return acts.agpick();ctForm({id:ctNuevoId(),f:agd<iso()?iso():agd,t:d.t,mec:d.m||'',tipo:'SP',dur:60})},
  ctedit:d=>{const c=CT().find(x=>x.id===d.id);if(c)ctForm(Object.assign({},c))},
- ctsave:d=>{const g=i=>(($('#'+i)||{}).value||'').trim(),f=g('ct-f'),t=g('ct-t'),cl=g('ct-cli'),tel=g('ct-tel');
-  if(!f||!t)return toast('Elige la fecha y la hora');if(f<iso())return toast('La fecha no puede ser anterior a hoy');if(!cl&&!tel)return toast('Captura el cliente o su WhatsApp');
+ ctvin:()=>{const v=vinN(($('#ct-vin')||{}).value);if(v.length<11)return;const set=(id,val)=>{const el=$('#'+id);if(el&&val&&!el.value.trim()){el.value=val;return 1}return 0};
+  const prev=S.orders.find(x=>vinN(x.vin)===v),mc=(MOTOS.cache||{})[v]||{},info=vinInfo(v);let n=0;
+  if(prev){n+=set('ct-cli',prev.cliente)+set('ct-tel',prev.tel)+set('ct-mail',prev.email)+set('ct-marca',prev.marca)+set('ct-mod',prev.modelo)+set('ct-anio',prev.anio)}
+  n+=set('ct-marca',mc.marca)+set('ct-mod',mc.modelo)+set('ct-anio',mc.anio)+set('ct-marca',info.fab)+set('ct-anio',info.anio?String(info.anio):'');if(n)toast('Datos de la moto completados','ok')},
+ ctsave:d=>{const g=i=>(($('#'+i)||{}).value||'').trim(),f=g('ct-f'),t=g('ct-t'),cl=g('ct-cli'),tel=g('ct-tel'),mail=g('ct-mail');
+  if(!f)return toast('Elige la fecha');if(f<iso())return toast('La fecha no puede ser anterior a hoy');if(!t||t<'08:00'||t>'18:45')return toast('Elige una hora entre 08:00 am y 06:45 pm');
+  if(!cl)return toast('Captura el cliente (propietario)');if(tel.replace(/\D/g,'').length<10)return toast('Captura el teléfono (WhatsApp) a 10 dígitos');if(mail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))return toast('El correo electrónico no es válido');
   let c=CT().find(x=>x.id===d.id);if(!c){c={id:d.id,suc:S.suc,est:'prog',folio:'',cre:Date.now(),por:sesion&&(sesion.nombre||sesion.correo)||''};S.citas.push(c)}
-  Object.assign(c,{f,t,tipo:g('ct-tipo')||'SP',b:g('ct-b'),cliente:cl,tel,modelo:g('ct-mod'),nota:g('ct-nota')});if(c.est==='no')c.est='prog';
+  Object.assign(c,{f,t,tipo:g('ct-tipo')||'SP',cliente:cl,tel,email:mail,vin:vinN(g('ct-vin')),marca:g('ct-marca'),modelo:g('ct-mod'),anio:g('ct-anio').replace(/\D/g,'').slice(0,4),nota:g('ct-nota'),mec:g('ct-mec'),dur:+g('ct-dur')||60});if(c.est==='no')c.est='prog';
   ctTouch(c);agd=f;$('#modal').innerHTML='';renderMain();toast('Cita guardada','ok')},
  agdia:d=>{agd=+d.n===0?iso():sumD(agd,+d.n);renderMain()},
  ctrecibir:async d=>{const c=CT().find(x=>x.id===d.id);if(!c)return;if(c.f!==iso())return toast('Solo se recibe el día de la cita');if(!S.suc)return acts.agpick();
-  const o=await crear(c.tipo||'SP',{cliente:c.cliente,tel:c.tel,modelo:c.modelo,motivo:c.nota||'',bahia:c.b?+c.b:'',conCita:true,citaId:c.id,cita:{f:c.f,h:+String(c.t).slice(0,2),b:c.b?+c.b:0}});
+  const o=await crear(c.tipo||'SP',{cliente:c.cliente,tel:c.tel,email:c.email||'',vin:c.vin||'',marca:c.marca||'',modelo:c.modelo||'',anio:c.anio||'',motivo:c.nota||'',mec:c.mec||'',conCita:true,citaId:c.id,cita:{f:c.f,h:+String(c.t).slice(0,2),b:0}});
   if(o){c.est='llego';c.folio=o.folio;ctTouch(c)}},
  ctno:d=>{const c=CT().find(x=>x.id===d.id);if(!c)return;c.est='no';ctTouch(c);renderMain()},
  ctcancel:async d=>{const c=CT().find(x=>x.id===d.id);if(!c)return;if(!(await ask({t:'Cancelar cita',m:'¿Cancelar la cita de '+(c.cliente||'este cliente')+' a las '+c.t+'?',ok:'Cancelar cita',tipo:'err'})))return;c.est='cancel';ctTouch(c);renderMain()},
- ctwa:d=>{const c=CT().find(x=>x.id===d.id);if(c)wa(c.tel,`Hola ${c.cliente}, te esperamos el ${ctFecha(c.f)} a las ${c.t} en ${S.suc} para tu servicio (${TIPOS[c.tipo]||c.tipo}). Si no puedes asistir, avísanos para reprogramar.`)}
+ ctwa:d=>{const c=CT().find(x=>x.id===d.id);if(c)wa(c.tel,`Hola ${c.cliente}, te esperamos el ${ctFecha(c.f)} a las ${c.t} en ${S.suc} para tu servicio (${TIPOS[c.tipo]||c.tipo}). Si no puedes asistir, avísanos para reprogramar.`)},
+ llmed:d=>{const o=D&&O(D);if(!o||!o.llantas[+d.i])return;o.llantas[+d.i].med=d.v;touch(o);renderDrawer()}
 });
+document.addEventListener('change',e=>{if(e.target&&e.target.id==='ct-vin')acts.ctvin()});
 document.addEventListener('change',e=>{const t=e.target;if(t&&t.matches&&t.matches('[data-agd]')){agd=t.value||iso();renderMain()}});
 
 /* Deslizar a izquierda / derecha para cambiar de pestaña (orden abierta y etapas del Panel en el celular) */
