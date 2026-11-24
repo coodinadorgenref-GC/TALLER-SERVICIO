@@ -151,7 +151,7 @@
   /* ---------- Render ---------- */
   function vista() {
     const o = O, pend = (o.lineas || []).some(l => l.st === 'pend');
-    $('#app').innerHTML = cabecera(o) + `<main class="wrap" id="principal">${banner(o)}${datos(o)}${cotizacion(o)}${autorizacion(o)}${inspeccion(o)}${carroceria(o)}${pie(o)}</main>
+    $('#app').innerHTML = cabecera(o) + `<main class="wrap" id="principal">${banner(o)}${datos(o)}${cotizacion(o)}${inspeccion(o)}${carroceria(o)}${autorizacion(o)}${pie(o)}</main>
       <div class="cta" id="cta" hidden><div class="cta-i"><div><small id="cta-n">Por autorizar</small><b id="cta-t">$0</b></div><a class="btn pri" href="#autorizar">Firmar y enviar</a></div></div>`;
     $('#app').removeAttribute('aria-busy');
     document.title = 'Orden de trabajo · ' + o.folio;
