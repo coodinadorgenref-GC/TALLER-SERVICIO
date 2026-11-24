@@ -15,6 +15,11 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v40
+- **Cotización**: los totales vuelven a ser filas de la tabla, alineadas bajo Importe (Identificado, TOTAL A COBRAR, Pendiente por autorizar, Rechazado / diferido). Se quitó el cuadro oscuro junto a Agregar concepto.
+- **Orden ya firmada por el cliente**: ya no regresa sola a Autorizado; solo se puede mover hacia atrás a **Taller** (para trabajarla) y al volver a avanzar el cliente puede autorizar de nuevo desde el enlace.
+- **Enlace del cliente**: la descripción ya no se encima; la tabla con Aceptar / Rechazar se muestra cuando hay ancho suficiente y en pantallas angostas cada concepto es una fila compacta.
+
 ## Novedades v39
 - **Autorizado automático**: cuando el cliente autoriza desde el enlace, la orden pasa sola a la columna **Autorizado** (también las órdenes que ya tenían la autorización guardada y seguían en otra columna). Queda registrado en el Historial.
 - **Firma del cliente**: en Cotización solo queda el botón **Enviar visto bueno por WhatsApp**; abajo se ve la firma del cliente y la opción **Recabar firma en el taller**.

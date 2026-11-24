@@ -209,8 +209,10 @@ dialog#lb img{position:absolute;inset:56px 8px 8px;width:calc(100% - 16px);heigh
 .dc.no[aria-pressed=true]{background:var(--rj);border-color:var(--rj);color:var(--on-rj)}
 .act:has(.no[aria-pressed=true]) .ok{opacity:.4;box-shadow:none}
 .ln.st-rech .c-de b,.ln.st-rech .c-pr b{text-decoration:line-through;color:var(--mut)}
-@media(min-width:720px){
-  .lh{display:grid;grid-template-columns:36px 170px minmax(0,1fr) 120px 250px;gap:10px;padding:10px 12px;background:#243447;color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.lns{container-type:inline-size}
+@media(min-width:900px){.wrap,.top-i{max-width:900px}}
+@container (min-width:800px){
+  .lh{display:grid;grid-template-columns:32px 150px minmax(0,1fr) 100px 220px;gap:10px;padding:10px 12px;background:#243447;color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
   .lh .r{text-align:right}
-  .ln{grid-template-columns:36px 170px minmax(0,1fr) 120px 250px;grid-template-areas:"ic ar de pr au" "mt mt mt mt mt";gap:6px 10px}
+  .ln{grid-template-columns:32px 150px minmax(0,1fr) 100px 220px;grid-template-areas:"ic ar de pr au" "mt mt mt mt mt";gap:6px 10px}
 }

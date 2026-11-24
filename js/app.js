@@ -70,7 +70,7 @@ function pintaFaltas(o){if(!o)return;const n=sig(o),b=n?puede(o,n):'',ks=o.etapa
   ['marca','modelo','anio','vin','km','comb'].forEach(k=>document.querySelectorAll('#drawer [data-p="'+k+'"]').forEach(e=>{const m=ks.includes(k);e.classList.toggle('miss',m);if(m)e.setAttribute('aria-invalid','true');else e.removeAttribute('aria-invalid');const l=e.closest('label');if(l)l.classList.toggle('miss',m)}));
   const ft=document.querySelector('#drawer .dft');if(ft)ft.innerHTML=foot(o);
   const nb=document.querySelector('#drawer .drh .nxt');if(nb){nb.disabled=!!b;nb.title=b||'Siguiente etapa: '+(ETAPAS[idx(n)]||[])[1]}}
-function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<=i)return'';
+function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<i&&o.auth&&dest!=='taller')return'El cliente ya firmó la autorización: solo se puede regresar a Taller para trabajarlo';if(j<=i)return'';
   if(i===0){autoMarca(o);
     const fv=vehFalta(o).map(x=>x[1]);
     if(!String(o.cliente||'').trim())return'Captura el cliente (Unidad)';
@@ -431,14 +431,14 @@ function lineaH(l,i,o){const mo=l.t==='mo',z=zonaDe(o,l),area=z>=0?CATS[z][0]:(m
    <select class="q2e est-${l.st}" data-qest="${i}" aria-label="Estado de autorización: ${esc(l.desc)}">${EST.map(([k,n])=>`<option value="${k}" ${l.st===k?'selected':''}>${n}</option>`).join('')}</select>
    <b class="q2i fol" id="imp-${i}">${money(imp(l))}</b></div>${det}</div>`}
 // Totales como pie de la propia tabla: Identificado es el subtotal, Autorizado (a cobrar) el total, y debajo lo que sigue abierto o quedó fuera.
-const totH=o=>{const t=tot(o),k=(c,l,v)=>`<div class="q2k ${c}"><span>${l}</span><b class="fol">${money(v)}</b></div>`;
-  return`<div class="q2big"><div><span class="q2bl">TOTAL A COBRAR</span><small>Solo lo autorizado · IVA incluido</small></div><b class="q2bv fol">${money(t.aut)}</b></div><div class="q2brk">${k('sub','Identificado (subtotal)',t.cot)}${k('pen','Por autorizar',t.pend)}${t.gar?k('gar','Garantía (sin cargo)',t.gar):''}${k('rec','Rechazado / diferido',t.rech)}</div>`};
+const totH=o=>{const t=tot(o),r=(c,l,v,x='')=>`<div class="q2s ${c}"><span class="q2l">${l}${x}</span><b class="q2v fol">${money(v)}</b></div>`;
+  return r('sub','Identificado <small>(subtotal)</small>',t.cot)+r('tot','TOTAL A COBRAR <small>(autorizado, IVA incl.)</small>',t.aut)+(t.gar?r('gar','Garantía <small>(sin cargo)</small>',t.gar):'')+r('pen','Pendiente <small>por autorizar</small>',t.pend)+r('rec','Rechazado / diferido',t.rech)};
 const autCard=o=>{const a=o.auth,f=o.firmas.aut,s=f&&src(f);
   return`<div class="cfg-g">Autorización del cliente</div><div class="card"><div class="row sp"><div class="h">Firma de autorización</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>
   ${s?`<img class="pic" alt="Firma de autorización" src="${s}"><div class="mut">${esc((a&&a.n)||f.n||'Cliente')}${a?' · '+new Date(a.t).toLocaleString('es-MX')+' · desde el enlace':''}</div>`:`<p class="mut" style="margin:0">El cliente firma desde su enlace o aquí en el taller. Al guardar desde el enlace, lo aceptado pasa solo a Autorizado y la orden se mueve a la columna Autorizado.${o.vb?' Enlace enviado el '+new Date(o.vb).toLocaleString('es-MX')+'.':''}</p>`}
   <div class="row wrap"><button class="btn sm" data-a="firma" data-k="aut">${s?'Firmar de nuevo en el taller':'Recabar firma en el taller'}</button></div></div>`};
 let qmode='';
-const qaddH=()=>`<div class="qadd"><button class="qplus" data-a="qmenu" aria-expanded="${!!qmode}" aria-label="Agregar concepto a la cotización"><span class="qpi" aria-hidden="true">+</span><span>Agregar concepto</span><small class="qh">Refacción, mano de obra o concepto manual</small></button>${qmode==='menu'?`<div class="qmenu" role="group" aria-label="Tipo de concepto"><button class="btn qo2" data-a="qopt" data-k="ref"><b>Refacción</b><small>SKU o catálogo</small></button><button class="btn qo2" data-a="qopt" data-k="mo"><b>Mano de obra</b><small>Tiempo o monto</small></button><button class="btn qo2" data-a="qopt" data-k="manual"><b>Concepto manual</b><small>Texto libre</small></button></div>`:''}${qmode==='ref'?`<div class="qref"><label class="f">Busca SKU o refacción (catálogo, precio con IVA)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" class="sugl"></div></div>`:''}</div>`;
+const qaddH=()=>`<div class="qadd"><button class="qplus" data-a="qmenu" aria-expanded="${!!qmode}" aria-label="Agregar concepto a la cotización"><span class="qpi" aria-hidden="true">+</span><span>Agregar concepto</span><small class="qhint">Refacción, mano de obra o concepto manual</small></button>${qmode==='menu'?`<div class="qmenu" role="group" aria-label="Tipo de concepto"><button class="btn qo2" data-a="qopt" data-k="ref"><b>Refacción</b><small>SKU o catálogo</small></button><button class="btn qo2" data-a="qopt" data-k="mo"><b>Mano de obra</b><small>Tiempo o monto</small></button><button class="btn qo2" data-a="qopt" data-k="manual"><b>Concepto manual</b><small>Texto libre</small></button></div>`:''}${qmode==='ref'?`<div class="qref"><label class="f">Busca SKU o refacción (catálogo, precio con IVA)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" class="sugl"></div></div>`:''}</div>`;
 function tC(o){return`<div class="q2t"><div class="q2h"><span></span><span>Concepto</span><span>Estado de autorización</span><span class="r">Importe (IVA incl.)</span></div>${o.lineas.map((l,i)=>lineaH(l,i,o)).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
   ${qaddH()}<div class="q2f" id="tot" role="group" aria-label="Totales de la cotización">${totH(o)}</div></div>
   <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button></div>
@@ -699,7 +699,7 @@ async function enlaceListo(o){let v=null;try{v=await api.taller({action:'verOrde
 function aplicaAuth(l,ro){const a=ro.auth;if(!a||(l.auth&&l.auth.t>=a.t))return false;l.auth=a;if(ro.firmas&&ro.firmas.aut)(l.firmas=l.firmas||{}).aut=ro.firmas.aut;
   (a.d||[]).forEach(d=>{const x=l.lineas[d.i];if(x&&x.desc===d.desc){x.st=d.st;if(d.mot)x.mot=d.mot;if(d.st==='rech'&&!x.seg)x.seg=d.seg||addD(30)}});return true}
 // El cliente ya decidió desde el enlace: la orden pasa sola a la columna Autorizado (también las que ya tenían la autorización guardada).
-const autoEtapa=l=>{if(!l||!l.auth||idx(l.etapa)<0||idx(l.etapa)>=idx('autorizado'))return false;logH(l,'Etapa: Autorizado (el cliente autorizó desde el enlace)');l.etapa='autorizado';touch(l);return true};
+const autoEtapa=l=>{if(!l||!l.auth||l.auth.mv)return false;l.auth.mv=1;if(idx(l.etapa)<0||idx(l.etapa)>=idx('autorizado'))return false;logH(l,'Etapa: Autorizado (el cliente autorizó desde el enlace)');l.etapa='autorizado';touch(l);return true};
 async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(sesion&&!navigator.onLine){syncMsg='sin internet';pintaSyn()}return}syncing=true;let err='';
   try{for(const f of [...(S.del||[])]){const r=await api.taller({action:'eliminarOrden',folio:f});if(r.success)S.del=S.del.filter(x=>x!==f);else err=r.message||'error del servidor'}
    // 1) bajar lo que hay en la hoja (y juntar las fotos que subieron otros dispositivos)
@@ -723,7 +723,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v39 · 23-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v40 · 23-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
