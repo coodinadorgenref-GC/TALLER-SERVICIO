@@ -81,11 +81,14 @@
     const fts = [...new Set([l.f, ...(k ? fx(k.c) : [])].filter(Boolean))];
     const icono = k ? ico(k.c.e) : `<span class="ico">${generico}</span>`;
     const cant = !mo && Number(l.cant) > 1 ? `<small>${l.cant} × ${money(l.precio)}</small>` : '';
-    return `<article class="ln ${pend ? 'pend' : ''}${k && k.c.e && EST[k.c.e] ? ' sv-' + k.c.e : ''}" data-i="${i}"><div class="lm">${icono}<div class="tx"><small>${esc(k ? k.z : mo ? 'Mano de obra' : 'Refacción')}</small><b>${esc(op)}</b>${k && k.c.n ? `<small class="nt">${esc(k.c.n)}</small>` : ''}${thumbs(fts, 'Evidencia de ' + l.desc)}</div>
-      <div class="pr"><b>${l.st === 'gar' ? 'Garantía' : money(imp(l))}</b>${cant}</div></div>
-      ${pend ? `<div class="act" role="group" aria-label="Tu decisión para ${esc(l.desc)}"><button type="button" class="dc ok" data-d="aut" aria-pressed="${!!d && d.st === 'aut'}">${IC.ok}Aceptar</button><button type="button" class="dc no" data-d="rech" aria-pressed="${!!d && d.st === 'rech'}">${IC.x}Rechazar</button></div>
-        <label class="mot" ${d && d.st === 'rech' ? '' : 'hidden'}>Motivo (opcional)<select data-mot>${['', ...MOTIVOS].map(m => `<option value="${esc(m)}" ${d && d.mot === m ? 'selected' : ''}>${m || 'Elige un motivo'}</option>`).join('')}</select></label>`
-        : `<div class="stat">${chip(LN_ST[l.st] || LN_ST.pend)}${l.st === 'rech' ? `<span class="hint">${l.mot ? esc(l.mot) + '. ' : ''}Queda pendiente; tu taller te lo recordará.</span>` : ''}</div>`}</article>`;
+    const dc = (st, cls, ic, t) => `<button type="button" class="dc ${cls}" data-d="${st}" aria-pressed="${!!d && d.st === st}">${ic}${t}</button>`;
+    const acc = pend
+      ? `<div class="act" role="group" aria-label="Tu decisión para ${esc(l.desc)}">${dc('aut', 'ok', IC.ok, 'Aceptar')}${dc('rech', 'no', IC.x, 'Rechazar')}</div>`
+      : `<div class="stat">${chip(LN_ST[l.st] || LN_ST.pend)}</div>`;
+    const extra = pend
+      ? `<label class="mot" ${d && d.st === 'rech' ? '' : 'hidden'}>Motivo (opcional)<select data-mot>${['', ...MOTIVOS].map(m => `<option value="${esc(m)}" ${d && d.mot === m ? 'selected' : ''}>${m || 'Elige un motivo'}</option>`).join('')}</select></label>`
+      : (l.st === 'rech' ? `<span class="hint mot-t">${l.mot ? esc(l.mot) + '. ' : ''}Queda pendiente; tu taller te lo recordará.</span>` : '');
+    return `<article class="ln st-${l.st} ${pend ? 'pend' : ''}${k && k.c.e && EST[k.c.e] ? ' sv-' + k.c.e : ''}" data-i="${i}"><span class="c-ic">${icono}</span><div class="c-ar">${esc(k ? k.z : mo ? 'Mano de obra' : 'Refacción')}</div><div class="c-de"><b>${esc(op)}</b>${k && k.c.n ? `<small class="nt">${esc(k.c.n)}</small>` : ''}${thumbs(fts, 'Evidencia de ' + l.desc)}</div><div class="c-pr"><b>${l.st === 'gar' ? 'Garantía' : money(imp(l))}</b>${cant}</div><div class="c-au">${acc}</div>${extra}</article>`;
   }
   function banner(o) {
     const L = o.lineas || [], pend = L.filter(l => l.st === 'pend').length;
@@ -100,7 +103,7 @@
     if (!L.length) return sec('cot', 'Trabajos recomendados', '', '<p class="hint">Todavía no hay trabajos recomendados. Cuando estén listos los verás aquí para autorizarlos.</p>');
     const pend = L.filter(l => l.st === 'pend').length;
     const leg = `<ul class="leg" aria-label="Leyenda de estados">${['ur', 'px', 'ok', 'nr'].map(k => `<li class="lg-${k}">${ico(k, true)}${EST[k][1]}</li>`).join('')}</ul>`;
-    return sec('cot', 'Trabajos recomendados', pend ? pend + ' por autorizar' : 'Revisados', `${leg}${pend > 1 ? `<button type="button" class="btn ghost" data-all>${IC.ok}Aceptar todo</button>` : ''}<div class="lns">${L.map(linea).join('')}</div><div class="tot" id="tot" aria-live="polite"></div>`);
+    return sec('cot', 'Trabajos recomendados', pend ? pend + ' por autorizar' : 'Revisados', `${leg}${pend > 1 ? `<button type="button" class="btn ghost" data-all>${IC.ok}Aceptar todo</button>` : ''}<div class="lns"><div class="lh" aria-hidden="true"><span></span><span>Área</span><span>Descripción</span><span class="r">Precio</span><span>Autorización</span></div>${L.map(linea).join('')}</div><div class="tot" id="tot" aria-live="polite"></div>`);
   }
 
   function resDec(o) {

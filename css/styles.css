@@ -501,3 +501,37 @@ html.dark .q2s.pen .q2v{color:#fbbf24}
 .f.miss{color:#B91C1C;font-weight:700}
 .f input.miss,.f select.miss,.f textarea.miss{border:2px solid #DC2626;background:#FEF2F2;box-shadow:0 0 0 3px rgba(220,38,38,.18)}
 html.dark .f.miss{color:#FCA5A5}html.dark .f input.miss,html.dark .f select.miss{border-color:#F87171;background:#2a1517;box-shadow:0 0 0 3px rgba(248,113,113,.25)}
+
+/* v39 · tabla de cotización: concepto en dos líneas, estado de color y TOTAL A COBRAR destacado */
+.q2h,.q2r{grid-template-columns:34px minmax(0,1fr) 210px 130px;gap:12px;padding:8px 12px}
+.q2h{min-height:40px;padding-left:16px;letter-spacing:.5px}
+.q2{border-left:4px solid transparent;transition:background-color .15s}
+.q2:hover{background:#F8FAFC}
+.q2.st-aut{border-left-color:#16A34A}.q2.st-gar{border-left-color:#2563EB}.q2.st-pend{border-left-color:#F59E0B}.q2.st-rech{border-left-color:#CBD5E1}
+.q2r{min-height:64px}
+.q2c{display:flex;align-items:center;min-width:0}
+.q2ct{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.q2ct small{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.3px}
+.q2ct b{font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.q2e{min-height:42px;font-size:13.5px;border-radius:8px}
+.q2i{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.q2.st-rech .q2ct b,.q2.st-rech .q2i{text-decoration:line-through;color:var(--mut)}
+@media(max-width:900px){.q2r{grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"x c i" "e e e"}.q2c{grid-area:c}.qh{display:none}}
+.q2f{border-top:2px solid #243447;background:#F8FAFC;display:block;padding:0}
+.q2big{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#DCFCE7;border-bottom:1px solid #86EFAC;padding:14px 16px}
+.q2bl{display:block;font-size:13px;font-weight:800;letter-spacing:.6px;color:#14532D}
+.q2big small{color:#166534;font-size:12px;font-weight:500}
+.q2bv{font-size:30px;line-height:1;color:#14532D;font-variant-numeric:tabular-nums}
+.q2brk{display:flex;flex-wrap:wrap}
+.q2k{flex:1 1 150px;display:flex;flex-direction:column;gap:2px;padding:10px 16px;border-left:1px solid var(--bd)}.q2k:first-child{border-left:0}
+.q2k span{font-size:12px;font-weight:600;color:var(--mut)}.q2k b{font-size:16px;font-variant-numeric:tabular-nums}
+.q2k.pen b{color:#92400E}.q2k.rec b{color:var(--mut)}.q2k.gar b{color:#1E3A8A}
+/* Agregar concepto: misma cuadrícula que las filas */
+.q2t .qadd{border-top:1px solid var(--bd);border-left:4px solid transparent;background:#F8FAFC}
+.qplus{min-height:56px;padding:0 16px 0 12px;gap:12px;font-size:15px;font-weight:700}
+.qpi{width:34px;height:34px;border:0;border-radius:8px;background:var(--nv);color:#fff;font-size:22px;padding-bottom:2px}
+.qplus:hover{background:#EEF2F7}
+.qh{margin-left:auto;color:var(--mut);font-weight:500;font-size:12.5px}
+html.dark .q2:hover{background:#1b283c}html.dark .q2t .qadd{background:#162032}
+html.dark .qpi{background:#93c5fd;color:#0b1220}html.dark .qplus:hover{background:#1b283c}
+html.dark .q2big{background:#12361f;border-color:#1f6b3a}html.dark .q2bl,html.dark .q2bv,html.dark .q2big small{color:#bbf7d0}html.dark .q2k{border-color:#334155}
