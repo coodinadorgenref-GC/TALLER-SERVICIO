@@ -62,7 +62,7 @@ function agenda(){const hoy=iso(),d=agd,C=ctDia(d),L=mine(),mecs=ctMecs(),n=new 
   its.forEach(x=>{x.si=Math.max(0,Math.min(CT_N-1,Math.floor((x.s-CT_I)/15)));x.n=Math.max(1,Math.min(CT_N-x.si,Math.ceil(x.dur/15)))});
   const foco=now>=0?Math.max(0,Math.floor(now)):its.length?Math.min(...its.map(x=>x.si)):0;
   const fila=m=>{const I=its.filter(x=>(x.mec||'')===m).sort((a,b)=>a.s-b.s),lanes=[];I.forEach(x=>{let k=lanes.findIndex(e=>e<=x.si);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x.si+x.n;x.k=k});
-   return`<div class="tl-r" role="row" style="--ln:${Math.max(1,lanes.length)}"><div class="tl-n" role="rowheader">${m?esc(m):'Sin asignar'}<small>${m?I.length+' cita'+(I.length===1?'':'s'):'Sin técnico'}</small></div>${Array.from({length:CT_N},(_,i)=>`<button type="button" class="tl-s${i%4===0?' h':''}" style="grid-column:${i+2}" data-a="ctslot" data-t="${hm(CT_I+i*15)}" data-m="${esc(m)}" aria-label="Nueva cita ${m?esc(m)+' ':''}${h12(CT_I+i*15)}"></button>`).join('')}${I.map(x=>`<button type="button" class="tl-b ${x.est}" style="grid-column:${x.si+2}/span ${x.n};grid-row:${x.k+1}" ${x.a} title="${esc(x.t+' · '+x.l1+(x.l2?' · '+x.l2:''))}"><b>${esc(x.t)}</b><span>${esc(x.l1)}</span>${x.l2?`<small>${esc(x.l2)}</small>`:''}</button>`).join('')}</div>`};
+   return`<div class="tl-r" role="row" style="--ln:${Math.max(1,lanes.length)}"><div class="tl-n" role="rowheader" title="${m?esc(m):'Sin asignar'}"><span class="tl-nm">${m?esc(m):'Sin asignar'}</span><small>${m?I.length+' cita'+(I.length===1?'':'s'):'Sin técnico'}</small></div>${Array.from({length:CT_N},(_,i)=>`<button type="button" class="tl-s${i%4===0?' h':''}" style="grid-column:${i+2}" data-a="ctslot" data-t="${hm(CT_I+i*15)}" data-m="${esc(m)}" aria-label="Nueva cita ${m?esc(m)+' ':''}${h12(CT_I+i*15)}"></button>`).join('')}${I.map(x=>`<button type="button" class="tl-b ${x.est}" style="grid-column:${x.si+2}/span ${x.n};grid-row:${x.k+1}" ${x.a} title="${esc(x.t+' · '+x.l1+(x.l2?' · '+x.l2:''))}"><b>${esc(x.t)}</b><span>${esc(x.l1)}</span>${x.l2?`<small>${esc(x.l2)}</small>`:''}</button>`).join('')}</div>`};
   return`<div class="ph"><h2>Agenda</h2><div class="agd"><button class="btn sm" data-a="agdia" data-n="-1" aria-label="Día anterior">‹</button><button class="btn sm ${d===hoy?'pri':''}" data-a="agdia" data-n="0">Hoy</button><button class="btn sm" data-a="agdia" data-n="1" aria-label="Día siguiente">›</button><input type="date" data-agd value="${d}" aria-label="Fecha de la agenda"></div><button class="btn pri" data-a="ctnueva">+ Nueva cita</button></div>
   <p class="agt"><b>${esc(ctFecha(d))}</b> · ${C.length} cita${C.length===1?'':'s'}${d===hoy?'':' · programa citas de hoy o de días posteriores'}</p>
   <div class="tl-leg" aria-hidden="true"><span><i style="background:#0284C7"></i>Programada</span><span><i style="background:#059669"></i>Llegó</span><span><i style="background:#94A3B8"></i>No llegó</span><span class="mut">Toca un horario libre para agendar</span></div>
@@ -70,7 +70,7 @@ function agenda(){const hoy=iso(),d=agd,C=ctDia(d),L=mine(),mecs=ctMecs(),n=new 
    <div class="tl-hd" role="row"><div class="tl-c0" role="columnheader">Técnico</div>${Array.from({length:CT_N/4},(_,i)=>`<div class="tl-hh" style="grid-column:${2+i*4}/span 4" role="columnheader">${h12(CT_I+i*60)}</div>`).join('')}<div class="tl-hh tl-he" style="grid-column:${CT_N+2}" role="columnheader">${h12(CT_F)}</div>${Array.from({length:CT_N},(_,i)=>`<div class="tl-hm${i%4===0?' q':''}" style="grid-column:${i+2}" aria-hidden="true">${String((i%4)*15).padStart(2,'0')}</div>`).join('')}</div>
    ${[...mecs,''].map(fila).join('')}${now>=0?'<div class="tl-now" aria-hidden="true"></div>':''}</div></div>
   <h3 class="h" style="margin:14px 0 8px">Citas del día <span class="cnt">${C.length}</span></h3>${C.length?`<div class="sgg">${C.map(c=>ctCard(c,true)).join('')}</div>`:'<p class="mut">No hay citas para este día. Toca un horario libre o «Nueva cita».</p>'}`}
-function agScroll(prev){const tl=document.querySelector('.tl');if(!tl)return;if(prev!=null){tl.scrollLeft=prev;return}const sw=(tl.querySelector('.tl-s')||{}).offsetWidth||34;tl.scrollLeft=Math.max(0,((+tl.dataset.f||0)-2)*sw)}
+function agScroll(prev){const tl=document.querySelector('.tl');if(!tl)return;tl.scrollTop=0;tl.scrollLeft=prev!=null?prev:0}
 const DURS=[[15,'15 min'],[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30 min'],[120,'2 h'],[180,'3 h'],[240,'4 h']];
 function ctForm(c){CTD=c;const hoy=iso(),nuevo=!CT().some(x=>x.id===c.id),mecs=ctMecs();if(c.mec&&!mecs.includes(c.mec))mecs.push(c.mec);
   sheet(`<div class="h">${nuevo?'Nueva cita':'Editar cita'}</div>
@@ -117,6 +117,15 @@ const est=o=>Math.round(o.lineas.filter(l=>l.t==='mo'&&l.st!=='rech').reduce((a,
 const tot=o=>{const t={cot:0,aut:0,gar:0,rech:0,pend:0};o.lineas.forEach(l=>{const v=imp(l);t.cot+=v;t[l.st]+=v});return t};
 const desk=()=>matchMedia('(min-width:700px)').matches;
 const sig=o=>ETAPAS[idx(o.etapa)+1]?.[0];
+
+/* ---------- Panel v45: columnas y órdenes contraíbles, pin y alerta de orden parada (preferencias solo de este dispositivo) ---------- */
+const UI=()=>{S.ui=S.ui||{};S.ui.col=S.ui.col||{};S.ui.cc=S.ui.cc||{};S.ui.pin=S.ui.pin||{};return S.ui};
+const enEtapa=o=>{const h=o.hist||[];for(let i=h.length-1;i>=0;i--){const x=String(h[i].x||'');if(/^Etapa:|^Orden creada/.test(x))return h[i].t}return o.cre||o.fing||0};
+const PARA=10,parMin=o=>o.etapa==='entregado'?0:Math.max(0,Math.floor((Date.now()-enEtapa(o))/6e4));
+const parTxt=m=>m<60?m+' min':Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min';
+const ICI='<svg class="ali" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="#D92D20"/><path d="M12 6.5v7" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.6" fill="#fff"/></svg>';
+const ICP='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5"/><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/></svg>';
+const alertaH=(o,full)=>{const m=parMin(o);if(m<=PARA)return'';const t='Parada '+parTxt(m)+' en esta etapa';return`<span class="alr" title="${t}" role="img" aria-label="${t}">${ICI}${full?`<b>${parTxt(m)}</b>`:''}</span>`};
 const wa=(tel,m)=>{let t=String(tel||'').replace(/\D/g,'');if(!t){toast('Captura el WhatsApp del cliente');return}if(t.length===10)t='52'+t;open('https://wa.me/'+t+'?text='+encodeURIComponent(m),'_blank')};
 
 async function folio(t){try{const r=await api.taller({action:'siguienteFolio',tipo:t});if(r.folio)return r.folio}catch{}
@@ -158,7 +167,7 @@ function render(){
   if(view==='rep'&&!puedeRep())view='board';
   document.querySelectorAll('.vn button').forEach(b=>b.classList.toggle('on',b.dataset.v===view));pintaHd();
   renderMain();renderDrawer();navSync()}
-function renderMain(){const old=document.querySelector('.tl'),sl=old&&old.dataset.d===agd?old.scrollLeft:null;$('#app').innerHTML=view==='ag'?agenda():view==='seg'?seguimientos():view==='rep'&&puedeRep()?reporte():board();if(view==='ag')agScroll(sl)}
+function renderMain(){const old=document.querySelector('.tl'),sl=old&&old.dataset.d===agd?old.scrollLeft:null,kn=document.querySelector('.kan'),ks=kn?kn.scrollLeft:0;$('#app').innerHTML=view==='ag'?agenda():view==='seg'?seguimientos():view==='rep'&&puedeRep()?reporte():board();if(view==='ag')agScroll(sl);const k2=document.querySelector('.kan');if(k2&&ks)k2.scrollLeft=ks}
 function renderDrawer(){const el=$('#drawer'),o=D&&O(D),sc=el.querySelector('.dbody')?.scrollTop||0;
   el.innerHTML=o?drawer(o):'';document.body.classList.toggle('lock',!!o);
   if(o){const b=el.querySelector('.dbody');if(b&&keepSc)b.scrollTop=sc;if(lastD!==D)el.querySelector('.drh .ib')?.focus()}
@@ -169,17 +178,16 @@ const match=o=>{if(ft&&o.tipo!==ft)return false;if(!q)return true;const s=[o.fol
 function board(){const L=mine().filter(match),C=ctHoy().filter(ctMatch),np=C.filter(c=>c.est==='prog').length;
   return`<div class="tabs" role="tablist" aria-label="Etapas">${citaTab(np)}${ETAPAS.map(([k,n])=>`<button class="tab ${k===tab?'on':''}" role="tab" aria-selected="${k===tab}" data-a="tab" data-k="${k}">${n} <span class="cnt">${L.filter(o=>o.etapa===k).length}</span></button>`).join('')}</div>
   ${q?`<p class="mut">${L.length} resultado(s) para «${esc(q)}»</p>`:''}
-  <div class="kan">${citaCol(C,np)}${ETAPAS.map(([k,n,c])=>{const C=L.filter(o=>o.etapa===k);return`<section class="col ${k===tab?'on':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch"><span>${n}</span><span class="cnt">${C.length}</span></h2><div class="cl">${C.map(card).join('')}</div></section>`}).join('')}</div>`}
+  <div class="kan" ${desk()?`style="grid-template-columns:minmax(205px,1fr) ${ETAPAS.map(([k])=>UI().col[k]?'92px':'minmax(205px,1fr)').join(' ')}"`:''}>${citaCol(C,np)}${ETAPAS.map(([k,n,c])=>{const U=UI(),cx=desk()&&!!U.col[k],C=L.filter(o=>o.etapa===k).sort((a,b)=>(U.pin[b.folio]?1:0)-(U.pin[a.folio]?1:0));return`<section class="col ${k===tab?'on':''}${cx?' cx':''}" data-drop="${k}" style="--c:${c}" aria-label="${n}"><h2 class="ch" title="${n}"><span>${n}</span><span class="cnt">${C.length}</span><button type="button" class="kb cb" data-a="ccol" data-k="${k}" aria-expanded="${!cx}" aria-label="${cx?'Expandir':'Contraer'} columna ${n}" title="${cx?'Expandir':'Contraer'} columna"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${cx?'M9 6l6 6-6 6':'M15 6l-6 6 6 6'}"/></svg></button></h2><div class="cl">${cx?C.map(o=>`<button type="button" class="mini${U.pin[o.folio]?' pn':''}" data-a="abrir" data-f="${esc(o.folio)}" draggable="true" title="${esc(o.folio+' · '+(o.cliente||'Sin cliente'))}">${esc(o.folio)}</button>`).join(''):C.map(card).join('')}</div></section>`}).join('')}</div>`}
 const ICU='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',ICC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4h6v3H9zM6 6h12v15H6zM9 12h6M9 16h6"/></svg>';
 const bd=(c,i,t,n)=>`<span class="bd ${c}" title="${t}" role="img" aria-label="${t}">${i}${n?`<b>${n}</b>`:''}</span>`;
 function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length,
-  gf=nRecep(o)>0;
-  return`<article class="card k" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
-  <div class="row sp wrap"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span>${conCita(o)?'<span class="chip g">Con cita</span>':''}</div>
-  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}${o.auth?bd('ok',IC.ok,'El cliente autorizó desde el enlace'):''}${o.espRef?bd('wa',IC.at,'Esperando refacciones'):''}${o.ret?bd('al',IC.fa,'Orden retrasada'):''}</div>
+  gf=nRecep(o)>0,U=UI(),cc=!!U.cc[o.folio],pn=!!U.pin[o.folio];
+  return`<article class="card k${cc?' cc':''}${pn?' pn':''}" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
+  <div class="row wrap kh"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span>${conCita(o)?'<span class="chip g">Con cita</span>':''}<span class="kc"><button type="button" class="kb pb${pn?' on':''}" data-a="pin" data-f="${esc(o.folio)}" aria-pressed="${pn}" aria-label="${pn?'Quitar la orden fijada':'Fijar la orden'}" title="${pn?'Quitar fijado':'Fijar orden'}">${ICP}</button><button type="button" class="kb xb" data-a="ccard" data-f="${esc(o.folio)}" aria-expanded="${!cc}" aria-label="${cc?'Expandir':'Contraer'} la orden" title="${cc?'Expandir':'Contraer'} orden"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span></div>
+  <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}${o.auth?bd('ok',IC.ok,'El cliente autorizó desde el enlace'):''}${o.espRef?bd('wa',IC.at,'Esperando refacciones'):''}${o.ret?bd('al',IC.fa,'Orden retrasada'):''}${alertaH(o,!cc)}</div>
   <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc([o.marca,o.modelo].filter(Boolean).join(' ')||'Sin modelo')}${o.anio?' '+esc(o.anio):''}</div>${o.placas?`<div class="kv pl">${esc(o.placas)}</div>`:''}<div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
-  <div class="pg5" aria-hidden="true">${ETAPAS.map((e,i)=>`<i class="${i<=idx(o.etapa)?'d':''}"></i>`).join('')}</div>
   <div class="row"><button class="btn sm" style="flex:1" data-a="mv" data-f="${o.folio}">Mover a…</button>${n?`<button class="btn sm pri" style="flex:1" data-a="sig" data-f="${o.folio}">Siguiente: ${ETAPAS[idx(n)][1]}</button>`:`<button class="btn sm" style="flex:1" data-a="clon" data-f="${o.folio}">Clonar por garantía</button>`}</div></article>`}
 
 const inp=(l,p,v,x='')=>`<label class="f">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
@@ -521,6 +529,9 @@ function sheet(h){$('#modal').innerHTML=`<div class="ov" data-a="cerrar"><div cl
 const tipoBtns=(a,x='')=>Object.entries(TIPOS).map(([k,v])=>`<button class="btn" data-a="${a}" data-t="${k}" ${x}><span class="fol">${k}</span> ${v}</button>`).join('');
 function setPath(o,p,v){const a=p.split('.');let r=o;for(let i=0;i<a.length-1;i++){if(r[a[i]]==null)r[a[i]]={};r=r[a[i]]}r[a[a.length-1]]=v}
 const acts={
+ pin:d=>{const u=UI();if(u.pin[d.f])delete u.pin[d.f];else u.pin[d.f]=1;save();renderMain()},
+ ccard:d=>{const u=UI();if(u.cc[d.f])delete u.cc[d.f];else u.cc[d.f]=1;save();renderMain()},
+ ccol:d=>{const u=UI();if(u.col[d.k])delete u.col[d.k];else u.col[d.k]=1;save();renderMain()},
  usamoto:d=>{const o=D&&O(D),m=MOTOS.sug&&MOTOS.sug.motos[+d.i];if(!o||!m)return;o.vin=m.vin;MOTOS.cache[m.vin]=m;llenaMoto(o,m);const r=vinInfo(o.vin);if(r.anio&&!String(o.anio||'').trim()){o.anio=String(r.anio);o.anioAuto=true}touch(o);renderDrawer()},
  impmotos:()=>{const f=$('#fmotos');if(f)f.click()},
  vinanio:d=>{const o=O(D);o.anio=String(d.y);o.anioAuto=true;touch(o);renderDrawer()},
@@ -784,10 +795,10 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 async function syncCitas(){try{const rc=await api.taller({action:'listarCitas'});if(!rc||!rc.success)return;let ch=false;CT();(rc.citas||[]).forEach(r=>{if(!r||!r.id)return;const l=S.citas.find(x=>x.id===r.id);if(!l){S.citas.push(r);ch=true}else if((r.upd||0)>(l.upd||0)&&!S.cdirty.includes(l.id)){Object.assign(l,r);ch=true}});
   for(const id of [...S.cdirty]){const c=S.citas.find(x=>x.id===id);if(!c){S.cdirty=S.cdirty.filter(x=>x!==id);continue}const u0=c.upd,r=await api.taller({action:'guardarCita',cita:c});if(r&&r.success&&c.upd===u0)S.cdirty=S.cdirty.filter(x=>x!==id)}
   save();if(ch&&(view==='ag'||view==='board')&&!escribiendo())renderMain()}catch{}}
-setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
+setInterval(sync,30000);setInterval(()=>{if(view!=='board')return;document.querySelectorAll('.card.k[data-f]').forEach(el=>{const o=O(el.dataset.f),ki=el.querySelector('.ki');if(!o||!ki)return;const a=ki.querySelector('.alr');if(a)a.remove();ki.insertAdjacentHTML('beforeend',alertaH(o,!el.classList.contains('cc')))})},30000);matchMedia('(min-width:700px)').addEventListener('change',()=>{if(view==='board')renderMain()});setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v44 · 24-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v45 · 24-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
