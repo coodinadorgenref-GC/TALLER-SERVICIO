@@ -549,3 +549,17 @@ html.dark .mmenu{background:#162032;border-color:#334155}html.dark .mmenu .mi{co
 .sw-l{animation:swl .2s ease-out}.sw-r{animation:swr .2s ease-out}
 @media(prefers-reduced-motion:reduce){.sw-l,.sw-r{animation:none}}
 .dbody{overscroll-behavior-x:none}
+
+/* v43 · columna Citas, agenda por día, historial de visitas y 7 columnas */
+@media(min-width:700px){.kan{grid-template-columns:repeat(7,minmax(205px,1fr))}}
+@media(max-width:699px){.tabs{display:flex;overflow-x:auto}.tabs .tab{flex:0 0 auto;min-width:86px}}
+.cita{background:#fff;border:1px solid var(--bd);border-left:4px solid #CA8A04;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px}
+.cita.llego{border-left-color:#15803D;opacity:.85}.cita.no{border-left-color:#94A3B8;opacity:.75}
+.cita .cth{font-size:16px}.cvac{padding:8px 4px}
+.agd{display:flex;gap:6px;align-items:flex-end}.agd input[type=date]{min-height:40px;border:1px solid var(--bd);border-radius:8px;padding:0 8px;font:inherit;background:#fff;color:inherit}
+.agt{margin:4px 0 10px}.agt b{text-transform:capitalize}
+.slot.occ.prog{background:#FEF9C3;border-color:#CA8A04}.slot.occ.llego{background:#DCFCE7;border-color:#15803D}.slot.occ.no{background:#F1F5F9;opacity:.75}
+.vlist{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px}
+.vis{border:1px solid var(--bd);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px;background:#fff}
+.vis.now{border-color:#154B94;box-shadow:inset 3px 0 0 #154B94}.vis time{font-weight:600}.vtr{font-size:13.5px}
+html.dark .cita,html.dark .vis,html.dark .agd input[type=date]{background:#162032}html.dark .slot.occ.prog{background:#3b3414}html.dark .slot.occ.llego{background:#12361f}html.dark .slot.occ.no{background:#1e293b}

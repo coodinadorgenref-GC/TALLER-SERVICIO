@@ -15,6 +15,14 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v43
+- **Citas**: viven en la **Agenda** (se programan para hoy o días posteriores, con fecha, hora, bahía, tipo, cliente, WhatsApp, moto y nota). La columna **Citas** del Panel, a la izquierda de Recepción, muestra las de hoy de la agencia; **Recibir** abre la orden en Recepción con los datos ya llenos (orden *con cita*). Un cliente que llega sin cita se atiende con **Nueva orden** (orden *sin cita*). Solo se recibe el día de la cita.
+- **Reporte**: nueva tabla **Órdenes con cita y sin cita** (órdenes, % y autorizado) y **Citas del periodo** (programadas, llegaron, no llegaron, canceladas).
+- **Lavado**: nueva columna entre Autorizado y Entregado; para entregar la moto debe pasar por Lavado. Se elimina la pestaña **Cierre** (Entrega, Diagnóstico del técnico); **Aviso legal** y **Próximo servicio** quedan debajo de la Cotización y el aviso «unidad lista» aparece al estar en Lavado.
+- **Historial**: ahora muestra las visitas de la misma moto (por VIN o placas) con fecha, folio, tipo, km, técnico, trabajos autorizados y total cobrado.
+- **Aceite del motor**: la bayoneta / drenado es una fila más de **Motor y combustible** con los mismos colores y fotos (las órdenes anteriores conservan su captura y sus fotos de bayoneta pasan a la fila).
+- **Apps Script v12**: pegar `gas/taller_api.gs` y publicar una nueva versión (crea la hoja `CITAS_TALLER`).
+
 ## Novedades v42
 - **Celular · botón Atrás**: cada capa abierta (orden, ventana, aviso, visor de fotos) es un paso del historial. Atrás cierra la ventana o el visor; desde una orden regresa al Panel sin importar la pestaña.
 - **Celular · ventanas**: encabezado fijo con botón **Cerrar** siempre visible (Configuración, Mover a…, etc.), altura ajustada a la pantalla real del teléfono y respeto del borde inferior del iPhone.
