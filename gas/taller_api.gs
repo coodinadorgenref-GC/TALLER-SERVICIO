@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v9 (modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v10 (garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -379,7 +379,7 @@ function autorizarCliente_(b) {
     var d = D[k], l = L[d.i];
     if (!l || l.desc !== d.desc) return { success: false, message: 'La cotización cambió. Recarga la página para ver la versión actualizada.' };
     if (l.st !== 'pend' || (d.st !== 'aut' && d.st !== 'rech')) continue;   // solo se decide lo pendiente
-    l.st = d.st;
+    l.st = (d.st === 'aut' && o.tipo === 'G') ? 'gar' : d.st;   // orden de garantía: lo aceptado queda en Garantía (sin cargo)
     if (d.st === 'rech') { l.mot = String(d.mot || 'Otro').slice(0, 40); if (!l.seg) l.seg = seg; }
     hecho.push({ i: d.i, desc: l.desc, st: l.st, mot: l.mot || '', seg: l.seg || '' });
   }
