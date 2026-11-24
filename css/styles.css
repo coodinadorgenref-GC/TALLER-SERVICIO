@@ -432,8 +432,7 @@ html.dark .rsb,html.dark .kp{background:#162032}
 @media(min-width:1100px){
   .u-dk{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start}
 }
-#vinh .btn{display:inline-flex;min-height:30px;height:30px;padding:0 10px;margin:2px 4px;font-size:13px;flex:none;vertical-align:middle}
-#vinh{line-height:2}
+#vinh{line-height:1.2}
 
 /* ===== v32: encabezado de la orden azul, títulos sticky y fila "+" de la cotización ===== */
 .dr .drh{background:var(--nv);border-bottom:0;color:#fff}
@@ -616,3 +615,11 @@ html.dark .card.k.pn,html.dark .mini.pn{box-shadow:0 0 0 2px #60a5fa}html.dark .
 .tl-n small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tl-now{z-index:4}
 @media(max-width:699px){.tl{--mw:118px;--lh:58px}.tl-nm{font-size:12px}}
+
+/* v45b · encabezado de la tarjeta en una línea (folio + pin + flecha), sugerencias de la serie en una sola línea */
+.k>.row.kh{flex-wrap:nowrap;align-items:center;justify-content:flex-start}.kh .fol{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kch{gap:6px}.k>.kch{margin-top:6px}
+.vsg{display:flex;flex-wrap:nowrap;align-items:center;gap:12px;overflow-x:auto;scrollbar-width:none;white-space:nowrap;font-size:12.5px;line-height:1.2;padding:2px 0}.vsg::-webkit-scrollbar{display:none}
+.vi{display:inline-flex;align-items:center;gap:4px;flex:none}
+.vchip{height:22px;padding:0 8px;border:1px solid #154B94;border-radius:11px;background:#fff;color:#154B94;font:600 12px/1 inherit;cursor:pointer;flex:none}.vchip:hover,.vchip:focus-visible{background:#EAF1FB;outline:none}
+html.dark .vchip{background:#162032;border-color:#60a5fa;color:#bfdbfe}

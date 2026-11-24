@@ -184,7 +184,8 @@ const bd=(c,i,t,n)=>`<span class="bd ${c}" title="${t}" role="img" aria-label="$
 function card(o){const n=sig(o),b=n?puede(o,n):'',pend=o.lineas.filter(l=>l.st==='pend').length,ur=o.chk.filter(c=>c.e==='ur').length,np=o.inv.filter(i=>i.p).length,
   gf=nRecep(o)>0,U=UI(),cc=!!U.cc[o.folio],pn=!!U.pin[o.folio];
   return`<article class="card k${cc?' cc':''}${pn?' pn':''}" data-a="abrir" data-f="${o.folio}" tabindex="0" ${desk()?'draggable="true"':''} aria-label="Orden ${o.folio}">
-  <div class="row wrap kh"><span class="fol">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span>${conCita(o)?'<span class="chip g">Con cita</span>':''}<span class="kc"><button type="button" class="kb pb${pn?' on':''}" data-a="pin" data-f="${esc(o.folio)}" aria-pressed="${pn}" aria-label="${pn?'Quitar la orden fijada':'Fijar la orden'}" title="${pn?'Quitar fijado':'Fijar orden'}">${ICP}</button><button type="button" class="kb xb" data-a="ccard" data-f="${esc(o.folio)}" aria-expanded="${!cc}" aria-label="${cc?'Expandir':'Contraer'} la orden" title="${cc?'Expandir':'Contraer'} orden"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span></div>
+  <div class="row kh"><span class="fol">${esc(o.folio)}</span><span class="kc"><button type="button" class="kb pb${pn?' on':''}" data-a="pin" data-f="${esc(o.folio)}" aria-pressed="${pn}" aria-label="${pn?'Quitar la orden fijada':'Fijar la orden'}" title="${pn?'Quitar fijado':'Fijar orden'}">${ICP}</button><button type="button" class="kb xb" data-a="ccard" data-f="${esc(o.folio)}" aria-expanded="${!cc}" aria-label="${cc?'Expandir':'Contraer'} la orden" title="${cc?'Expandir':'Contraer'} orden"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></span></div>
+  <div class="row wrap kch"><span class="chip">${TIPOS[o.tipo]}</span>${conCita(o)?'<span class="chip g">Con cita</span>':''}</div>
   <div class="ki">${bd(o.cliente?'ok':'',ICU,o.cliente?'Cliente capturado':'Falta el cliente')}${bd(gf?'ok':'',IC.cam,gf?'Fotos de ingreso tomadas':'Faltan fotos de ingreso')}${bd(np===32?'ok':'',ICC,'Inventario '+np+'/32')}${ur?bd('al',IC.fa,ur+' urgente'+(ur>1?'s':''),ur):''}${pend?bd('wa',IC.at,pend+' por autorizar',pend):''}${o.auth?bd('ok',IC.ok,'El cliente autorizó desde el enlace'):''}${o.espRef?bd('wa',IC.at,'Esperando refacciones'):''}${o.ret?bd('al',IC.fa,'Orden retrasada'):''}${alertaH(o,!cc)}</div>
   <div class="kn">${esc(o.cliente||'Sin cliente')}</div><div class="kv">${esc([o.marca,o.modelo].filter(Boolean).join(' ')||'Sin modelo')}${o.anio?' '+esc(o.anio):''}</div>${o.placas?`<div class="kv pl">${esc(o.placas)}</div>`:''}<div class="kv">${esc(o.mec||'Sin técnico')}${o.bahia?' · Bahía '+o.bahia:''}</div>
   ${b?`<span class="chip w">${IC.at} ${b}</span>`:''}
@@ -325,12 +326,12 @@ function vinH(o){const r=vinInfo(o.vin);if(!r.n)return'';
   if(r.mal)return`${IC.at} La serie tiene caracteres no válidos (el VIN no usa I, O ni Q): revísala.`;
   if(!r.anio)return`${IC.at} No se pudo leer el año en la posición 10 de la serie: revísala o captura el año a mano.`;
   const dif=Number(o.anio)!==r.anio,mc=String(o.marca||'').trim(),fab=(MOTOS.cache[o.vin]||{}).marca||r.fab;
-  const btn=(m,t)=>`<button type="button" class="btn sm" data-a="vinmarca" data-m="${m}">${t||'Usar '+m}</button>`;
-  const pa=dif?`año <b>${r.anio}</b>${o.anio?` (capturaste ${esc(o.anio)})`:''} <button type="button" class="btn sm" data-a="vinanio" data-y="${r.anio}">Usar ${r.anio}</button>`:`año <b>${r.anio}</b> ✓`;
-  const pm=fab?(mc&&mc!==fab?`marca <b>${esc(fab)}</b> (capturaste ${esc(mc)}) ${btn(fab)}`:`marca <b>${esc(fab)}</b> ✓`):r.amb?(mc&&r.amb.includes(mc)?`marca <b>${esc(mc)}</b> ✓`:`marca: esta fábrica arma varias (${r.amb.join(', ')}), elige ${r.amb.map(m=>btn(m,m)).join(' ')}`):'marca no reconocida: captúrala a mano';
-  const md=modVin(o),mm=String(o.modelo||'').trim(),bm=(m,t)=>`<button type="button" class="btn sm" data-a="vinmodelo" data-m="${esc(m)}">${esc(t||m)}</button>`;
-  const pmo=!md?'':md.uno?(mm.toUpperCase()===md.top[0].toUpperCase()?`modelo <b>${esc(md.top[0])}</b> ✓`:`modelo <b>${esc(md.top[0])}</b>${mm?` (capturaste ${esc(mm)})`:''} ${bm(md.top[0],'Usar '+md.top[0])}`):(md.top.some(m=>m.toUpperCase()===mm.toUpperCase())?`modelo <b>${esc(mm)}</b> ✓`:`modelo: esta serie la usan varios (${md.top.map(esc).join(', ')}), elige ${md.top.map(m=>bm(m)).join(' ')}`);
-  return`Según la serie: ${pa} · ${pm}${pmo?' · '+pmo:''}`}
+  const btn=(m,t)=>`<button type="button" class="vchip" data-a="vinmarca" data-m="${esc(m)}" title="Usar ${esc(m)}">${esc(t||'Usar')}</button>`;
+  const pa=dif?`año <b>${r.anio}</b>${o.anio?` (tienes ${esc(o.anio)})`:''} <button type="button" class="vchip" data-a="vinanio" data-y="${r.anio}" title="Usar ${r.anio}">Usar</button>`:`año <b>${r.anio}</b> ✓`;
+  const pm=fab?(mc&&mc!==fab?`marca <b>${esc(fab)}</b> (tienes ${esc(mc)}) ${btn(fab)}`:`marca <b>${esc(fab)}</b> ✓`):r.amb?(mc&&r.amb.includes(mc)?`marca <b>${esc(mc)}</b> ✓`:`marca ${r.amb.map(m=>btn(m,m)).join('')}`):'marca no reconocida';
+  const md=modVin(o),mm=String(o.modelo||'').trim(),bm=(m,t)=>`<button type="button" class="vchip" data-a="vinmodelo" data-m="${esc(m)}" title="Usar ${esc(m)}">${esc(t||m)}</button>`;
+  const pmo=!md?'':md.uno?(mm.toUpperCase()===md.top[0].toUpperCase()?`modelo <b>${esc(md.top[0])}</b> ✓`:`modelo <b>${esc(md.top[0])}</b>${mm?` (tienes ${esc(mm)})`:''} ${bm(md.top[0],'Usar')}`):(md.top.some(m=>m.toUpperCase()===mm.toUpperCase())?`modelo <b>${esc(mm)}</b> ✓`:`modelo ${md.top.map(m=>bm(m)).join('')}`);
+  return`<div class="vsg"><span class="vi">${pa}</span><span class="vi">${pm}</span>${pmo?`<span class="vi">${pmo}</span>`:''}</div>`}
 // ---- Base de motos (hoja MOTOS_TALLER de la API del taller) ----
 // Al completar el VIN o el teléfono se busca la moto y se llenan los datos que estén vacíos. km y combustible nunca se llenan: se capturan en cada visita.
 const MOTOS={cache:{},sug:null,tt:0,aviso:false,mod:{},modErr:{},modOff:false,avisoMod:false};
@@ -381,43 +382,6 @@ async function buscaMotosTel(o,tel){let r=null;try{r=await api.taller({action:'b
   if(!r)return;if(!r.success){avisaMotos(motoErr(r));return}
   if(!D||O(D)!==o||nTel(o.tel)!==tel)return;
   MOTOS.sug={tel,motos:r.motos||[]};pintaSug()}
-// ---- Importar el reporte de ventas (GCVEN02 en CSV) o la base ya preparada (base_motos.csv) ----
-const NMARCA={CARABELA:'Carabela',VENTO:'Vento',BAJAJ:'Bajaj',SUZUKI:'Suzuki',VELOCI:'Veloci',ISLO:'Islo',HAOJUE:'Haojue',HERCULES:'Hercules',MOTOMEL:'Motomel',KURAZAI:'Kurazai',ATUL:'Atul',BENELLI:'Benelli','E-BIKES':'E-Bike',TRECKMOTORS:'Treckmotors'};
-const COLORES=new Set('ROJO ROJA NEGRO NEGRA AZUL BLANCO BLANCA GRIS PLATA NARANJA VERDE AMARILLO AMARILLA TITANIO GRAFITO PURPURA MORADO MORADA DORADO DORADA CAFE BEIGE VINO MATE METALIZADO METALIZADA METALICO METALICA BICOLOR CELESTE ROSA AQUA MARINO PERLA ARENA OLIVO'.split(' '));
-// Modelo con cilindraje y año a partir del nombre del producto: "MOTOCICLETA CARABELA HUNTER 125CC ROJO 2026" → HUNTER 125CC · 2026.
-function modeloDe(prod,marca){let q=String(prod||'').replace(/\s+/g,' ').trim().toUpperCase().replace(/^(MOTOCICLETA|MOTOCARRO(?: DE CARGA)?|BICICLETA ELECTRICA)\s+/,'');const M=String(marca||'').toUpperCase();
-  if(M&&q.startsWith(M+' '))q=q.slice(M.length+1);if(M==='HERCULES')q=q.replace(/\bHERCULES\b/g,'').trim();else if(q.startsWith('HERCULES '))q=q.slice(9);
-  const yrs=q.match(/\b20\d\d\b/g),cc=/(\d{2,3}(?:\.\d)?)\s?CC\b/.exec(q);let modelo;
-  if(cc){const antes=q.slice(0,cc.index).replace(/\b(4T|2T|1CIL|2CIL)\b/g,'').trim().replace(/\bHC-\s*$/,'').trim().replace(/\s+/g,' '),desp=q.slice(cc.index+cc[0].length).trim().split(' ').filter(Boolean);
-    if(M==='SUZUKI'||M==='HAOJUE')modelo=((desp[0]?desp[0]+' ':'')+cc[1]+'CC').trim();
-    else{const v=[];for(const t of desp){if(COLORES.has(t)||COLORES.has(t.replace(/,$/,''))||/^20\d\d$/.test(t)||/^\d\dD$/.test(t)||t.includes('/'))break;v.push(t)}modelo=(antes+' '+cc[1]+'CC'+(v.length?' '+v.join(' '):'')).trim()}}
-  else modelo=q.split(' ').filter(w=>w&&!COLORES.has(w)&&!/^20\d\d$/.test(w)&&!/^\d\dD$/.test(w)).join(' ');
-  return{modelo,anio:yrs?+yrs[yrs.length-1]:0}}
-function csvFilas(t,fn){let i=t.charCodeAt(0)===0xFEFF?1:0,row=[],f='',q=false;const n=t.length;
-  for(;i<n;i++){const c=t[i];
-    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
-    else if(c==='"')q=true;
-    else if(c===','){row.push(f);f=''}
-    else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(f);f='';fn(row);row=[]}
-    else f+=c}
-  if(f!==''||row.length){row.push(f);fn(row)}}
-function motosDeCsv(txt){const out=new Map(),nr=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase();let modo=null,ix={};
-  const col=(h,n)=>h.indexOf(n),g=(r,k)=>String(r[ix[k]]===undefined?'':r[ix[k]]).trim();
-  const tel=v=>{const d=nTel(v);return d.length===10?d:''};
-  csvFilas(txt,r=>{
-    if(!modo){const h=r.map(nr);
-      if(h.includes('SERIE')&&h.includes('FAMILIA')){modo='raw';['FAMILIA','PRODUCTO','MARCA','SERIE','FECHA','FACTURA','SUCURSAL','CVE_CLIENTE','CLIENTE','TELEFONO','DIRECCION','CIUDAD','DEVOLUCION'].forEach(k=>ix[k]=col(h,k))}
-      else if(h.includes('VIN')&&h.includes('CLIENTE')){modo='base';['VIN','CLIENTE','TEL','EMAIL','DIRECCION','CIUDAD','MARCA','MODELO','ANIO','PLACAS','FECHA_VENTA','FACTURA','SUCURSAL_VENTA','CVE_CLIENTE'].forEach(k=>ix[k]=col(h,k))}
-      return}
-    if(modo==='base'){const vin=nr(g(r,'VIN')).replace(/\s+/g,'');if(vin.length<8)return;
-      out.set(vin,{vin,cliente:g(r,'CLIENTE'),tel:tel(g(r,'TEL')),email:g(r,'EMAIL'),direccion:g(r,'DIRECCION'),ciudad:g(r,'CIUDAD'),marca:g(r,'MARCA'),modelo:g(r,'MODELO'),anio:g(r,'ANIO'),placas:g(r,'PLACAS'),fecha_venta:g(r,'FECHA_VENTA'),factura:g(r,'FACTURA'),sucursal_venta:g(r,'SUCURSAL_VENTA'),cve_cliente:g(r,'CVE_CLIENTE')});return}
-    if(!/MOTOCICLETAS|MOTOCARROS/.test(nr(g(r,'FAMILIA'))))return;
-    const vin=nr(g(r,'SERIE')).replace(/\s+/g,'');if(vin.length!==17||nr(g(r,'DEVOLUCION'))==='CANCELACION')return;
-    const fm=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(g(r,'FECHA')),fecha=fm?fm[3]+'-'+fm[2].padStart(2,'0')+'-'+fm[1].padStart(2,'0'):'',prev=out.get(vin);
-    if(prev&&prev.fecha_venta>fecha)return;                 // se queda la venta vigente más reciente (refacturaciones)
-    const mar=nr(g(r,'MARCA')),marca=NMARCA[mar]||(mar?mar[0]+mar.slice(1).toLowerCase():''),md=modeloDe(g(r,'PRODUCTO'),mar);
-    out.set(vin,{vin,cliente:g(r,'CLIENTE'),tel:tel(g(r,'TELEFONO')),direccion:g(r,'DIRECCION'),ciudad:g(r,'CIUDAD'),marca,modelo:md.modelo,anio:String(md.anio||vinInfo(vin).anio||''),placas:'',fecha_venta:fecha,factura:g(r,'FACTURA'),sucursal_venta:g(r,'SUCURSAL'),cve_cliente:g(r,'CVE_CLIENTE')})});
-  return[...out.values()]}
 function cuentasH(){if(!puedeRep())return'';const ag=S.suc;
   if(!ag)return`<div class="cfg-g">Cuentas</div><div class="mut">Elige una agencia (botón de arriba) para administrar a sus colaboradores.</div>`;
   const grp=PUESTOS.map(([p,pl])=>{const L=(S.colab||[]).filter(c=>c.p===p&&agN(c.a)===agN(ag)).sort((x,y)=>x.n.localeCompare(y.n,'es'));
@@ -427,32 +391,8 @@ function cuentasH(){if(!puedeRep())return'';const ag=S.suc;
 <label class="f">Puesto<select id="colp">${PUESTOS.map(([p,,s])=>`<option value="${p}">${s}</option>`).join('')}</select></label>
 <label class="f">Nombre completo<input id="coln" autocomplete="off" placeholder="Nombre y apellidos"></label>
 <button class="btn" data-a="coladd">Agregar a ${esc(ag)}</button><div class="mut" id="colst"></div>
-${adminReal()?`<div class="mut" style="margin-top:10px">Carga masiva (todas las agencias): CSV con las columnas AGENCIA, PUESTO y NOMBRE.</div><button class="btn" data-a="impcol">Importar colaboradores (CSV)</button><input type="file" id="fcol" accept=".csv,text/csv" hidden>`:''}`}
+`}
 async function leeColab(){try{const c=await api.taller({action:'listarColaboradores'});if(c&&c.success&&Array.isArray(c.colaboradores)){S.colab=c.colaboradores;S.colabT=Date.now();save();return true}}catch{}return false}
-async function importaColab(file){if(!file)return;const st=$('#colst'),msg=t=>{if(st)st.textContent=t};
-  try{msg('Leyendo archivo…');const buf=await file.arrayBuffer();let txt;
-    try{txt=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch{txt=new TextDecoder('windows-1252').decode(buf)}
-    const nr=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase(),filas=[];let ix=null;
-    csvFilas(txt,r=>{if(!ix){const h=r.map(nr),a=h.findIndex(x=>x==='AGENCIA'||x==='SUCURSAL'),p=h.indexOf('PUESTO'),n=h.indexOf('NOMBRE');if(a>=0&&p>=0&&n>=0)ix={a,p,n};return}
-      const a=nr(r[ix.a]),p=nr(r[ix.p]),n=agN(r[ix.n]);if(a&&n&&PUESTOS.some(x=>x[0]===p))filas.push({agencia:a,puesto:p,nombre:n})});
-    if(!filas.length){msg('No encontré colaboradores. El CSV necesita las columnas AGENCIA, PUESTO y NOMBRE (puestos: ASESOR DE SERVICIO, ASESOR DE REFACCIONES o MECANICO).');return}
-    msg('Subiendo '+filas.length+' colaboradores…');
-    const r=await api.taller({action:'importarColaboradores',filas});
-    if(!r||!r.success){msg(/desconocida/i.test((r&&r.message)||'')?'Actualiza el script del taller a la v8 y vuelve a intentar.':'No se pudo subir: '+((r&&r.message)||'sin respuesta'));return}
-    await leeColab();acts.cfg();const st2=$('#colst');if(st2)st2.textContent='Listo: '+r.nuevos+' nuevos, '+r.reactivados+' reactivados, '+r.omitidos+' ya estaban o se omitieron.';toast('Colaboradores importados')}
-  catch(e){msg('No se pudo importar: '+((e&&e.message)||e))}}
-async function importaMotos(file){if(!file)return;const st=$('#impst'),msg=t=>{if(st)st.textContent=t};
-  try{msg('Leyendo archivo…');const buf=await file.arrayBuffer();let txt;
-    try{txt=new TextDecoder('utf-8',{fatal:true}).decode(buf)}catch{txt=new TextDecoder('windows-1252').decode(buf)}
-    const filas=motosDeCsv(txt);
-    if(!filas.length){msg('No encontré motos con serie de 17 caracteres. Sube el reporte GCVEN02 en CSV o base_motos.csv.');return}
-    let nue=0,act=0,omi=0;
-    for(let i=0;i<filas.length;i+=1500){msg('Subiendo '+Math.min(i+1500,filas.length)+' de '+filas.length+'…');
-      const r=await api.taller({action:'importarMotos',filas:filas.slice(i,i+1500)});
-      if(!r||!r.success){const k=motoErr(r);msg(k==='viejo'?'Actualiza el script del taller a la v7 y vuelve a intentar.':k==='clave'?'Define TALLER_CLAVE en el script y escribe la misma en Configuración de la app.':'No se pudo subir: '+((r&&r.message)||'sin respuesta'));return}
-      nue+=r.nuevas;act+=r.actualizadas;omi+=r.omitidas}
-    MOTOS.cache={};msg('Listo: '+nue+' nuevas, '+act+' actualizadas, '+omi+' omitidas ('+filas.length+' motos en el archivo).');toast('Base de motos importada')}
-  catch(e){msg('No se pudo leer el archivo: '+String(e&&e.message||e))}}
 // ---- fin base de motos ----
 // Colaboradores por agencia: lista de la hoja COLABORADORES_TALLER + nombres ya usados en órdenes de esa agencia (sin repetir)
 const agN=s=>String(s||'').replace(/\s+/g,' ').trim().toUpperCase();
@@ -533,7 +473,6 @@ const acts={
  ccard:d=>{const u=UI();if(u.cc[d.f])delete u.cc[d.f];else u.cc[d.f]=1;save();renderMain()},
  ccol:d=>{const u=UI();if(u.col[d.k])delete u.col[d.k];else u.col[d.k]=1;save();renderMain()},
  usamoto:d=>{const o=D&&O(D),m=MOTOS.sug&&MOTOS.sug.motos[+d.i];if(!o||!m)return;o.vin=m.vin;MOTOS.cache[m.vin]=m;llenaMoto(o,m);const r=vinInfo(o.vin);if(r.anio&&!String(o.anio||'').trim()){o.anio=String(r.anio);o.anioAuto=true}touch(o);renderDrawer()},
- impmotos:()=>{const f=$('#fmotos');if(f)f.click()},
  vinanio:d=>{const o=O(D);o.anio=String(d.y);o.anioAuto=true;touch(o);renderDrawer()},
  vinmarca:d=>{const o=O(D);o.marca=d.m;delete o.marcaAuto;touch(o);renderDrawer()},
  vinmodelo:d=>{const o=O(D);o.modelo=d.m;delete o.modeloAuto;touch(o);renderDrawer()},
@@ -623,7 +562,6 @@ const acts={
   try{const r=await api.taller({action:'guardarColaborador',agencia:S.suc,puesto:d.pu,nombre:d.nm,activo:false});
    if(!r||!r.success){toast('No se pudo dar de baja: '+((r&&r.message)||'sin respuesta'),'err');return}
    S.colab=(S.colab||[]).filter(c=>!(c.p===d.pu&&agN(c.a)===agN(S.suc)&&agN(c.n)===agN(d.nm)));save();acts.cfg();toast('Colaborador dado de baja','ok')}catch{toast('Sin conexión: no se pudo dar de baja','err')}},
- impcol:()=>{const f=$('#fcol');if(f)f.click()},
  cfg:()=>{const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG();
   sheet(`<div class="h">Configuración</div>
 <div class="cfg-g">Perfil</div>
@@ -634,7 +572,6 @@ ${cuentasH()}
 <div class="cfg-g">Cuenta y versión</div>
 <div class="mut">Pendientes de sincronizar: ${S.dirty.length}</div><div class="mut">${S.inv.length?S.inv.length+' productos en el catálogo':'Sin catálogo cargado'}</div>
 <div class="mut">Identificador de versión</div><div class="ver">${esc(APP_BUILD)}</div>
-${adminReal()?`<div class="cfg-g">Base de motos</div><div class="mut">Sube el reporte de ventas GCVEN02 en CSV (o base_motos.csv). Solo entran motos con serie de 17 caracteres y venta vigente; lo que el taller ya capturó en visitas no se pisa.</div><button class="btn" data-a="impmotos">Importar base de motos (CSV)</button><input type="file" id="fmotos" accept=".csv,text/csv" hidden><div class="mut" id="impst"></div>`:''}
 <button class="btn" data-a="catup">Actualizar catálogo</button>
 <button class="btn" data-a="recarga">Forzar recarga (limpiar caché de esta pestaña)</button>
 <button class="btn red" data-a="salir">Cerrar sesión</button>`)},
@@ -695,8 +632,8 @@ document.addEventListener('change',async e=>{const t=e.target;
   if(t.dataset&&t.dataset.sku!=null){const o=O(D),l=o&&o.lineas[+t.dataset.sku];if(l){const v=t.value.trim(),it=v&&S.inv.find(x=>nSku(x.sku)===nSku(v));l.sku=v;
     if(it){l.desc=it.nombre;l.pc=precioDe(it);l.pf=pIva(it)==null;l.precio=l.pc;toast('Precio de catálogo aplicado (IVA incluido)','ok')}else if(v)toast('SKU no encontrado en el catálogo: pon el precio a mano','inf');
     touch(o);renderDrawer()}return}
-  if(t.id==='fcol'){const f=t.files[0];t.value='';importaColab(f);return}
-  if(t.id==='fmotos'){const f=t.files[0];t.value='';importaMotos(f);return}
+  
+  
   if(t.id==='ftipo'){ft=t.value;renderMain();return}
   if(t.dataset&&t.dataset.rp){rp[t.dataset.rp]=t.value;renderMain();return}
   if(t.dataset.ag){agf[t.dataset.ag]=t.value;renderMain();return}
@@ -825,8 +762,9 @@ const nSku=v=>{const t=String(v==null?'':v).trim();return /^\d+$/.test(t)?t.repl
 // Precio público CON IVA (lista del catálogo: obtenerPreciosCatalogo). Si el SKU no está en esa lista se usa el del inventario y se marca para verificar.
 const pIva=i=>{const p=S.pr&&S.pr[nSku(i.sku)];return p>0?p:null};
 const precioDe=i=>pIva(i)??i.precio;
-// Existencia en la sucursal de la orden (si no coincide el nombre, el total de todas)
-const stockDe=(i,suc)=>{if(!i||!i.ex)return null;const k=String(suc||'').toUpperCase(),e=i.ex,ks=Object.keys(e);const hit=ks.find(x=>k&&(k.includes(x.toUpperCase())||x.toUpperCase().includes(k)));return hit!=null?{n:e[hit],suc:hit}:{n:ks.reduce((a,x)=>a+e[x],0),suc:'todas'}};
+// Existencia solo de la agencia de la orden (misma regla del catálogo: nombre normalizado, PISTE MUEBLES = BAJAJ PISTE). Si la agencia no tiene registro del producto, es 0; nunca se suma lo de otras agencias.
+const nAg=t=>String(t||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\bPISTE MUEBLES\b/g,'BAJAJ PISTE');
+const stockDe=(i,suc)=>{if(!i||!i.ex)return null;const k=nAg(suc);if(!k)return null;const hit=Object.keys(i.ex).filter(x=>{const n=nAg(x);return n===k||n.includes(k)||k.includes(n)});return{n:hit.reduce((a,x)=>a+(Number(i.ex[x])||0),0),suc:hit[0]||suc}};
 async function cargaCat(quiet){if(!sesion)return;
   try{const r=await api.inventario(sesion.correo,sesion.token);if(!r.success){if(!quiet)toast(r.message||'Catálogo no disponible: vuelve a iniciar sesión');return}
     S.inv=(r.data||[]).map(i=>({sku:String(i.sku||i.SKU||i.Sku||i.Codigo||''),nombre:String(i.nombre||i.Nombre||i.Descripcion||i.Producto||''),precio:Number(i.precio||i.Precio||i.precioPublico||i.PrecioPublico||0),ex:(i.Existencias||[]).reduce((m,e)=>{if(!e.enTransito&&e.sucursal)m[e.sucursal]=(m[e.sucursal]||0)+(Number(e.cantidad)||0);return m},{})})).filter(i=>i.sku);
