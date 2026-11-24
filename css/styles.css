@@ -563,3 +563,29 @@ html.dark .mmenu{background:#162032;border-color:#334155}html.dark .mmenu .mi{co
 .vis{border:1px solid var(--bd);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:4px;background:#fff}
 .vis.now{border-color:#154B94;box-shadow:inset 3px 0 0 #154B94}.vis time{font-weight:600}.vtr{font-size:13.5px}
 html.dark .cita,html.dark .vis,html.dark .agd input[type=date]{background:#162032}html.dark .slot.occ.prog{background:#3b3414}html.dark .slot.occ.llego{background:#12361f}html.dark .slot.occ.no{background:#1e293b}
+
+/* v44 · agenda por técnico (línea de tiempo 08:00–19:00 cada 15 min) y medidas de llanta */
+.tl{--mw:150px;--sw:34px;--lh:46px;--se:64px;position:relative;overflow:auto;max-height:72vh;background:#fff;border:1px solid var(--bd);border-radius:12px;overscroll-behavior:contain}
+.tl-in{position:relative;width:max-content;min-width:100%}
+.tl-hd,.tl-r{display:grid;grid-template-columns:var(--mw) repeat(44,var(--sw)) var(--se)}
+.tl-hd{position:sticky;top:0;z-index:6;background:#F1F5F9;border-bottom:1px solid var(--bd)}
+.tl-c0{grid-row:1/span 2;position:sticky;left:0;z-index:7;background:#F1F5F9;display:flex;align-items:center;padding:0 12px;font:700 12px/1.2 inherit;letter-spacing:.4px;text-transform:uppercase;color:#334155;border-right:1px solid var(--bd)}
+.tl-hh{grid-row:1;padding:6px 6px 2px;font:600 12px/1.2 "JetBrains Mono",ui-monospace,monospace;color:#0F172A;border-left:1px solid #CBD5E1;white-space:nowrap}
+.tl-he{grid-row:1/span 2;padding-top:8px}
+.tl-hm{grid-row:2;text-align:center;font-size:10.5px;color:#64748B;padding:0 0 5px;border-left:1px solid #E2E8F0}.tl-hm.q{border-left-color:#CBD5E1}
+.tl-r{grid-template-rows:repeat(var(--ln),var(--lh));border-bottom:1px solid #E2E8F0}
+.tl-n{grid-column:1;grid-row:1/span var(--ln);position:sticky;left:0;z-index:5;background:#fff;padding:6px 12px;display:flex;flex-direction:column;justify-content:center;font-weight:700;font-size:14px;line-height:1.25;border-right:1px solid var(--bd)}
+.tl-n small{font-weight:500;color:#64748B;font-size:11.5px}
+.tl-s{grid-row:1/span var(--ln);z-index:1;min-width:0;padding:0;border:0;border-left:1px dashed #E2E8F0;background:transparent;cursor:pointer}
+.tl-s.h{border-left:1px solid #CBD5E1}.tl-s:hover,.tl-s:focus-visible{background:#E0F2FE;outline:none}
+.tl-b{z-index:2;margin:3px 1px;padding:3px 8px;min-width:0;overflow:hidden;border:0;border-left:4px solid #0284C7;border-radius:8px;background:#E0F2FE;color:#075985;text-align:left;font-size:12.5px;line-height:1.2;cursor:pointer;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 2px rgba(15,23,42,.14)}
+.tl-b b{font:600 11.5px "JetBrains Mono",ui-monospace,monospace}.tl-b span,.tl-b small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tl-b small{opacity:.85}
+.tl-b.llego{background:#DCFCE7;color:#166534;border-left-color:#059669}.tl-b.no{background:#F1F5F9;color:#475569;border-left-color:#94A3B8}.tl-b.ord{background:#E8EEF9;color:#154B94;border-left-color:#154B94}
+.tl-now{position:absolute;top:0;bottom:0;width:2px;background:#DC2626;left:calc(var(--mw) + var(--now)*var(--sw));z-index:8;pointer-events:none}
+.tl-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;margin:2px 0 8px}.tl-leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+@media(max-width:699px){.tl{--mw:104px;--sw:36px;max-height:none}.tl-n{font-size:13px;padding:6px 8px}}
+.g3{display:grid;grid-template-columns:1fr 1fr 90px;gap:8px}
+.medch{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.medb{min-height:36px;padding:0 10px;border:1px solid var(--bd);border-radius:999px;background:#F8FAFC;font:600 13px inherit;cursor:pointer}.medb.on{background:#154B94;border-color:#154B94;color:#fff}
+html.dark .tl,html.dark .tl-n{background:#162032}html.dark .tl-hd,html.dark .tl-c0{background:#0f172a}html.dark .tl-hh{color:#E5EAF2;border-color:#334155}html.dark .tl-hm,html.dark .tl-s,html.dark .tl-r{border-color:#263449}html.dark .tl-s:hover{background:#12304a}
+html.dark .tl-b{background:#0c2d45;color:#bae6fd}html.dark .tl-b.llego{background:#12361f;color:#bbf7d0}html.dark .tl-b.no{background:#1e293b;color:#cbd5e1}html.dark .tl-b.ord{background:#1e2c45;color:#bfdbfe}html.dark .medb{background:#162032;color:#E5EAF2}
+@media(prefers-reduced-motion:reduce){.tl{scroll-behavior:auto}}
