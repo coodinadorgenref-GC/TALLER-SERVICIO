@@ -72,7 +72,7 @@
 
   function totales() {
     const t = { aut: 0, rech: 0, gar: 0, pend: 0 };
-    (O.lineas || []).forEach((l, i) => { let st = l.st; if (st === 'pend' && dec[i]) st = dec[i].st; t[st === 'aut' ? 'aut' : st === 'rech' ? 'rech' : st === 'gar' ? 'gar' : 'pend'] += imp(l); });
+    (O.lineas || []).forEach((l, i) => { let st = l.st; if (st === 'pend' && dec[i]) st = dec[i].st === 'aut' && O.tipo === 'G' ? 'gar' : dec[i].st; t[st === 'aut' ? 'aut' : st === 'rech' ? 'rech' : st === 'gar' ? 'gar' : 'pend'] += imp(l); });
     return t;
   }
   function linea(l, i) {
@@ -87,6 +87,14 @@
         <label class="mot" ${d && d.st === 'rech' ? '' : 'hidden'}>Motivo (opcional)<select data-mot>${['', ...MOTIVOS].map(m => `<option value="${esc(m)}" ${d && d.mot === m ? 'selected' : ''}>${m || 'Elige un motivo'}</option>`).join('')}</select></label>`
         : `<div class="stat">${chip(LN_ST[l.st] || LN_ST.pend)}${l.st === 'rech' ? `<span class="hint">${l.mot ? esc(l.mot) + '. ' : ''}Queda pendiente; tu taller te lo recordará.</span>` : ''}</div>`}</article>`;
   }
+  function banner(o) {
+    const L = o.lineas || [], pend = L.filter(l => l.st === 'pend').length;
+    if (!L.length) return '';
+    const hecho = !!o.auth && !pend, rev = !pend && !o.auth;
+    const h = hecho ? 'Tu orden está autorizada' : rev ? 'Resumen de tu servicio' : 'Revisa y autoriza tu servicio';
+    const p = hecho ? 'Gracias. El taller ya fue avisado y continuará con los trabajos que aceptaste.' : rev ? 'Estos son los trabajos de tu orden y su estado.' : 'Acepta o rechaza cada trabajo recomendado y firma. Solo se realiza lo que tú autorices.';
+    return `<section class="hero${hecho ? ' ok' : ''}" aria-label="Resumen">${hecho ? IC.ok : ''}<div><h1>${h}</h1><p>${p}</p>${pend ? '<ol class="steps"><li><span>1</span>Revisa</li><li><span>2</span>Decide</li><li><span>3</span>Firma y envía</li></ol>' : ''}</div></section>`;
+  }
   function cotizacion(o) {
     const L = o.lineas || [];
     if (!L.length) return sec('cot', 'Trabajos recomendados', '', '<p class="hint">Todavía no hay trabajos recomendados. Cuando estén listos los verás aquí para autorizarlos.</p>');
@@ -96,18 +104,19 @@
   }
 
   function resDec(o) {
-    const a = (o.lineas || []).filter(l => l.st === 'aut'), r = (o.lineas || []).filter(l => l.st === 'rech');
-    return `${a.length ? `Autorizado: <b>${a.length}</b> (${money(a.reduce((t, l) => t + imp(l), 0))}). ` : ''}${r.length ? `Para después: <b>${r.length}</b>. ` : ''}`;
+    const a = (o.lineas || []).filter(l => l.st === 'aut' || l.st === 'gar'), r = (o.lineas || []).filter(l => l.st === 'rech');
+    return `${a.length ? `Autorizado: <b>${a.length}</b> (${money(a.filter(l => l.st === 'aut').reduce((t, l) => t + imp(l), 0))}). ` : ''}${r.length ? `Para después: <b>${r.length}</b>. ` : ''}`;
   }
   function autorizacion(o) {
     const pend = (o.lineas || []).some(l => l.st === 'pend');
     if (o.auth && !pend) return sec('aut', 'Tu autorización', '', `<div class="ok-box" role="status">${IC.ok}<div><b>${msgOk ? '¡Listo! Recibimos tu autorización.' : 'Ya autorizaste esta orden.'}</b>${esc(o.auth.n)} · ${esc(fdt(o.auth.t))}<br>${resDec(o)}El taller ya fue avisado.</div></div>${o.firma ? `<img class="sg-img" alt="Firma de ${esc(o.auth.n)}" src="${esc(imgSrc(o.firma))}">` : ''}`);
     if (!pend) return '';
     return sec('aut', 'Autoriza y firma', '', `<div id="autorizar" tabindex="-1"></div>
+      <div class="rs" id="rs" aria-live="polite"></div>
       <label class="f" for="nom">Nombre completo<input type="text" id="nom" autocomplete="name" aria-describedby="e-nom" value="${esc(o.cliente || '')}"></label><div class="err" id="e-nom" role="alert" hidden></div>
       <div class="f"><span id="sig-l">Firma con tu dedo</span><div class="sig" id="sigw"><canvas id="sig" role="img" aria-labelledby="sig-l"></canvas><span class="ph-t">Firma aquí</span></div></div>
       <div class="err" id="e-sig" role="alert" hidden></div><div class="err" id="e-gen" role="alert" hidden></div>
-      <div class="row2"><button type="button" class="btn ghost" id="sig-c">Borrar</button><button type="button" class="btn pri" id="enviar">${IC.pen}Enviar autorización</button></div>
+      <div class="row2"><button type="button" class="btn ghost" id="sig-c">Borrar</button><button type="button" class="btn pri" id="enviar">${IC.pen}Guardar y enviar autorización</button></div>
       <details class="leyenda"><summary>Condiciones</summary><p class="small">Autorizo los trabajos que acepté y los importes indicados. ${esc(LEYENDA)}</p></details>`);
   }
 
@@ -139,7 +148,7 @@
   /* ---------- Render ---------- */
   function vista() {
     const o = O, pend = (o.lineas || []).some(l => l.st === 'pend');
-    $('#app').innerHTML = cabecera(o) + `<main class="wrap" id="principal">${datos(o)}${cotizacion(o)}${autorizacion(o)}${inspeccion(o)}${carroceria(o)}${pie(o)}</main>
+    $('#app').innerHTML = cabecera(o) + `<main class="wrap" id="principal">${banner(o)}${datos(o)}${cotizacion(o)}${autorizacion(o)}${inspeccion(o)}${carroceria(o)}${pie(o)}</main>
       <div class="cta" id="cta" hidden><div class="cta-i"><div><small id="cta-n">Por autorizar</small><b id="cta-t">$0</b></div><a class="btn pri" href="#autorizar">Firmar y enviar</a></div></div>`;
     $('#app').removeAttribute('aria-busy');
     document.title = 'Orden de trabajo · ' + o.folio;
@@ -149,6 +158,7 @@
   function pintaTot() {
     const t = totales(), el = $('#tot'); if (!el) return;
     el.innerHTML = `<span>Autorizado <b>${money(t.aut)}</b></span>${t.gar ? `<span>Garantía ${money(t.gar)}</span>` : ''}${t.rech ? `<span>No autorizado ${money(t.rech)}</span>` : ''}${t.pend ? `<span>Por decidir ${money(t.pend)}</span>` : ''}<span class="big">Total ${money(t.aut)}</span>`;
+    const rs = $('#rs'); if (rs) { let a = 0, r = 0, f = 0; (O.lineas || []).forEach((l, i) => { if (l.st !== 'pend') return; const d = dec[i]; if (!d) f++; else if (d.st === 'aut') a++; else r++; }); rs.innerHTML = `<div><b>${a}</b><span>Aceptados</span></div><div><b>${r}</b><span>Rechazados</span></div><div><b>${f}</b><span>Por decidir</span></div><div class="tt"><b>${money(t.aut)}</b><span>Total a pagar</span></div>`; }
     const c = $('#cta'), ct = $('#cta-t'), cn = $('#cta-n'); if (ct) ct.textContent = money(t.aut);
     if (cn) { const f = (O.lineas || []).filter((l, i) => l.st === 'pend' && !dec[i]).length; cn.textContent = f ? f + ' por decidir · total a pagar' : 'Total a pagar'; }
     if (c && !$('#autorizar')) c.hidden = true;
@@ -205,7 +215,7 @@
       msgOk = true; dec = {}; await cargar(); scrollTo({ top: 0 });
     } catch (ex) {
       err('e-gen', String(ex.message || ex) + ' Revisa tu conexión e inténtalo de nuevo.');
-      b.disabled = false; b.innerHTML = IC.pen + 'Enviar autorización';
+      b.disabled = false; b.innerHTML = IC.pen + 'Guardar y enviar autorización';
     }
   }
 

@@ -435,13 +435,13 @@ const totH=o=>{const t=tot(o),r=(c,l,v,x='')=>`<div class="q2s ${c}"><span class
   return r('sub','Identificado <small>(subtotal)</small>',t.cot)+r('tot','Autorizado <small>(a cobrar)</small>',t.aut)+(t.gar?r('gar','Garantía <small>(sin cargo)</small>',t.gar):'')+r('pen','Pendiente <small>por autorizar</small>',t.pend)+r('rec','Rechazado / diferido',t.rech)};
 const autCard=o=>{const a=o.auth,f=o.firmas.aut,s=f&&src(f);
   return`<div class="cfg-g">Autorización del cliente</div><div class="card"><div class="row sp"><div class="h">Firma de autorización</div><span class="chip ${s?'g':'w'}">${s?IC.ok+' Firmada':'Pendiente'}</span></div>
-  ${s?`<img class="pic" alt="Firma de autorización" src="${s}"><div class="mut">${esc((a&&a.n)||f.n||'Cliente')}${a?' · '+new Date(a.t).toLocaleString('es-MX')+' · desde el enlace':''}</div>`:`<p class="mut" style="margin:0">El cliente firma desde el enlace que se manda con “Enviar visto bueno por WhatsApp”.${o.vb?' Enlace enviado el '+new Date(o.vb).toLocaleString('es-MX')+'.':''}</p>`}
-  <div class="row wrap"><button class="btn sm" data-a="vblink">Copiar enlace</button><button class="btn sm" data-a="firma" data-k="aut">${s?'Firmar de nuevo en el taller':'Firmar en el taller'}</button></div></div>`};
+  ${s?`<img class="pic" alt="Firma de autorización" src="${s}"><div class="mut">${esc((a&&a.n)||f.n||'Cliente')}${a?' · '+new Date(a.t).toLocaleString('es-MX')+' · desde el enlace':''}</div>`:`<p class="mut" style="margin:0">El cliente acepta o rechaza y firma desde su enlace; al guardar, los conceptos pasan solos a Autorizado (o Garantía). También puedes cambiar el estado de cada concepto a mano.${o.vb?' Enlace enviado el '+new Date(o.vb).toLocaleString('es-MX')+'.':''}</p>`}
+  <div class="row wrap"><button class="btn sm" data-a="vblink">Copiar enlace</button></div></div>`};
 let qmode='';
 const qaddH=()=>`<div class="qadd"><button class="qplus" data-a="qmenu" aria-expanded="${!!qmode}" aria-label="Agregar concepto a la cotización"><span class="qpi" aria-hidden="true">+</span><span>Agregar concepto</span></button>${qmode==='menu'?`<div class="qmenu" role="group" aria-label="Tipo de concepto"><button class="btn qo2" data-a="qopt" data-k="ref"><b>Refacción</b><small>SKU o catálogo</small></button><button class="btn qo2" data-a="qopt" data-k="mo"><b>Mano de obra</b><small>Tiempo o monto</small></button><button class="btn qo2" data-a="qopt" data-k="manual"><b>Concepto manual</b><small>Texto libre</small></button></div>`:''}${qmode==='ref'?`<div class="qref"><label class="f">Busca SKU o refacción (catálogo, precio con IVA)<input id="q2" autocomplete="off" placeholder="SKU, nombre o número de parte"></label><div id="sug" class="sugl"></div></div>`:''}</div>`;
 function tC(o){return`<div class="q2t"><div class="q2h"><span></span><span>Área</span><span>Operación</span><span>Estado de autorización</span><span class="r">Importe (IVA incl.)</span></div>${o.lineas.map((l,i)=>lineaH(l,i,o)).join('')||'<div class="qe mut">Sin conceptos. Agrégalos aquí abajo o pasa hallazgos desde Inspección.</div>'}
   ${qaddH()}<div class="q2f" id="tot" role="group" aria-label="Totales de la cotización">${totH(o)}</div></div>
-  <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button><button class="btn" data-a="autall">Autorizar todo lo pendiente</button></div>
+  <div class="row wrap"><button class="btn amb" data-a="wa">Enviar visto bueno por WhatsApp</button></div>
   ${autCard(o)}`}
 function tZ(o){return`<div class="card"><div class="h">Entrega de la moto</div><button class="btn ${o.lav?'':'pri'}" data-a="lav" aria-pressed="${!!o.lav}">${o.lav?IC.ok+' Moto lavada (tocar para revertir)':'Marcar moto lavada'}</button><div class="mut">Requisito para pasar a Entregado.</div></div>
   <div class="card"><div class="h">Diagnóstico del técnico</div><label class="f"><span class="sr">Diagnóstico</span><textarea data-p="diag" style="min-height:110px">${esc(o.diag)}</textarea></label></div>
@@ -515,7 +515,6 @@ const acts={
  aut:d=>{const o=O(D),l=o.lineas[+d.i],k=(l.st===d.k&&d.k!=='pend')?'pend':d.k;l.st=k;if(k==='rech'){if(!l.seg)l.seg=addD(30)}else{delete l.cerr;delete l.rg}touch(o);renderDrawer()},
  rguardar:d=>{const o=O(D),l=o.lineas[+d.i];if(!l.mot)return toast('Selecciona el motivo del rechazo','err');if(!/^\d{4}-\d{2}-\d{2}$/.test(l.seg||''))return toast('Falta la fecha de seguimiento','err');l.rg=Date.now();touch(o);renderDrawer();sync();toast('Rechazo guardado: aparece en Seguimientos')},
  redit:d=>{const o=O(D);delete o.lineas[+d.i].rg;touch(o);renderDrawer()},
- autall:()=>{const o=O(D);o.lineas.forEach(l=>{if(l.st==='pend')l.st=o.tipo==='G'?'gar':'aut'});touch(o);renderDrawer()},
  qmenu:()=>{qmode=qmode?'':'menu';renderDrawer()},
  qopt:d=>{if(d.k==='ref'){qmode='ref';renderDrawer();setTimeout(()=>{const x=$('#q2');x&&x.focus()},0);return}
   qmode='';const o=O(D),t=d.k==='mo'?'mo':'ref';o.lineas.push({t,sku:t==='mo'?'MO':'MANUAL',desc:'',cant:1,precio:0,min:0,st:o.tipo==='G'?'gar':'pend'});const n=o.lineas.length-1;qopen.add(n);touch(o);renderDrawer();setTimeout(()=>{const x=document.querySelector('[data-p="lineas.'+n+'.desc"]');x&&x.focus()},0)},
@@ -721,7 +720,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v37 · 23-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v38 · 23-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};

@@ -15,6 +15,12 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v38
+- **Autorización solo desde el enlace del cliente**: el cliente acepta o rechaza cada concepto, firma y guarda; lo aceptado pasa solo a Autorizado (en órdenes de garantía, a Garantía) y lo rechazado a Rechazado / diferido. El asesor también puede cambiar el estado de cada concepto a mano.
+- Se quitó **Autorizar todo lo pendiente** y **Firmar en el taller**. En Cotización queda la tarjeta de solo lectura con el estado de la firma y **Copiar enlace**.
+- **Enlace del cliente**: nuevo acabado (resumen inicial con pasos, tarjetas planas, resumen en vivo de aceptados / rechazados / por decidir y total a pagar antes de firmar).
+- **Apps Script v10**: hay que pegar `gas/taller_api.gs` y publicar una nueva versión para que las garantías queden en Garantía.
+
 ## Novedades v37
 - **Cotización**: Identificado (subtotal), Autorizado (a cobrar, resaltado como total), Garantía, Pendiente y Rechazado / diferido ahora son el pie de la misma tabla, alineados bajo la columna Importe, en lugar de una barra aparte.
 - **Faltan datos del vehículo**: cuando aparece ese aviso, el borde de cada campo que falta (Marca, Modelo, Año, Serie / VIN, Km, Combustible) se marca en rojo y se quita al capturarlo. El aviso de abajo y el botón Siguiente también se actualizan al momento, sin tener que salir del campo.
