@@ -15,6 +15,9 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v41
+- **Mover a…** ahora es una lista desplegable bajo la flecha junto a **Siguiente** (en la orden abierta): muestra las etapas con su color, marca la actual y se cierra al elegir, al tocar fuera o con Esc. Las etapas bloqueadas (por requisitos o por firma del cliente) se ven atenuadas y al elegirlas la app explica por qué.
+
 ## Novedades v40
 - **Cotización**: los totales vuelven a ser filas de la tabla, alineadas bajo Importe (Identificado, TOTAL A COBRAR, Pendiente por autorizar, Rechazado / diferido). Se quitó el cuadro oscuro junto a Agregar concepto.
 - **Orden ya firmada por el cliente**: ya no regresa sola a Autorizado; solo se puede mover hacia atrás a **Taller** (para trabajarla) y al volver a avanzar el cliente puede autorizar de nuevo desde el enlace.

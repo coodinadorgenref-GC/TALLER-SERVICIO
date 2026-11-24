@@ -129,7 +129,7 @@ function drawer(o){const e=ETAPAS[idx(o.etapa)],nx=sig(o),nb=nx?puede(o,nx):'',c
   nd=(o.danos||[]).filter(d=>d.t!==REC).length,pa=o.lineas.filter(l=>l.st==='pend').length,au=o.lineas.filter(l=>l.st==='aut'||l.st==='gar').length;
   const T=[['u','Cliente y unidad',''],['i','Inspección',sm('r',cn('ur'),'Urgentes')+sm('a',cn('px'),'Próximos')],['l','Llantas',sm('r',ln('ur'),'Urgentes')+sm('a',ln('px'),'Próximas')],['r','Carrocería',sm('n',nd,'Daños marcados')],['c','Cotización',sm('g',au,'Autorizados')+sm('a',pa,'Por autorizar')],['z','Cierre',''],['h','Historial','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
-  <header class="drh"><button class="btn sm" data-a="cerrard" aria-label="Volver al panel general">${IC.back}<span> Panel</span></button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span>${nx?`<span class="split"><button class="btn sm nxt" data-a="sig" data-f="${o.folio}" ${nb?'disabled':''} title="${esc(nb||'Siguiente etapa: '+ETAPAS[idx(nx)][1])}">Siguiente ${ICN}</button><button class="btn sm nxd" data-a="mv" data-f="${o.folio}" aria-label="Mover a otra etapa" title="Mover a otra etapa">${ICD}</button></span>`:''}<span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print" aria-label="Imprimir">${IC.pr}<span class="bt"> Imprimir</span></button>${nx?'':`<button class="btn sm" data-a="mv" data-f="${o.folio}">Mover a…</button>`}</header>
+  <header class="drh"><button class="btn sm" data-a="cerrard" aria-label="Volver al panel general">${IC.back}<span> Panel</span></button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span>${nx?`<span class="split"><button class="btn sm nxt" data-a="sig" data-f="${o.folio}" ${nb?'disabled':''} title="${esc(nb||'Siguiente etapa: '+ETAPAS[idx(nx)][1])}">Siguiente ${ICN}</button><button class="btn sm nxd" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}" aria-label="Mover a otra etapa" title="Mover a otra etapa">${ICD}</button></span>`:''}<span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print" aria-label="Imprimir">${IC.pr}<span class="bt"> Imprimir</span></button>${nx?'':`<span class="mvw"><button class="btn sm" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}">Mover a… ${ICD}</button></span>`}</header>
   ${dhead(o)}
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
   <div class="dbody">${dt==='u'?'':heroH(o)}${{u:tU,i:tI,l:tL,r:tR,c:tC,z:tZ,h:tH}[dt](o)}</div><footer class="dft">${foot(o)}</footer></aside>`}
@@ -497,7 +497,10 @@ const acts={
  cita:d=>sheet(`<div class="h">Nueva cita ${d.h}:00 · Bahía ${d.b}</div>`+tipoBtns('crearc',`data-h="${d.h}" data-b="${d.b}"`)),
  crearc:d=>{$('#modal').innerHTML='';crear(d.t,{bahia:d.b,cita:{f:iso(),h:+d.h,b:+d.b}})},
  mv:d=>sheet('<div class="h">Mover a…</div>'+ETAPAS.map(([k,n])=>`<button class="btn ${O(d.f).etapa===k?'pri':''}" data-a="mvto" data-f="${d.f}" data-k="${k}">${n}</button>`).join('')),
- mvto:d=>{$('#modal').innerHTML='';mover(O(d.f),d.k)},sig:d=>{const o=O(d.f);mover(o,sig(o))},
+ mvto:d=>{$('#modal').innerHTML='';document.querySelectorAll('.mmenu').forEach(m=>m.remove());mover(O(d.f),d.k)},
+ mvmenu:(d,e)=>{const w=e.target.closest('.split,.mvw');if(!w)return;const abierto=!!w.querySelector('.mmenu');document.querySelectorAll('.mmenu').forEach(m=>m.remove());document.querySelectorAll('[data-a="mvmenu"]').forEach(x=>x.setAttribute('aria-expanded','false'));if(abierto)return;const o=O(d.f);if(!o)return;
+  w.querySelector('[data-a="mvmenu"]').setAttribute('aria-expanded','true');
+  w.insertAdjacentHTML('beforeend',`<div class="mmenu" role="menu" aria-label="Mover a"><div class="mh">Mover a…</div>${ETAPAS.map(([k,n,c])=>{const act=o.etapa===k,r=act?'':puede(o,k);return`<button type="button" role="menuitem" class="mi${act?' on':''}${r?' blk':''}" ${act?'disabled aria-current="true"':''} data-a="mvto" data-f="${o.folio}" data-k="${k}" ${r?`title="${esc(r)}"`:''}><i style="background:${c}"></i><span>${n}</span>${act?'<small>Etapa actual</small>':''}</button>`}).join('')}</div>`)},sig:d=>{const o=O(d.f);mover(o,sig(o))},
  gar:d=>{const o=O(D);o.gar=d.k==='1';touch(o);renderDrawer()},
  inv:d=>{const o=O(D),x=o.inv[+d.n];x.p=!x.p;if(x.p&&!(x.c>0))x.c=1;touch(o);renderDrawer()},invall:()=>{const o=O(D);o.inv.forEach(x=>{x.p=true;if(!(x.c>0))x.c=1});touch(o);renderDrawer()},
  pfo:d=>{const i=+d.i;pfo.has(i)?pfo.delete(i):pfo.add(i)},dsel:d=>{ds=+d.i;renderDrawer()},ddel:d=>{const o=O(D);o.danos.splice(+d.i,1);ds=-1;touch(o);renderDrawer()},
@@ -578,6 +581,8 @@ ${adminReal()?`<div class="cfg-g">Base de motos</div><div class="mut">Sube el re
   sesion=null;borrarSes();S.inv=[];S.suc='';save();$('#modal').innerHTML='';D=null;pintaHd();render();pintaLogin()}
 };
 document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(b&&acts[b.dataset.a])acts[b.dataset.a](b.dataset,e)});
+document.addEventListener('click',e=>{if(!e.target.closest('.split,.mvw'))document.querySelectorAll('.mmenu').forEach(m=>m.remove())});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.mmenu').forEach(m=>m.remove())});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches&&e.target.matches('article[data-a]'))acts.abrir(e.target.dataset);
   if(visorOn()){if(e.key==='Escape')cerrarVisor();else if(e.key==='ArrowLeft'&&VW.L.length>1)acts.vzprev();else if(e.key==='ArrowRight'&&VW.L.length>1)acts.vznext();else if(e.key==='+'||e.key==='=')acts.vzmas();else if(e.key==='-')acts.vzmenos();return}
   if(e.key==='Escape'){if($('#modal').innerHTML)$('#modal').innerHTML='';else if(D){D=null;render()}}});
@@ -723,7 +728,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
 setInterval(sync,30000);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v40 · 23-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v41 · 23-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
