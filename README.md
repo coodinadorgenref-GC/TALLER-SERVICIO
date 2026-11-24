@@ -15,6 +15,13 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v39
+- **Autorizado automático**: cuando el cliente autoriza desde el enlace, la orden pasa sola a la columna **Autorizado** (también las órdenes que ya tenían la autorización guardada y seguían en otra columna). Queda registrado en el Historial.
+- **Firma del cliente**: en Cotización solo queda el botón **Enviar visto bueno por WhatsApp**; abajo se ve la firma del cliente y la opción **Recabar firma en el taller**.
+- **Tabla de cotización rediseñada**: concepto en dos líneas (área y operación), borde de color según el estado, estado y importe alineados, y un bloque **TOTAL A COBRAR** grande con el desglose (identificado, por autorizar, garantía, rechazado / diferido). **Agregar concepto** ahora comparte la cuadrícula de la tabla.
+- **Enlace del cliente**: tabla como la referencia (Área, Descripción, Precio, Autorización) con **Aceptar** en verde y **Rechazar** opaco.
+- **Apps Script v11**: pegar `gas/taller_api.gs` y publicar una nueva versión.
+
 ## Novedades v38
 - **Autorización solo desde el enlace del cliente**: el cliente acepta o rechaza cada concepto, firma y guarda; lo aceptado pasa solo a Autorizado (en órdenes de garantía, a Garantía) y lo rechazado a Rechazado / diferido. El asesor también puede cambiar el estado de cada concepto a mano.
 - Se quitó **Autorizar todo lo pendiente** y **Firmar en el taller**. En Cotización queda la tarjeta de solo lectura con el estado de la firma y **Copiar enlace**.
