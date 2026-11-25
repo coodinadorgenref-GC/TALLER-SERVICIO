@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v13 (citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v14 (columnas personalizadas del panel: clave etapas_cfg en CONFIG_TALLER; v13: citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -194,7 +194,16 @@ function leerConfig_() {
   return o;
 }
 function guardarConfig_(k, v) {
-  if (!/^tarifa_mo\|.{1,60}$/.test(String(k || ''))) return { success: false, message: 'Clave de configuración inválida' };
+  k = String(k || '');
+  // v14: columnas personalizadas del panel (JSON) compartidas por todas las agencias
+  if (k === 'etapas_cfg') {
+    v = String(v == null ? '' : v);
+    if (v.length > 40000) return { success: false, message: 'Configuración demasiado grande' };
+    try { JSON.parse(v); } catch (e) { return { success: false, message: 'Configuración inválida' }; }
+    upsert_(sheet_('CONFIG_TALLER'), k, [k, v, new Date()]);
+    return { success: true };
+  }
+  if (!/^tarifa_mo\|.{1,60}$/.test(k)) return { success: false, message: 'Clave de configuración inválida' };
   v = Number(v); if (!(v >= 0)) return { success: false, message: 'Valor inválido' };
   upsert_(sheet_('CONFIG_TALLER'), String(k), [String(k), v, new Date()]);
   return { success: true };

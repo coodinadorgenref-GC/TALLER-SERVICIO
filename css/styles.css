@@ -675,3 +675,48 @@ html:has(body.lock){overflow:hidden}
   .k>.row.kh{padding-left:8px;padding-right:4px}
   .col>.ch{padding-left:8px;padding-right:4px;gap:4px}
 }
+/* v45e · un solo scroll en la orden, panel con scroll visible y columnas estándar, Seguimientos sin encimarse, Configuración con secciones */
+.dscroll{flex:1 1 auto;min-height:0;overflow:auto;display:flex;flex-direction:column;overscroll-behavior:contain}
+.dscroll>.dhead,.dscroll>.dtabs{flex:none}
+.dscroll>.dtabs{position:sticky;top:0;z-index:6}
+.dr .dbody{overflow:visible;flex:1 0 auto}
+@media(min-width:700px){
+  .kan{overflow-x:auto;scrollbar-width:thin;scrollbar-color:#94A3B8 transparent;-ms-overflow-style:auto}
+  .kan::-webkit-scrollbar{display:block;height:12px;width:auto}
+  .kan::-webkit-scrollbar-thumb{background:#94A3B8;border-radius:6px;border:2px solid var(--bg)}
+  .kan::-webkit-scrollbar-track{background:transparent}
+  .kan{grid-template-columns:repeat(7,minmax(250px,1fr));padding-bottom:4px}
+}
+.sgg{grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr))}
+.sgg .card{min-width:0}
+.sgg .row.wrap{gap:6px}
+.sgg .row.wrap .btn{flex:1 1 auto!important;min-width:0;white-space:normal;line-height:1.15;padding:6px 10px;overflow-wrap:anywhere}
+@media(min-width:700px){#modal .sh.wide{max-width:920px;width:calc(100% - 24px)}}
+.cfg-tabs{display:flex;gap:2px;border-bottom:1px solid var(--bd2);overflow-x:auto;scrollbar-width:none;margin-bottom:6px}
+.cfg-tab{min-height:44px;padding:0 16px;border:0;border-bottom:3px solid transparent;background:none;color:var(--mut);font:600 14px "Fira Sans",sans-serif;cursor:pointer;white-space:nowrap}
+.cfg-tab:hover{color:var(--tx)}.cfg-tab[aria-selected=true]{color:var(--nv,#154B94);border-bottom-color:var(--nv,#154B94)}
+.cfg-tab:focus-visible,.sw:focus-visible,.btn.dng:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+.cl-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.cl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.cl-card{border:1px solid var(--bd2);border-radius:10px;padding:12px 14px;background:#fff;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cl-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:700;margin-bottom:6px}
+.cl-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--bd)}
+.cl-av{width:34px;height:34px;border-radius:50%;background:#DBEAFE;color:#154B94;font:700 13px "Fira Sans",sans-serif;display:flex;align-items:center;justify-content:center;flex:none}
+.cl-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.cl-nada{color:var(--mut);padding:8px 0;font-size:13px}
+.cl-f{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.cl-f .f{min-width:180px}.cl-fn{flex:1 1 240px}
+.btn.dng{background:#fff;color:#B91C1C;border-color:#DC2626}.btn.dng:hover{background:#FEF2F2}
+.pc-list{display:flex;flex-direction:column}
+.pc-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--bd)}
+.pc-dot{width:14px;height:14px;border-radius:4px;flex:none}
+.pc-n{flex:1 1 180px;min-width:150px}
+.pc-n input{width:100%;min-height:40px;border:1px solid #94A3B8;border-radius:8px;padding:0 10px;font:600 14px "Fira Sans",sans-serif;background:#fff;color:var(--tx)}
+.pc-fx{font-size:12px}
+.pc-sw{display:inline-flex;gap:8px;align-items:center}
+.sw{position:relative;width:26px;height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #94A3B8;cursor:pointer;padding:0}.sw::after{content:"";position:absolute;inset:-9px}.sw.on{box-shadow:0 0 0 3px #0F172A}
+.pc-add{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+html.dark .cl-card{background:#111a2b;border-color:#2b3a52}html.dark .cl-av{background:#1e3a5f;color:#bfdbfe}
+html.dark .btn.dng{background:#111a2b;color:#fca5a5;border-color:#ef4444}html.dark .btn.dng:hover{background:#2a1215}
+html.dark .pc-n input{background:#0f172a;border-color:#334155}html.dark .sw{border-color:#0b1220}html.dark .sw.on{box-shadow:0 0 0 3px #e2e8f0}
+.cl-n{display:flex;flex-direction:column;align-items:flex-start;gap:3px;white-space:normal;overflow:visible}.cl-nm{overflow-wrap:anywhere;line-height:1.2}
+#modal .sh>*{flex-shrink:0}
