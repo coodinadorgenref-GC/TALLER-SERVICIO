@@ -550,7 +550,7 @@ html.dark .mmenu{background:#162032;border-color:#334155}html.dark .mmenu .mi{co
 .dbody{overscroll-behavior-x:none}
 
 /* v43 · columna Citas, agenda por día, historial de visitas y 7 columnas */
-@media(min-width:700px){.kan{grid-template-columns:repeat(7,minmax(205px,1fr))}}
+@media(min-width:700px){.kan{grid-template-columns:repeat(7,minmax(140px,1fr))}}
 @media(max-width:699px){.tabs{display:flex;overflow-x:auto}.tabs .tab{flex:0 0 auto;min-width:86px}}
 .cita{background:#fff;border:1px solid var(--bd);border-left:4px solid #CA8A04;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px}
 .cita.llego{border-left-color:#15803D;opacity:.85}.cita.no{border-left-color:#94A3B8;opacity:.75}
@@ -634,9 +634,44 @@ html.dark .vchip{background:#162032;border-color:#60a5fa;color:#bfdbfe}
 }
 .dbody>*{flex-shrink:0}
 @media(min-width:1100px){
-  .dbody>.dhead{max-width:none;border:1px solid var(--bd);border-radius:4px}
   .dbody>.u-dk{max-width:none;flex:1 0 auto;align-items:stretch}
   .u-dk>.card{display:flex;flex-direction:column}
   .dkt{flex:1 1 auto;align-items:stretch}.dkt .f{display:flex;flex-direction:column}.dkt textarea{flex:1;min-height:120px;resize:none}
 }
-html.dark .dbody>.dhead{border-color:var(--bd)}
+
+/* v45d · sin doble scroll; Carrocería en dos columnas; tipografía compacta para PC y tabletas */
+html:has(body.lock){overflow:hidden}
+.dgrid{display:block}
+@media(min-width:900px){
+  .dgrid{display:grid;grid-template-columns:minmax(300px,1fr) minmax(360px,1.15fr);gap:16px;align-items:start;margin-top:6px}
+  .dgl .mw{margin:0;max-width:560px}.dgr{min-width:0}.dgh{margin-top:0}
+}
+@media(min-width:700px){.kan>.col{min-width:0}.col>.cl{overflow-x:hidden}.card.k{min-width:0}}
+/* Tipografía y controles compactos para PC y tabletas (celular sin cambios) */
+@media(min-width:700px){
+  .dr{font-size:13px}
+  .dr .f{font-size:11px}
+  .dr .f input,.dr .f select,.dr .f textarea,.dr input,.dr select,.dr textarea{font-size:13px;min-height:32px;border-radius:6px}
+  .dr input:not([type=checkbox]):not([type=radio]):not([type=range]),.dr select{padding-top:0;padding-bottom:0;padding-left:8px;padding-right:8px}
+  .dr textarea{min-height:56px;padding:6px 8px}
+  .dr .btn{min-height:32px;font-size:13px;padding-top:0;padding-bottom:0}
+  .dr .card{padding:12px 14px}
+  .dr .card .h{font-size:14px}.dr .sbh{font-size:13px}.dr .mut{font-size:12px}
+  .dr .chip{font-size:11.5px}
+  .dr .dtabs button,.dr .dtabs .dt{font-size:13px;min-height:40px}
+  .dr .dhead input,.dr .dhead select{min-height:30px}
+  .dmr{grid-template-columns:24px minmax(110px,150px) 1fr 34px 34px;gap:6px}
+  .dmr select,.dmr input{min-height:32px;font-size:13px;padding:0 8px;border-radius:6px}.dmr .btn,.dmr .cq{min-height:32px;width:34px}
+  .dmn{width:24px;height:24px;font-size:12px}.mk{width:26px;height:26px;font-size:12px}
+  .dgl .mw{max-width:480px}
+}
+/* Encabezados de columna y tarjeta sin recortes en anchos medianos */
+@media(min-width:700px){
+  .col>.ch{min-width:0;flex-wrap:nowrap}.col>.ch>span:first-of-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.col>.ch .cb{flex:none}
+  .kh .fol{flex:none}
+}
+@media(min-width:700px) and (max-width:1300px){
+  .kb{width:22px;height:22px}.kc{gap:0}
+  .k>.row.kh{padding-left:8px;padding-right:4px}
+  .col>.ch{padding-left:8px;padding-right:4px;gap:4px}
+}
