@@ -623,3 +623,20 @@ html.dark .card.k.pn,html.dark .mini.pn{box-shadow:0 0 0 2px #60a5fa}html.dark .
 .vi{display:inline-flex;align-items:center;gap:4px;flex:none}
 .vchip{height:22px;padding:0 8px;border:1px solid #154B94;border-radius:11px;background:#fff;color:#154B94;font:600 12px/1 inherit;cursor:pointer;flex:none}.vchip:hover,.vchip:focus-visible{background:#EAF1FB;outline:none}
 html.dark .vchip{background:#162032;border-color:#60a5fa;color:#bfdbfe}
+
+/* v45c · tablero: columnas hasta el final de la pantalla con scroll vertical sin barra; cajón: un solo scroll general por pestaña */
+@media(min-width:700px){
+  .kan{overflow-y:hidden;align-items:stretch;grid-template-rows:minmax(0,1fr)}
+  .col,.col.on{display:flex;flex-direction:column;min-height:0;height:100%}
+  .col>.ch{flex:none}
+  .col>.cl{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-ms-overflow-style:none}
+  .col>.cl::-webkit-scrollbar{display:none;width:0;height:0}
+}
+.dbody>*{flex-shrink:0}
+@media(min-width:1100px){
+  .dbody>.dhead{max-width:none;border:1px solid var(--bd);border-radius:4px}
+  .dbody>.u-dk{max-width:none;flex:1 0 auto;align-items:stretch}
+  .u-dk>.card{display:flex;flex-direction:column}
+  .dkt{flex:1 1 auto;align-items:stretch}.dkt .f{display:flex;flex-direction:column}.dkt textarea{flex:1;min-height:120px;resize:none}
+}
+html.dark .dbody>.dhead{border-color:var(--bd)}
