@@ -5,10 +5,16 @@ const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch{retur
 let S=load('taller_v2',{orders:[],seq:{},dirty:[],inv:[],suc:''});
 const migEt=o=>{if(o&&ETMIG[o.etapa])o.etapa=ETMIG[o.etapa];return normChk(o)};S.orders.forEach(migEt);
 const ETAPAS_BASE=ETAPAS.map(e=>e.slice()),COLS_ET=[['#0369A1','Azul'],['#B45309','Ámbar'],['#7C3AED','Violeta'],['#0F766E','Verde azulado'],['#BE185D','Rosa'],['#475569','Gris']];
-const cfgE=()=>{S.etapasCfg=S.etapasCfg||{};S.etapasCfg.ren=S.etapasCfg.ren||{};S.etapasCfg.extra=S.etapasCfg.extra||[];return S.etapasCfg};
-// Las 6 columnas base no se mueven ni se eliminan (solo se les puede cambiar el nombre); las personalizadas se colocan después de una columna elegida y siempre antes de Entregado.
+// v46: cada agencia tiene su propia configuración de columnas (S.etapasAg[AGENCIA]); S.etapasPend[AGENCIA] marca lo pendiente de subir
+const agE=()=>{try{return String(S.suc||(sesion&&sesion.agencia)||'').replace(/\s+/g,' ').trim().toUpperCase()}catch{return''}};
+const pendE=()=>{if(!S.etapasPend||typeof S.etapasPend!=='object')S.etapasPend={};return S.etapasPend};
+const cfgE=()=>{const k=agE();S.etapasAg=S.etapasAg||{};
+  if(S.etapasCfg){if(k&&!S.etapasAg[k]){S.etapasAg[k]=S.etapasCfg;if(S.etapasPend===true)S.etapasPend={};pendE()[k]=true}delete S.etapasCfg;if(S.etapasPend===true)S.etapasPend={}}
+  if(!k)return{ren:{},extra:[]};
+  const c=S.etapasAg[k]=S.etapasAg[k]||{};c.ren=c.ren||{};c.extra=c.extra||[];return c};
+// Las 6 columnas base no se mueven ni se eliminan (solo se les puede cambiar el nombre); las personalizadas de cada agencia se colocan al inicio o después de la columna elegida (también después de Entregado).
 function aplicaEtapas(){const c=cfgE(),L=ETAPAS_BASE.map(e=>[e[0],c.ren[e[0]]||e[1],e[2],e[3]]);
-  c.extra.forEach(x=>{const at=L.findIndex(e=>e[0]===x.a);let p=at<0?L.length-1:at+1;if(p>L.length-1)p=L.length-1;L.splice(p,0,[x.k,x.n,x.c||'#0369A1','Columna personalizada'])});
+  c.extra.forEach(x=>{const at=L.findIndex(e=>e[0]===x.a);let p=x.a==='^'?0:at<0?L.length:at+1;L.splice(p,0,[x.k,x.n,x.c||'#0369A1','Columna personalizada'])});
   ETAPAS.length=0;ETAPAS.push(...L)}
 aplicaEtapas();
 let sesion=null,tab='recepcion',view='board',D=null,dt='u',q='',ft='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
@@ -478,8 +484,8 @@ const tipoBtns=(a,x='')=>Object.entries(TIPOS).map(([k,v])=>`<button class="btn"
 function setPath(o,p,v){const a=p.split('.');let r=o;for(let i=0;i<a.length-1;i++){if(r[a[i]]==null)r[a[i]]={};r=r[a[i]]}r[a[a.length-1]]=v}
 let cfgT='g',etC=COLS_ET[0][0];
 const ini=n=>String(n||'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
-function etSave(){S.etapasPend=true;aplicaEtapas();save();render();acts.cfg();
-  subeEtapas().then(r=>{if(r==='viejo')toast('Se guardó en este dispositivo. Actualiza el script del taller a la v14 para compartir las columnas con todos.','inf');else if(r==='error')toast('Sin conexión: las columnas se compartirán al sincronizar','inf')})}
+function etSave(){pendE()[agE()]=true;aplicaEtapas();save();render();acts.cfg();
+  subeEtapas().then(r=>{if(r==='viejo')toast('Se guardó en este dispositivo. Actualiza el script del taller a la v14 para compartir las columnas con las demás pantallas.','inf');else if(r==='error')toast('Sin conexión: las columnas se compartirán al sincronizar','inf')})}
 function cfgGen(){const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG(),so=sndOn();
   return`<div class="cfg-g">Perfil</div>
 <div class="cfg-c"><b>${esc(sesion?.nombre||sesion?.correo||'—')}</b><span class="mut">${esc(sesion?.correo||'')}${rol?' · '+rol:''}</span><span class="mut">Agencia: ${esc(S.suc||sesion?.agencia||'—')}</span></div>
@@ -502,13 +508,13 @@ function cfgColab(){const ag=S.suc;
   return`<div class="cl-top"><div><div class="h" style="margin:0">Colaboradores · ${esc(ag)}</div><p class="mut" style="margin:2px 0 0">Salen como sugerencia en Asesor de servicio, Asesor de refacciones y Técnico principal. Los campos siguen permitiendo escribir otro nombre.</p></div><span class="chip n">${tot} activo${tot===1?'':'s'}</span></div>
 <div class="cl-grid">${cards}</div>
 <section class="cl-card" aria-label="Dar de alta a un colaborador"><div class="cl-h"><span>Dar de alta a un colaborador</span></div><div class="cl-f"><label class="f">Puesto<select id="colp">${PUESTOS.map(([p,,x])=>`<option value="${p}">${x}</option>`).join('')}</select></label><label class="f cl-fn">Nombre completo<input id="coln" autocomplete="off" placeholder="Nombre y apellidos"></label><button type="button" class="btn pri" data-a="coladd">Dar de alta en ${esc(ag)}</button></div><div class="mut" id="colst" role="status" aria-live="polite"></div></section>`}
-function cfgPanel(){const c=cfgE(),ex=new Set(c.extra.map(x=>x.k));
+function cfgPanel(){if(!agE())return'<div class="h" style="margin:0">Panel de control</div><p class="mut">Elige una agencia (botón de arriba) para personalizar sus columnas.</p>';const c=cfgE(),ex=new Set(c.extra.map(x=>x.k));
   const filas=ETAPAS.map(([k,n,col],i)=>{const cu=ex.has(k),no=S.orders.filter(o=>o.etapa===k).length,cn=no+' orden'+(no===1?'':'es');
     return`<div class="pc-row"><span class="pc-dot" style="background:${col}" aria-hidden="true"></span><label class="pc-n"><span class="sr">Nombre de la columna ${i+1}</span><input data-etren="${esc(k)}" value="${esc(n)}" maxlength="24" autocomplete="off"></label><span class="chip ${cu?'w':'n'}">${cu?'Personalizada':'Fija'}</span>${cu?`<span class="pc-sw" role="group" aria-label="Color de ${esc(n)}">${COLS_ET.map(([h,nm])=>`<button type="button" class="sw${h===col?' on':''}" style="background:${h}" data-a="etcol" data-k="${esc(k)}" data-c="${h}" aria-label="${nm}" aria-pressed="${h===col}"></button>`).join('')}</span><span class="pc-fx mut">${cn}</span><button type="button" class="btn sm dng" data-a="etdel" data-k="${esc(k)}" aria-label="Eliminar la columna ${esc(n)}">Eliminar</button>`:`<span class="pc-fx mut">Posición y color fijos · ${cn}</span>`}</div>`}).join('');
-  const opts=ETAPAS.filter(e=>e[0]!=='entregado').map(([k,n])=>`<option value="${esc(k)}">${esc(n)}</option>`).join('');
-  return`<div class="cl-top"><div><div class="h" style="margin:0">Panel de control</div><p class="mut" style="margin:2px 0 0">Columnas del panel de trabajos, iguales para todas las agencias. Las 6 originales no se pueden mover ni eliminar, pero sí cambiarles el nombre. Los cambios se aplican en todas las pantallas al sincronizar.</p></div>${S.etapasPend?'<span class="chip w">Pendiente de sincronizar</span>':'<span class="chip g">Sincronizado</span>'}</div>
+  const opts='<option value="^">Al inicio (antes de la primera)</option>'+ETAPAS.map(([k,n])=>`<option value="${esc(k)}">Después de ${esc(n)}</option>`).join('');
+  return`<div class="cl-top"><div><div class="h" style="margin:0">Panel de control</div><p class="mut" style="margin:2px 0 0">Columnas del panel de trabajos de <b>${esc(S.suc||'—')}</b>: cada agencia arma su propio flujo. Las 6 originales no se pueden mover ni eliminar, pero sí cambiarles el nombre; las nuevas van al inicio o después de la columna que elijas. Los cambios se aplican en todas las pantallas de esta agencia al sincronizar.</p></div>${pendE()[agE()]?'<span class="chip w">Pendiente de sincronizar</span>':'<span class="chip g">Sincronizado</span>'}</div>
 <section class="cl-card" aria-label="Columnas del panel"><div class="cl-h"><span>Columnas del panel</span><span class="chip n">${ETAPAS.length}</span></div><div class="pc-list">${filas}</div></section>
-<section class="cl-card" aria-label="Agregar una columna"><div class="cl-h"><span>Agregar una columna</span></div><div class="cl-f"><label class="f cl-fn">Nombre de la columna<input id="etn" maxlength="24" autocomplete="off" placeholder="Ej. Esperando refacciones"></label><label class="f">Colocar después de<select id="eta">${opts}</select></label></div><div class="pc-add"><span class="mut" id="etcl">Color</span><span class="pc-sw sw-add" role="group" aria-labelledby="etcl">${COLS_ET.map(([h,nm])=>`<button type="button" class="sw${h===etC?' on':''}" style="background:${h}" data-a="etsw" data-c="${h}" aria-label="${nm}" aria-pressed="${h===etC}"></button>`).join('')}</span><button type="button" class="btn pri" data-a="etadd">Agregar columna</button></div></section>`}
+<section class="cl-card" aria-label="Agregar una columna"><div class="cl-h"><span>Agregar una columna</span></div><div class="cl-f"><label class="f cl-fn">Nombre de la columna<input id="etn" maxlength="24" autocomplete="off" placeholder="Ej. Esperando refacciones"></label><label class="f">Colocar<select id="eta">${opts}</select></label></div><div class="pc-add"><span class="mut" id="etcl">Color</span><span class="pc-sw sw-add" role="group" aria-labelledby="etcl">${COLS_ET.map(([h,nm])=>`<button type="button" class="sw${h===etC?' on':''}" style="background:${h}" data-a="etsw" data-c="${h}" aria-label="${nm}" aria-pressed="${h===etC}"></button>`).join('')}</span><button type="button" class="btn pri" data-a="etadd">Agregar columna</button></div></section>`}
 const acts={
  pin:d=>{const u=UI();if(u.pin[d.f])delete u.pin[d.f];else u.pin[d.f]=1;save();renderMain()},
  ccard:d=>{const u=UI();if(u.cc[d.f])delete u.cc[d.f];else u.cc[d.f]=1;save();renderMain()},
@@ -541,7 +547,7 @@ const acts={
  elimok:()=>{if(!adminReal()||!D)return;const f=D;S.orders=S.orders.filter(o=>o.folio!==f);S.dirty=S.dirty.filter(x=>x!==f);(S.del=S.del||[]).push(f);D=null;save();$('#modal').innerHTML='';render();sync();toast('Orden eliminada')},
  lav:()=>{const o=O(D);o.lav=!o.lav;touch(o);renderDrawer()},
  agpick:()=>{if(!sesion||!multi(sesion.agencia))return;sheet('<div class="h">Agencia de trabajo</div><div class="mut">Elige la agencia en la que vas a trabajar.</div>'+permitidas(sesion.agencia).map(a=>`<button class="btn ${a===S.suc?'pri':''}" data-a="agset" data-k="${esc(a)}">${esc(a)}</button>`).join(''))},
- agset:d=>{S.suc=d.k;migrarLeg();$('#modal').innerHTML='';D=null;render()},crear:d=>{$('#modal').innerHTML='';crear(d.t)},
+ agset:d=>{S.suc=d.k;migrarLeg();aplicaEtapas();syncSoon(300);$('#modal').innerHTML='';D=null;render()},crear:d=>{$('#modal').innerHTML='';crear(d.t)},
  mv:d=>sheet('<div class="h">Mover a…</div>'+ETAPAS.map(([k,n])=>`<button class="btn ${O(d.f).etapa===k?'pri':''}" data-a="mvto" data-f="${d.f}" data-k="${k}">${n}</button>`).join('')),
  mvto:d=>{$('#modal').innerHTML='';document.querySelectorAll('.mmenu').forEach(m=>m.remove());mover(O(d.f),d.k)},
  mvmenu:(d,e)=>{const w=e.target.closest('.split,.mvw');if(!w)return;const abierto=!!w.querySelector('.mmenu');document.querySelectorAll('.mmenu').forEach(m=>m.remove());document.querySelectorAll('[data-a="mvmenu"]').forEach(x=>x.setAttribute('aria-expanded','false'));if(abierto)return;const o=O(d.f);if(!o)return;
@@ -609,20 +615,20 @@ const acts={
  snd:d=>{UI().snd=d.v==='1';save();unlockAudio();acts.cfg();if(sndOn())setTimeout(()=>beep(),80)},
  sndtest:()=>{unlockAudio();setTimeout(()=>beep(),80)},
  etsw:d=>{etC=d.c;document.querySelectorAll('.sw-add .sw').forEach(b=>{const on=b.dataset.c===etC;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})},
- etadd:()=>{if(!puedeRep())return;const n=($('#etn').value||'').trim().replace(/\s+/g,' '),a=$('#eta').value;
+ etadd:()=>{if(!puedeRep()||!agE())return toast("Elige una agencia (botón de arriba) para personalizar sus columnas","inf");const n=($('#etn').value||'').trim().replace(/\s+/g,' '),a=$('#eta').value;
   if(n.length<2)return toast('Escribe el nombre de la columna (mínimo 2 letras)','err');
   if(ETAPAS.some(e=>agN(e[1])===agN(n)))return toast('Ya existe una columna con ese nombre','inf');
   if(cfgE().extra.length>=8)return toast('Máximo 8 columnas personalizadas','inf');
   cfgE().extra.push({k:'x_'+Date.now().toString(36),n,c:etC,a});etSave();toast('Columna agregada','ok')},
- etren:d=>{if(!puedeRep())return;const v=String(d.v||'').trim().replace(/\s+/g,' '),c=cfgE(),base=ETAPAS_BASE.find(e=>e[0]===d.k),x=c.extra.find(y=>y.k===d.k);
+ etren:d=>{if(!puedeRep()||!agE())return toast("Elige una agencia (botón de arriba) para personalizar sus columnas","inf");const v=String(d.v||'').trim().replace(/\s+/g,' '),c=cfgE(),base=ETAPAS_BASE.find(e=>e[0]===d.k),x=c.extra.find(y=>y.k===d.k);
   if(v.length<2){toast('El nombre debe tener al menos 2 letras','err');return acts.cfg()}
   if(ETAPAS.some(e=>e[0]!==d.k&&agN(e[1])===agN(v))){toast('Ya existe una columna con ese nombre','inf');return acts.cfg()}
   if(base){if(v===base[1])delete c.ren[d.k];else c.ren[d.k]=v}else if(x)x.n=v;else return;
   etSave();toast('Nombre actualizado','ok')},
- etcol:d=>{if(!puedeRep())return;const x=cfgE().extra.find(y=>y.k===d.k);if(!x)return;x.c=d.c;etSave()},
- etdel:async d=>{if(!puedeRep())return;const c=cfgE(),x=c.extra.find(y=>y.k===d.k);if(!x)return;const n=S.orders.filter(o=>o.etapa===d.k).length;
+ etcol:d=>{if(!puedeRep()||!agE())return toast("Elige una agencia (botón de arriba) para personalizar sus columnas","inf");const x=cfgE().extra.find(y=>y.k===d.k);if(!x)return;x.c=d.c;etSave()},
+ etdel:async d=>{if(!puedeRep()||!agE())return toast("Elige una agencia (botón de arriba) para personalizar sus columnas","inf");const c=cfgE(),x=c.extra.find(y=>y.k===d.k);if(!x)return;const n=S.orders.filter(o=>o.etapa===d.k).length;
   if(n)return toast('Mueve las '+n+' orden'+(n===1?'':'es')+' de «'+x.n+'» a otra columna antes de eliminarla','err');
-  if(!(await ask({t:'Eliminar columna',m:'¿Eliminar la columna «'+x.n+'»? Se quitará del panel de todas las agencias.',ok:'Eliminar',tipo:'err'})))return;
+  if(!(await ask({t:'Eliminar columna',m:'¿Eliminar la columna «'+x.n+'»? Se quitará del panel de esta agencia.',ok:'Eliminar',tipo:'err'})))return;
   c.extra.forEach(y=>{if(y.a===d.k)y.a=x.a});c.extra=c.extra.filter(y=>y.k!==d.k);etSave();toast('Columna eliminada','ok')},
  tema:d=>{try{localStorage.setItem('taller_tema',d.tm)}catch{}aplicarTema()},
  catup:()=>cargaCat(false),recarga:()=>recarga(),
@@ -771,7 +777,7 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
      avisaCambios(cam);sndArmed=true;if(ch)renderMain();if(chd){if(escribiendo())pendDr=true;else{renderDrawer();renderMain()}}}
    else err=r.message||'error al leer las órdenes';
    try{const c=await api.taller({action:'leerConfig'});if(c&&c.success&&c.config){rxEtapas(c.config);S.tarifas=S.tarifas||{};let ct=false;for(const k in c.config){const m=/^tarifa_mo\|(.+)$/.exec(k);if(m&&!(S.tarPend||{})[m[1]]&&S.tarifas[m[1]]!==Number(c.config[k])){S.tarifas[m[1]]=Number(c.config[k])||0;ct=true}}if(ct&&view==='rep'&&!escribiendo())renderMain()}
-    if(Object.keys(S.tarPend||{}).length)await subeTarifas();if(S.etapasPend)await subeEtapas()}catch{}
+    if(Object.keys(S.tarPend||{}).length)await subeTarifas();if(Object.keys(pendE()).some(k=>pendE()[k]))await subeEtapas()}catch{}
    if(!S.colabT||Date.now()-S.colabT>3e5)await leeColab();
    await syncCitas();
    // 2) subir lo pendiente
@@ -779,8 +785,8 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
    save()}catch(e){err=String(e&&e.message||e)}syncMsg=err;syncing=false;pintaSyn();
   if(fotoPend){if(!err&&!S.dirty.length){fotoPend=false;fotoErr=false;toast('Foto sincronizada: ya se puede ver en la PC')}else if(err&&!fotoErr){fotoErr=true;toast('La foto quedó guardada en este dispositivo, pero no se pudo subir: '+err)}}
   if(!err&&S.dirty.length)syncSoon(2500)}
-function rxEtapas(cfg){const v=cfg&&cfg.etapas_cfg;if(!v||S.etapasPend)return;try{const j=typeof v==='string'?JSON.parse(v):v;if(j&&typeof j==='object'&&JSON.stringify(j)!==JSON.stringify(cfgE())){S.etapasCfg={ren:j.ren||{},extra:Array.isArray(j.extra)?j.extra:[]};aplicaEtapas();save();if(!D&&view==='board')renderMain()}}catch{}}
-async function subeEtapas(){if(!S.etapasPend)return'ok';try{const x=await api.taller({action:'guardarConfig',cfgK:'etapas_cfg',cfgV:JSON.stringify(cfgE())});if(x&&x.success){S.etapasPend=false;save();return'ok'}return/inv[aá]lida/i.test((x&&x.message)||'')?'viejo':'error'}catch{return'error'}}
+function rxEtapas(cfg){const k=agE(),v=k&&cfg&&cfg['etapas_cfg|'+k];if(!v||pendE()[k])return;try{const j=typeof v==='string'?JSON.parse(v):v;if(j&&typeof j==='object'&&JSON.stringify({ren:j.ren||{},extra:Array.isArray(j.extra)?j.extra:[]})!==JSON.stringify(cfgE())){S.etapasAg[k]={ren:j.ren||{},extra:Array.isArray(j.extra)?j.extra:[]};aplicaEtapas();save();if(!D&&view==='board')renderMain()}}catch{}}
+async function subeEtapas(){const P=pendE(),L=Object.keys(P).filter(k=>P[k]);if(!L.length)return'ok';let res='ok';for(const k of L){try{const c=(S.etapasAg||{})[k]||{ren:{},extra:[]},x=await api.taller({action:'guardarConfig',cfgK:'etapas_cfg|'+k,cfgV:JSON.stringify(c)});if(x&&x.success){delete P[k];save()}else if(/inv[aá]lida/i.test((x&&x.message)||''))res='viejo';else if(res==='ok')res='error'}catch{if(res==='ok')res='error'}}return res}
 async function syncCitas(){try{const rc=await api.taller({action:'listarCitas'});if(!rc||!rc.success)return;let ch=false;CT();(rc.citas||[]).forEach(r=>{if(!r||!r.id)return;const l=S.citas.find(x=>x.id===r.id);if(!l){S.citas.push(r);ch=true}else if((r.upd||0)>(l.upd||0)&&!S.cdirty.includes(l.id)){Object.assign(l,r);ch=true}});
   for(const id of [...S.cdirty]){const c=S.citas.find(x=>x.id===id);if(!c){S.cdirty=S.cdirty.filter(x=>x!==id);continue}const u0=c.upd,r=await api.taller({action:'guardarCita',cita:c});if(r&&r.success&&c.upd===u0)S.cdirty=S.cdirty.filter(x=>x!==id)}
   save();if(ch&&(view==='ag'||view==='board')&&!escribiendo())renderMain()}catch{}}
@@ -828,7 +834,7 @@ function pintaHd(){const a=sesion?.agencia||'',el=$('#agn'),lg=$('#hlogo'),m=mul
   if(el){el.hidden=!sesion;el.textContent=sesion?(S.suc||(m?'Elegir agencia':a)):'';el.className='agn'+(m?' pk':'');el.disabled=!m;if(m)el.dataset.a='agpick';else delete el.dataset.a}
   if(lg){const u=LOGO_BASE+logoDe(S.suc||a)+'.png';if(lg.getAttribute('src')!==u)lg.setAttribute('src',u)}}
 function aplicaAg(){if(!sesion)return;const a=sesion.agencia,p=permitidas(a);
-  S.suc=multi(a)?(p.includes(S.suc)?S.suc:''):a;migrarLeg();pintaHd();if(!S.suc)acts.agpick()}
+  S.suc=multi(a)?(p.includes(S.suc)?S.suc:''):a;migrarLeg();aplicaEtapas();pintaHd();if(!S.suc)acts.agpick()}
 const temaG=()=>{try{return localStorage.getItem('taller_tema')||'sistema'}catch{return'sistema'}};
 function aplicarTema(){const t=temaG(),o=t==='oscuro'||(t==='sistema'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList.toggle('dark',o);document.querySelectorAll('.tema-op').forEach(b=>b.classList.toggle('on',b.dataset.tm===t))}
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(temaG()==='sistema')aplicarTema()})}catch{}

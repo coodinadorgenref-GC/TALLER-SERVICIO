@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v14 (columnas personalizadas del panel: clave etapas_cfg en CONFIG_TALLER; v13: citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v14 (columnas personalizadas del panel por agencia: claves etapas_cfg|AGENCIA en CONFIG_TALLER; v13: citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -195,8 +195,8 @@ function leerConfig_() {
 }
 function guardarConfig_(k, v) {
   k = String(k || '');
-  // v14: columnas personalizadas del panel (JSON) compartidas por todas las agencias
-  if (k === 'etapas_cfg') {
+  // v14: columnas personalizadas del panel (JSON), una clave por agencia: etapas_cfg|AGENCIA
+  if (/^etapas_cfg\|.{1,60}$/.test(k)) {
     v = String(v == null ? '' : v);
     if (v.length > 40000) return { success: false, message: 'Configuración demasiado grande' };
     try { JSON.parse(v); } catch (e) { return { success: false, message: 'Configuración inválida' }; }
