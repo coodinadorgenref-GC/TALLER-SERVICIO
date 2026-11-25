@@ -16,9 +16,12 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
 ## Novedades v46
-- **Orden con un solo scroll**: datos de la orden (hasta Técnico principal), pestañas y contenido se desplazan juntos; el encabezado con Siguiente y las pestañas quedan fijos arriba.
-- **Seguimientos**: botones en cuadrícula de 2 columnas (Aceptar y crear orden a todo el ancho), sin recortes ni encimados.
-- **Panel**: columnas de ancho estándar (mín. 264 px) y barra de desplazamiento lateral visible.
+- **Orden con un solo scroll**: datos de la orden (hasta Técnico principal), pestañas y contenido se desplazan juntos; las pestañas quedan fijas arriba.
+- **Seguimientos**: botones sin recortes ni encimados.
+- **Panel**: columnas de ancho estándar y barra de desplazamiento lateral visible.
+- **Configuración**: secciones **Colaboradores** (altas y bajas) y **Panel de control** (cada agencia arma su propio flujo: columnas nuevas con nombre y color editables, al inicio o después de cualquier columna; las 6 originales solo se pueden renombrar).
+- **Avisos con sonido** cuando una orden cambia de etapa, en todos los dispositivos con la app abierta (hasta 30 s de retraso; se puede apagar en Configuración).
+- **Apps Script v14**: pegar `gas/taller_api.gs` y publicar una nueva versión (claves `etapas_cfg|AGENCIA` en `CONFIG_TALLER`, una por agencia).
 
 ## Novedades v44
 - **Columna Citas** del Panel: solo lista las citas de hoy (sin botones ni textos de ayuda). Una orden nueva en el día es, por definición, **sin cita**; las citas se programan desde la Agenda.
