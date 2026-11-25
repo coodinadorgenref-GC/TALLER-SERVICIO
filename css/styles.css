@@ -733,3 +733,14 @@ html.dark .pc-n input{background:#0f172a;border-color:#334155}html.dark .sw{bord
 .cfg-body .f input,.cfg-body .f select{min-height:40px;font-size:14px}
 .cfg-body .cl-grid,.cfg-body .pc-list,.cfg-body .cl-card{max-width:100%}
 @media(max-width:699px){#modal .sh.cfg{border-radius:16px 16px 0 0;width:100%}}
+
+/* ===== v46 · Formato de garantía ===== */
+.gar-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gar-g .gar-w{grid-column:1/-1}
+.gar-f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gar-f .card{margin:0}
+@media(max-width:699px){.gar-g,.gar-f{grid-template-columns:1fr}}
+.req{color:#dc2626}
+.gf-list{display:flex;flex-direction:column;gap:8px}
+.gf-row{display:grid;grid-template-columns:minmax(0,1fr) 150px auto auto;gap:8px;align-items:center}
+.gf-row .f{margin:0}.gf-r{display:flex;gap:6px;align-items:center;font-size:13px;white-space:nowrap}.gf-b{display:flex;gap:4px}
+.gf-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:8px}
+@media(max-width:699px){.gf-row{grid-template-columns:minmax(0,1fr) auto}.gf-row .gf-n{grid-column:1/-1}.gf-row .gf-t{grid-column:1/-1}}

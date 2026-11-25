@@ -224,12 +224,12 @@ const ICN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="c
 const sm=(c,n,t)=>n?`<span class="sm ${c}" title="${t}">${n}</span>`:'';
 function drawer(o){const e=ETAPAS[idx(o.etapa)],nx=sig(o),nb=nx?puede(o,nx):'',cn=x=>o.chk.filter(c=>c.e===x).length,ln=x=>(o.llantas||[]).filter(l=>l.e===x).length,
   nd=(o.danos||[]).filter(d=>d.t!==REC).length,pa=o.lineas.filter(l=>l.st==='pend').length,au=o.lineas.filter(l=>l.st==='aut'||l.st==='gar').length;
-  const T=[['u','Cliente y unidad',''],['i','Inspección',sm('r',cn('ur'),'Urgentes')+sm('a',cn('px'),'Próximos')],['l','Llantas',sm('r',ln('ur'),'Urgentes')+sm('a',ln('px'),'Próximas')],['r','Carrocería',sm('n',nd,'Daños marcados')],['c','Cotización',sm('g',au,'Autorizados')+sm('a',pa,'Por autorizar')],['h','Historial','']];
+  const T=[['u','Cliente y unidad',''],...(o.tipo==='G'?[['ga','Garantía',sm('r',garFalta(o),'Pendientes del formato')]]:[]),['i','Inspección',sm('r',cn('ur'),'Urgentes')+sm('a',cn('px'),'Próximos')],['l','Llantas',sm('r',ln('ur'),'Urgentes')+sm('a',ln('px'),'Próximas')],['r','Carrocería',sm('n',nd,'Daños marcados')],['c','Cotización',sm('g',au,'Autorizados')+sm('a',pa,'Por autorizar')],['h','Historial','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
-  <header class="drh"><button class="btn sm" data-a="cerrard" aria-label="Volver al panel general">${IC.back}<span> Panel</span></button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span>${nx?`<span class="split"><button class="btn sm nxt" data-a="sig" data-f="${o.folio}" ${nb?'disabled':''} title="${esc(nb||'Siguiente etapa: '+ETAPAS[idx(nx)][1])}">Siguiente ${ICN}</button><button class="btn sm nxd" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}" aria-label="Mover a otra etapa" title="Mover a otra etapa">${ICD}</button></span>`:''}<span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print" aria-label="Imprimir">${IC.pr}<span class="bt"> Imprimir</span></button>${nx?'':`<span class="mvw"><button class="btn sm" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}">Mover a… ${ICD}</button></span>`}</header>
+  <header class="drh"><button class="btn sm" data-a="cerrard" aria-label="Volver al panel general">${IC.back}<span> Panel</span></button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span>${nx?`<span class="split"><button class="btn sm nxt" data-a="sig" data-f="${o.folio}" ${nb?'disabled':''} title="${esc(nb||'Siguiente etapa: '+ETAPAS[idx(nx)][1])}">Siguiente ${ICN}</button><button class="btn sm nxd" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}" aria-label="Mover a otra etapa" title="Mover a otra etapa">${ICD}</button></span>`:''}<span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}${o.tipo!=='G'?`<button class="btn sm" data-a="clonq" data-f="${o.folio}" aria-label="Crear orden de garantía" title="Crear orden de garantía">Garantía</button>`:''}<button class="btn sm" data-a="print" aria-label="Imprimir">${IC.pr}<span class="bt"> Imprimir</span></button>${nx?'':`<span class="mvw"><button class="btn sm" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}">Mover a… ${ICD}</button></span>`}</header>
   <div class="dscroll">${dhead(o)}
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
-  <div class="dbody">${dt==='u'?'':heroH(o)}${({u:tU,i:tI,l:tL,r:tR,c:tC,h:tH}[dt]||tU)(o)}</div></div><footer class="dft">${foot(o)}</footer></aside>`}
+  <div class="dbody">${dt==='u'?'':heroH(o)}${({u:tU,ga:tGa,i:tI,l:tL,r:tR,c:tC,h:tH}[dt]||tU)(o)}</div></div><footer class="dft">${foot(o)}</footer></aside>`}
 // Encabezado compacto de la orden (solo computadora): cliente y unidad a la izquierda, datos de la orden al centro, equipo a la derecha.
 const fld=(n,l,p,v,x='')=>`<label class="f s${n}">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
 function dhead(o){autoMarca(o);autoModelo(o);const rec=o.etapa==='recepcion',ro=(n,l,v)=>`<div class="f s${n}"><span>${l}</span><div class="ro">${v}</div></div>`;
@@ -248,7 +248,7 @@ function dhead(o){autoMarca(o);autoModelo(o);const rec=o.etapa==='recepcion',ro=
   <datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist>${dlColab('ass','ASESOR DE SERVICIO',o)}${dlColab('asr','ASESOR DE REFACCIONES',o)}${dlColab('mecs','MECANICO',o)}</section>`}
 function foot(o){const n=sig(o),b=n?puede(o,n):'';
   if(n&&!b)return'';
-  return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}${n?'':`<div class="row"><button class="btn" data-a="clon" data-f="${o.folio}">Clonar por garantía</button></div>`}`}
+  return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}${n?'':`<div class="row"><button class="btn" data-a="clonq" data-f="${o.folio}">Crear orden de garantía</button></div>`}`}
 
 const gfotos=o=>{const n=nRecep(o);return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n?'g':'w'}">${n?n+(n>1?' fotos':' foto')+' de ingreso':'Faltan fotos de ingreso'}</span></div>${danosH(o)}</div>`};
 function tU(o){autoMarca(o);autoModelo(o);return`<div class="u-dup"><div class="card"><div class="h">Cliente</div><div class="g2">${inp('Cliente (propietario)','cliente',o.cliente)}${inp('Teléfono (WhatsApp)','tel',o.tel,'type="tel" inputmode="tel"')}</div>${inp('Dirección','dir',o.dir)}<div class="g2">${inp('Correo electrónico','email',o.email,'type="email" inputmode="email" autocomplete="off" autocapitalize="off"')}${inp('Quién trae la moto (si no es el propietario)','trae',o.trae,'placeholder="Vacío = la trae el propietario"')}</div><div id="motoSug">${sugH(o)}</div></div>
@@ -495,6 +495,56 @@ function cfgGen(){const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGere
 <button class="btn" data-a="catup">Actualizar catálogo</button>
 <button class="btn" data-a="recarga">Forzar recarga (limpiar caché de esta pestaña)</button>
 <button class="btn red" data-a="salir">Cerrar sesión</button>`}
+// ===== v46 · Formato de garantía editable por marca =====
+// S.garFmt={def:{campos,fotos}|null,marcas:{MARCA:{campos,fotos}}}; se comparte con la clave garantia_fmt de CONFIG_TALLER. Los datos de cada orden van en o.garD.v[campo] y las fotos en o.fotos['gar_'+clave].
+const GAR_T=[['x','Texto corto'],['l','Texto largo'],['f','Fecha'],['n','Número']];
+const GAR_DEF={campos:[{k:'falla',n:'Falla reportada por el cliente',t:'l',r:1},{k:'frep',n:'Fecha del reporte',t:'f',r:1},{k:'kmr',n:'Km al reportar',t:'n',r:1},{k:'fvta',n:'Fecha de compra o entrega de la unidad',t:'f'},{k:'cond',n:'Condiciones en que ocurrió la falla',t:'l'},{k:'diag',n:'Diagnóstico técnico',t:'l',r:1},{k:'pza',n:'Pieza(s) defectuosa(s)',t:'x'},{k:'sol',n:'Solución propuesta',t:'l'},{k:'rm',n:'Folio de reporte con la marca',t:'x'},{k:'res',n:'Resolución de la marca',t:'x'}],
+ fotos:[{k:'tab',n:'Tablero con kilometraje',r:1},{k:'vin',n:'Número de serie (VIN)',r:1},{k:'falla',n:'Falla o pieza dañada',r:1},{k:'pza',n:'Pieza desmontada'},{k:'fact',n:'Factura o nota de venta'}]};
+const mkG=m=>String(m||'').replace(/\s+/g,' ').trim().toUpperCase();
+const cpG=x=>JSON.parse(JSON.stringify(x));
+const garFmtDe=m=>{const g=S.garFmt||{},mk=mkG(m),pr=(g.marcas||{})[mk],f=pr||g.def||GAR_DEF;return{campos:f.campos||[],fotos:f.fotos||[],esp:!!pr}};
+const gFoto=(o,x)=>{const f=o.fotos&&o.fotos['gar_'+x.k];return f&&src(f)?f:null};
+function garFalta(o){const f=garFmtDe(o.marca),v=(o.garD&&o.garD.v)||{};return f.campos.filter(c=>c.r&&!String(v[c.k]==null?'':v[c.k]).trim()).length+f.fotos.filter(x=>x.r&&!gFoto(o,x)).length}
+function tGa(o){const f=garFmtDe(o.marca),v=(o.garD&&o.garD.v)||{},fl=garFalta(o),ro=o.ref&&O(o.ref);
+  const cp=f.campos.map(c=>{const d=`data-p="garD.v.${esc(c.k)}"`,l=esc(c.n)+(c.r?' <b class="req" aria-label="obligatorio">*</b>':''),x=esc(v[c.k]==null?'':v[c.k]);
+    return c.t==='l'?`<label class="f gar-w">${l}<textarea ${d} rows="3">${x}</textarea></label>`:`<label class="f">${l}<input ${d} value="${x}" ${c.t==='f'?'type="date"':c.t==='n'?'inputmode="numeric"':''} autocomplete="off"></label>`}).join('');
+  const ft=f.fotos.map(x=>{const k='gar_'+x.k,h=gFoto(o,x);return`<div class="card"><div class="row sp"><div class="h">${esc(x.n)}</div><span class="chip ${h?'g':x.r?'w':'n'}">${h?IC.ok+' Cargada':x.r?'Obligatoria':'Opcional'}</span></div>${h?`<img class="pic" data-a="zoom" alt="${esc(x.n)}" src="${src(h)}">`:''}<button type="button" class="btn" data-a="fpick" data-foto="${esc(k)}">${IC.cam} ${h?'Reemplazar foto':'Tomar o elegir foto'}</button></div>`}).join('');
+  return`<div class="card"><div class="row sp"><div><div class="h">Formato de garantía · ${esc(o.marca||'sin marca')}</div><div class="mut">${f.esp?'Formato propio de la marca.':'Formato general: la marca aún no tiene uno propio (se edita en Configuración › Garantías).'}</div></div><span class="chip ${fl?'w':'g'}">${fl?fl+' pendiente'+(fl>1?'s':''):IC.ok+' Completo'}</span></div>
+  <label class="f">Folio de la orden original<input data-p="ref" value="${esc(o.ref||'')}" placeholder="Ej. SP-0002L" autocomplete="off"></label>${ro?`<div class="row"><button type="button" class="btn sm" data-a="abrir" data-f="${esc(o.ref)}">Ver orden original ${esc(o.ref)}</button></div>`:''}</div>
+  <div class="card"><div class="h">Datos del reporte</div><div class="gar-g">${cp||'<div class="mut">Este formato no tiene campos.</div>'}</div></div>
+  <div class="h" style="margin:4px 0 0">Evidencias</div><div class="gar-f">${ft||'<div class="mut">Este formato no pide fotos.</div>'}</div>
+  <div class="row"><button type="button" class="btn" data-a="garimp">Imprimir formato de garantía</button></div>`}
+function garImp(o){const f=garFmtDe(o.marca),v=(o.garD&&o.garD.v)||{},s=datosAg(o.suc),
+  fv=(c)=>{const x=v[c.k]==null?'':String(v[c.k]);return c.t==='f'&&x?esc(fechaMx(x)):c.t==='n'&&x?esc(fmtKm(x)):esc(x).replace(/\n/g,'<br>')},
+  fo=f.fotos.map(x=>{const h=gFoto(o,x);return`<td style="width:33%;text-align:center;vertical-align:top"><b>${esc(x.n)}</b><br>${h?`<img src="${src(h)}" style="max-width:100%;max-height:150px">`:'<i>Sin foto</i>'}</td>`});
+  while(fo.length%3)fo.push('<td></td>');const fr=[];for(let i=0;i<fo.length;i+=3)fr.push('<tr>'+fo.slice(i,i+3).join('')+'</tr>');
+  $('#print').innerHTML=`<h1>FORMATO DE GARANTÍA${o.marca?' · '+esc(mkG(o.marca)):''}</h1><div style="text-align:center">${esc(s.n)} ${esc(s.d)} ${esc(s.t)}</div>
+  <table style="margin-top:6px"><tr><td><b>FOLIO:</b> ${esc(o.folio)}</td><td><b>ORDEN ORIGINAL:</b> ${esc(o.ref||'')}</td><td><b>FECHA:</b> ${new Date(o.fing||Date.now()).toLocaleDateString('es-MX')}</td></tr>
+  <tr><td colspan="2"><b>CLIENTE:</b> ${esc(o.cliente)}</td><td><b>TELÉFONO:</b> ${esc(o.tel)}</td></tr>
+  <tr><td><b>MODELO:</b> ${esc(o.marca)} ${esc(o.modelo)} ${esc(o.anio)}</td><td><b>SERIE:</b> ${esc(o.vin)}</td><td><b>PLACAS:</b> ${esc(o.placas)}</td></tr></table>
+  <table style="margin-top:6px"><tr><th style="width:34%">CONCEPTO</th><th>DETALLE</th></tr>${f.campos.map(c=>`<tr><td><b>${esc(c.n)}</b></td><td>${fv(c)}</td></tr>`).join('')}</table>
+  ${fr.length?`<table style="margin-top:6px"><tr><th colspan="3">EVIDENCIAS</th></tr>${fr.join('')}</table>`:''}
+  <table style="margin-top:10px"><tr>${['Cliente','Asesor de servicio','Técnico'].map(n=>`<td style="text-align:center;height:70px;vertical-align:bottom"><b>${n}</b></td>`).join('')}</tr></table>`;
+  setTimeout(()=>print(),150)}
+// editor de formatos (Configuración › Garantías)
+let gfM='';
+function gfTarget(){S.garFmt=S.garFmt||{def:null,marcas:{}};const g=S.garFmt;g.marcas=g.marcas||{};if(!gfM){if(!g.def)g.def=cpG(GAR_DEF);return g.def}return g.marcas[gfM]||null}
+function rxGar(cfg){const v=cfg&&cfg.garantia_fmt;if(!v||S.garFmtPend)return;try{const j=typeof v==='string'?JSON.parse(v):v;if(j&&typeof j==='object'){const n={def:j.def||null,marcas:j.marcas||{}};if(JSON.stringify(n)!==JSON.stringify(S.garFmt||{def:null,marcas:{}})){S.garFmt=n;save();if(!D&&view==='board')renderMain()}}}catch{}}
+async function subeGar(){if(!S.garFmtPend)return'ok';try{const x=await api.taller({action:'guardarConfig',cfgK:'garantia_fmt',cfgV:JSON.stringify(S.garFmt||{def:null,marcas:{}})});if(x&&x.success){S.garFmtPend=false;save();return'ok'}return/inv[aá]lida/i.test((x&&x.message)||'')?'viejo':'error'}catch{return'error'}}
+function gfSave(){S.garFmtPend=true;save();acts.cfg();subeGar().then(r=>{if(r==='viejo')toast('Se guardó en este dispositivo. Actualiza el script del taller (v14) para compartir los formatos con las demás pantallas.','inf');else if(r==='error')toast('Sin conexión: el formato se compartirá al sincronizar','inf')})}
+function cfgGar(){const g=S.garFmt||{},ms=g.marcas||{},marcas=[...new Set([...Object.keys(ms),...S.orders.map(o=>mkG(o.marca)).filter(Boolean)])].sort();if(gfM&&!marcas.includes(gfM))marcas.push(gfM);
+  const own=gfM?ms[gfM]:(g.def||GAR_DEF),pend=S.garFmtPend?'<span class="chip w">Pendiente de sincronizar</span>':'<span class="chip g">Sincronizado</span>';
+  const sel=`<label class="f">Marca<select data-gfm="1"><option value="">Formato general (todas las marcas)</option>${marcas.map(m=>`<option value="${esc(m)}" ${m===gfM?'selected':''}>${esc(m)}${ms[m]?' · formato propio':''}</option>`).join('')}</select></label>`;
+  const add=`<div class="gf-add"><label class="f">Agregar otra marca<input id="gfn" maxlength="30" placeholder="Ej. ITALIKA" autocomplete="off"></label><button type="button" class="btn" data-a="gfnew">Crear formato</button></div>`;
+  const bt=(l,i,n)=>`<span class="gf-b"><button type="button" class="btn sm" data-a="gfmv" data-l="${l}" data-i="${i}" data-d="-1" ${i?'':'disabled'} aria-label="Subir">↑</button><button type="button" class="btn sm" data-a="gfmv" data-l="${l}" data-i="${i}" data-d="1" ${i<n-1?'':'disabled'} aria-label="Bajar">↓</button><button type="button" class="btn sm dng" data-a="gfdel" data-l="${l}" data-i="${i}" aria-label="Quitar">✕</button></span>`;
+  let ed;
+  if(!own)ed=`<section class="cl-card"><div class="cl-nada"><b>${esc(gfM)} usa el formato general</b><br>Crea un formato propio si esta marca pide campos o fotos distintos.</div><div class="row"><button type="button" class="btn pri" data-a="gfown">Crear formato propio (copia del general)</button></div></section>`;
+  else{const C=own.campos||[],F=own.fotos||[];
+   ed=`<section class="cl-card" aria-label="Campos del formato"><div class="cl-h"><span>Campos del formato</span><span class="chip n">${C.length}</span></div><div class="gf-list">${C.map((c,i)=>`<div class="gf-row"><label class="f gf-n"><span class="sr">Nombre del campo ${i+1}</span><input data-gfe="campos.${i}.n" value="${esc(c.n)}" maxlength="60" autocomplete="off"></label><label class="f gf-t"><span class="sr">Tipo</span><select data-gfe="campos.${i}.t">${GAR_T.map(([k,t])=>`<option value="${k}" ${k===c.t?'selected':''}>${t}</option>`).join('')}</select></label><label class="gf-r"><input type="checkbox" data-gfe="campos.${i}.r" ${c.r?'checked':''}> Obligatorio</label>${bt('campos',i,C.length)}</div>`).join('')}</div><div class="row"><button type="button" class="btn" data-a="gfadd" data-l="campos">+ Agregar campo</button></div></section>
+<section class="cl-card" aria-label="Fotos de evidencia"><div class="cl-h"><span>Fotos de evidencia</span><span class="chip n">${F.length}</span></div><div class="gf-list">${F.map((c,i)=>`<div class="gf-row"><label class="f gf-n"><span class="sr">Nombre de la foto ${i+1}</span><input data-gfe="fotos.${i}.n" value="${esc(c.n)}" maxlength="60" autocomplete="off"></label><label class="gf-r"><input type="checkbox" data-gfe="fotos.${i}.r" ${c.r?'checked':''}> Obligatoria</label>${bt('fotos',i,F.length)}</div>`).join('')}</div><div class="row"><button type="button" class="btn" data-a="gfadd" data-l="fotos">+ Agregar foto</button></div></section>
+<div class="row"><button type="button" class="btn dng" data-a="gfrst">${gfM?'Quitar el formato propio de '+esc(gfM):'Restablecer el formato general'}</button></div>`}
+  return`<div class="cl-top"><div><div class="h" style="margin:0">Formatos de garantía</div><p class="mut" style="margin:2px 0 0">Cada marca pide un formato distinto: define los campos y las fotos que debe llevar la orden de garantía. Si una marca no tiene formato propio se usa el general. Aplica a todas las agencias.</p></div>${pend}</div>
+<section class="cl-card"><div class="cl-f">${sel}</div>${add}</section>${ed}`}
 function cfgAsp(){const t=temaG();
   return`<div class="cfg-g">Aspecto</div><div class="mut">Elige cómo se ve el Taller en este dispositivo.</div>
 <div class="seg cfg-seg">${[['claro','Claro'],['oscuro','Oscuro'],['sistema','Igual que el sistema']].map(([k,n])=>`<button class="tema-op ${k===t?'on':''}" data-a="tema" data-tm="${k}" aria-pressed="${k===t}">${n}</button>`).join('')}</div>`}
@@ -592,7 +642,7 @@ const acts={
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
  fin:()=>{const o=O(D);o.t.acum=ms(o);o.t.ini=null;touch(o);renderDrawer();renderMain();toast('Tiempo real: '+hms(o.t.acum)+(est(o)?' · estándar '+est(o)+' min':''))},
- clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true})},
+ clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true,garD:{v:{frep:iso(),fvta:o.fcompra||'',kmr:o.km||''}}}).then(()=>{dt='ga';render()})},
  print:()=>imprimir(O(D)),
  sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+fmtKm(o.prox.km)+' km)':''}. ¿Te agendamos una cita en ${o.suc}?`)},
  sgre:async d=>{const o=O(d.f),l=o.lineas[+d.i],v=await ask({t:'Nueva fecha de seguimiento',input:'Fecha',type:'date',def:l.seg||addD(15),ok:'Guardar'});if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
@@ -611,9 +661,20 @@ const acts={
   try{const r=await api.taller({action:'guardarColaborador',agencia:S.suc,puesto:d.pu,nombre:d.nm,activo:false});
    if(!r||!r.success){toast('No se pudo dar de baja: '+((r&&r.message)||'sin respuesta'),'err');return}
    S.colab=(S.colab||[]).filter(c=>!(c.p===d.pu&&agN(c.a)===agN(S.suc)&&agN(c.n)===agN(d.nm)));save();acts.cfg();toast('Colaborador dado de baja','ok')}catch{toast('Sin conexión: no se pudo dar de baja','err')}},
- cfg:()=>{const rp=puedeRep();if(!rp&&(cfgT==='c'||cfgT==='p'))cfgT='g';const T=[['g','General'],['a','Aspecto'],['n','Notificaciones']].concat(rp?[['c','Colaboradores'],['p','Panel de control']]:[]),B={c:cfgColab,p:cfgPanel,a:cfgAsp,n:cfgNot}[cfgT]||cfgGen;
-  sheet(`<div class="cfg-top"><div class="h">Configuración</div><div class="cfg-tabs" role="tablist" aria-label="Secciones de configuración">${T.map(([k,n])=>`<button type="button" class="cfg-tab" role="tab" aria-selected="${k===cfgT}" data-a="cfgt" data-t="${k}">${n}</button>`).join('')}</div></div><div class="cfg-body" role="tabpanel">${B()}</div>`,'cfg')},
- cfgt:d=>{cfgT=d.t;acts.cfg()},
+ cfg:d=>{const sc0=!(d&&d.reset)&&document.querySelector('.cfg-body')?document.querySelector('.cfg-body').scrollTop:0,rp=puedeRep();if(!rp&&(cfgT==='c'||cfgT==='p'||cfgT==='w'))cfgT='g';const T=[['g','General'],['a','Aspecto'],['n','Notificaciones']].concat(rp?[['c','Colaboradores'],['p','Panel de control'],['w','Garantías']]:[]),B={c:cfgColab,p:cfgPanel,w:cfgGar,a:cfgAsp,n:cfgNot}[cfgT]||cfgGen;
+  sheet(`<div class="cfg-top"><div class="h">Configuración</div><div class="cfg-tabs" role="tablist" aria-label="Secciones de configuración">${T.map(([k,n])=>`<button type="button" class="cfg-tab" role="tab" aria-selected="${k===cfgT}" data-a="cfgt" data-t="${k}">${n}</button>`).join('')}</div></div><div class="cfg-body" role="tabpanel">${B()}</div>`,'cfg');const nb=document.querySelector('.cfg-body');if(nb&&sc0)nb.scrollTop=sc0},
+ gfset:d=>{if(!puedeRep())return;const f=gfTarget();if(!f)return;const[l,i,q]=String(d.p||'').split('.'),x=(f[l]||[])[+i];if(!x)return;let v=d.v;
+  if(q==='n'){v=String(v||'').trim().replace(/\s+/g,' ');if(v.length<2){toast('El nombre debe tener al menos 2 letras','err');return acts.cfg()}}else if(q==='r')v=v?1:0;else if(q==='t'&&!GAR_T.some(t=>t[0]===v))return;else if(q!=='t')return;
+  x[q]=v;gfSave()},
+ gfmv:d=>{if(!puedeRep())return;const f=gfTarget(),L=f&&f[d.l];if(!L)return;const i=+d.i,j=i+(+d.d);if(j<0||j>=L.length)return;[L[i],L[j]]=[L[j],L[i]];gfSave()},
+ gfdel:d=>{if(!puedeRep())return;const f=gfTarget(),L=f&&f[d.l];if(!L||!L[+d.i])return;L.splice(+d.i,1);gfSave();toast('Quitado del formato. Las órdenes ya capturadas conservan sus datos.','ok')},
+ gfadd:d=>{if(!puedeRep())return;const f=gfTarget(),L=f&&f[d.l];if(!L)return;const x={k:'c'+Date.now().toString(36),n:d.l==='campos'?'Nuevo campo':'Nueva foto'};if(d.l==='campos')x.t='x';L.push(x);gfSave()},
+ gfnew:()=>{if(!puedeRep())return;const m=mkG(($('#gfn')||{}).value);if(m.length<2)return toast('Escribe el nombre de la marca (mínimo 2 letras)','err');gfM=m;const g=(S.garFmt=S.garFmt||{def:null,marcas:{}});g.marcas=g.marcas||{};if(!g.marcas[m])g.marcas[m]=cpG(g.def||GAR_DEF);gfSave()},
+ gfown:()=>{if(!puedeRep()||!gfM)return;const g=(S.garFmt=S.garFmt||{def:null,marcas:{}});g.marcas=g.marcas||{};g.marcas[gfM]=cpG(g.def||GAR_DEF);gfSave()},
+ gfrst:()=>{if(!puedeRep())return;const g=(S.garFmt=S.garFmt||{def:null,marcas:{}});if(gfM){delete(g.marcas||{})[gfM];gfM=''}else g.def=cpG(GAR_DEF);gfSave();toast('Listo','ok')},
+ garimp:()=>{const o=D&&O(D);if(o)garImp(o)},
+ clonq:d=>{const o=O(d.f);if(!o)return;sheet(`<div class="h">Crear orden de garantía</div><div class="mut">Se creará una orden de garantía con los datos del cliente y de la unidad, ligada a <b>${esc(o.folio)}</b>. Después llenas el formato de la marca (${esc(mkG(o.marca)||'sin marca')}) y levantas las evidencias.</div><button class="btn pri" data-a="clon" data-f="${esc(o.folio)}">Crear orden de garantía</button><button class="btn" data-a="cerrarx">Cancelar</button>`)},
+ cfgt:d=>{cfgT=d.t;acts.cfg({reset:1})},
  snd:d=>{UI().snd=d.v==='1';save();unlockAudio();acts.cfg();if(sndOn())setTimeout(()=>beep(),80)},
  sndtest:()=>{unlockAudio();setTimeout(()=>beep(),80)},
  etsw:d=>{etC=d.c;document.querySelectorAll('.sw-add .sw').forEach(b=>{const on=b.dataset.c===etC;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})},
@@ -686,6 +747,8 @@ document.addEventListener('input',e=>{const t=e.target;
    const os=O(D)&&O(D).suc;$('#sug').innerHTML=sug.map((i,k)=>{const st=stockDe(i,os);return`<button class="btn sg" data-a="add" data-i="${k}"><span class="sd"><b>${esc(i.nombre)}</b><small class="fol">${esc(i.sku)}</small></span><span class="sp"><b class="fol">${money(precioDe(i))}</b><small>${pIva(i)==null?'verifica IVA':'IVA incl.'}</small></span>${st?`<span class="ex ${st.n>0?'ok':'no'}">${st.n>0?st.n+' pzas':'Sin existencia'}</span>`:''}</button>`}).join('')||(s.length>1?'<div class="mut">Sin resultados. Conecta el catálogo en Configuración o agrega un concepto manual.</div>':'')}});
 document.addEventListener('change',async e=>{const t=e.target;
    if(t.dataset&&t.dataset.etren!=null){acts.etren({k:t.dataset.etren,v:t.value});return}
+  if(t.dataset&&t.dataset.gfe!=null){acts.gfset({p:t.dataset.gfe,v:t.type==='checkbox'?t.checked:t.value});return}
+  if(t.dataset&&t.dataset.gfm!=null){gfM=t.value;acts.cfg({reset:1});return}
   if(t.dataset&&t.dataset.qest!=null){acts.aut({i:t.dataset.qest,k:t.value});return}
   if(t.dataset&&t.dataset.sku!=null){const o=O(D),l=o&&o.lineas[+t.dataset.sku];if(l){const v=t.value.trim(),it=v&&S.inv.find(x=>nSku(x.sku)===nSku(v));l.sku=v;
     if(it){l.desc=it.nombre;l.pc=precioDe(it);l.pf=pIva(it)==null;l.precio=l.pc;toast('Precio de catálogo aplicado (IVA incluido)','ok')}else if(v)toast('SKU no encontrado en el catálogo: pon el precio a mano','inf');
@@ -778,8 +841,8 @@ async function sync(){if(!sesion||syncing||!tallerUrl()||!navigator.onLine){if(s
       const lx=O(ro.folio);if(autoEtapa(lx)){if(D===lx.folio)chd=true;else ch=true}});
      avisaCambios(cam);sndArmed=true;if(ch)renderMain();if(chd){if(escribiendo())pendDr=true;else{renderDrawer();renderMain()}}}
    else err=r.message||'error al leer las órdenes';
-   try{const c=await api.taller({action:'leerConfig'});if(c&&c.success&&c.config){rxEtapas(c.config);S.tarifas=S.tarifas||{};let ct=false;for(const k in c.config){const m=/^tarifa_mo\|(.+)$/.exec(k);if(m&&!(S.tarPend||{})[m[1]]&&S.tarifas[m[1]]!==Number(c.config[k])){S.tarifas[m[1]]=Number(c.config[k])||0;ct=true}}if(ct&&view==='rep'&&!escribiendo())renderMain()}
-    if(Object.keys(S.tarPend||{}).length)await subeTarifas();if(Object.keys(pendE()).some(k=>pendE()[k]))await subeEtapas()}catch{}
+   try{const c=await api.taller({action:'leerConfig'});if(c&&c.success&&c.config){rxEtapas(c.config);rxGar(c.config);S.tarifas=S.tarifas||{};let ct=false;for(const k in c.config){const m=/^tarifa_mo\|(.+)$/.exec(k);if(m&&!(S.tarPend||{})[m[1]]&&S.tarifas[m[1]]!==Number(c.config[k])){S.tarifas[m[1]]=Number(c.config[k])||0;ct=true}}if(ct&&view==='rep'&&!escribiendo())renderMain()}
+    if(Object.keys(S.tarPend||{}).length)await subeTarifas();if(Object.keys(pendE()).some(k=>pendE()[k]))await subeEtapas();if(S.garFmtPend)await subeGar()}catch{}
    if(!S.colabT||Date.now()-S.colabT>3e5)await leeColab();
    await syncCitas();
    // 2) subir lo pendiente
