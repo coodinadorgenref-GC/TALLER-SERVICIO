@@ -720,3 +720,32 @@ html.dark .btn.dng{background:#111a2b;color:#fca5a5;border-color:#ef4444}html.da
 html.dark .pc-n input{background:#0f172a;border-color:#334155}html.dark .sw{border-color:#0b1220}html.dark .sw.on{box-shadow:0 0 0 3px #e2e8f0}
 .cl-n{display:flex;flex-direction:column;align-items:flex-start;gap:3px;white-space:normal;overflow:visible}.cl-nm{overflow-wrap:anywhere;line-height:1.2}
 #modal .sh>*{flex-shrink:0}
+
+/* ===== v46 · Configuración con tamaño estándar: mismo ancho y alto en todas las secciones; solo se desplaza el contenido ===== */
+#modal .sh.cfg{width:min(920px,calc(100% - 24px));max-width:none;height:min(660px,calc(100vh - 16px));height:min(660px,calc(100dvh - 16px - env(safe-area-inset-top,0px)));max-height:none;padding:0;gap:0;overflow:hidden}
+#modal .sh.cfg>.sh-h{position:static;margin:0;padding:8px 12px;flex:none}
+.cfg-top{flex:none;padding:12px 16px 0;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--bd2)}
+.cfg-top .h{margin:0}.cfg-top .cfg-tabs{margin:0;border-bottom:0}
+.cfg-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px}
+.cfg-body>*{flex-shrink:0}
+.cfg-body .btn{flex:none;min-height:40px;font-size:14px;padding:0 14px}
+.cfg-body .seg{max-width:520px}.cfg-body .seg button{min-height:40px;font-size:14px}
+.cfg-body .f input,.cfg-body .f select{min-height:40px;font-size:14px}
+.cfg-body .cl-grid,.cfg-body .pc-list,.cfg-body .cl-card{max-width:100%}
+@media(max-width:699px){#modal .sh.cfg{border-radius:16px 16px 0 0;width:100%}}
+
+/* ===== v46 · Formato de garantía ===== */
+.gar-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gar-g .gar-w{grid-column:1/-1}
+.gar-f{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gar-f .card{margin:0}
+@media(max-width:699px){.gar-g,.gar-f{grid-template-columns:1fr}}
+.req{color:#dc2626}
+.gf-list{display:flex;flex-direction:column;gap:8px}
+.gf-row{display:grid;grid-template-columns:minmax(0,1fr) 150px auto auto;gap:8px;align-items:center}
+.gf-row .f{margin:0}.gf-r{display:flex;gap:6px;align-items:center;font-size:13px;white-space:nowrap}.gf-b{display:flex;gap:4px}
+.gf-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:8px}
+@media(max-width:699px){.gf-row{grid-template-columns:minmax(0,1fr) auto}.gf-row .gf-n{grid-column:1/-1}.gf-row .gf-t{grid-column:1/-1}}
+
+/* ===== v47 · Panel: sin selección de texto y con "agarrar y arrastrar" ===== */
+.kan,.kan *{-webkit-user-select:none;user-select:none}
+.kan{cursor:grab}.kan .card,.kan button{cursor:pointer}.kan.pan{cursor:grabbing}.kan.pan *{cursor:grabbing!important}
+.gar-li{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:8px;text-align:left}

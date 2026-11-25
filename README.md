@@ -15,11 +15,13 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
-## Novedades v46
+## Novedades v47
+- **Panel**: no se selecciona texto y se desplaza entre etapas con clic sostenido y arrastre (en espacios libres de las columnas y encabezados; las tarjetas siguen arrastrándose para cambiar de etapa).
 - **Orden con un solo scroll**: datos de la orden (hasta Técnico principal), pestañas y contenido se desplazan juntos; las pestañas quedan fijas arriba.
 - **Seguimientos**: botones sin recortes ni encimados.
 - **Panel**: columnas de ancho estándar y barra de desplazamiento lateral visible.
-- **Configuración**: secciones **Colaboradores** (altas y bajas) y **Panel de control** (cada agencia arma su propio flujo: columnas nuevas con nombre y color editables, al inicio o después de cualquier columna; las 6 originales solo se pueden renombrar).
+- **Configuración con tamaño estándar**: mismo ancho y alto en todas las secciones (solo se desplaza el contenido). Secciones **General**, **Aspecto**, **Notificaciones** (Avisos con sonido), **Colaboradores** (altas y bajas) y **Panel de control** (cada agencia arma su propio flujo: columnas nuevas con nombre y color editables, entre Citas (siempre la primera) y Entregado (siempre la última); las 6 originales solo se pueden renombrar).
+- **Garantía con formato editable por marca**: la pestaña **Garantía** vive dentro de toda orden: lista las garantías ligadas y crea una orden de garantía ligada al folio original. Trae la pestaña **Garantía** con los campos y las fotos de evidencia que pide la marca, indicador de pendientes e impresión del formato. Admin y gerente editan los formatos en **Configuración › Garantías** (formato general + uno propio por marca; campos de texto, fecha o número, fotos obligatorias u opcionales, reordenar y quitar). Los formatos se comparten en todas las agencias (clave `garantia_fmt` en `CONFIG_TALLER`; requiere Apps Script v14).
 - **Avisos con sonido** cuando una orden cambia de etapa, en todos los dispositivos con la app abierta (hasta 30 s de retraso; se puede apagar en Configuración).
 - **Apps Script v14**: pegar `gas/taller_api.gs` y publicar una nueva versión (claves `etapas_cfg|AGENCIA` en `CONFIG_TALLER`, una por agencia).
 
