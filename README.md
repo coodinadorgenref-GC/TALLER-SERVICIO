@@ -15,6 +15,11 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v46
+- **Orden con un solo scroll**: datos de la orden (hasta Técnico principal), pestañas y contenido se desplazan juntos; el encabezado con Siguiente y las pestañas quedan fijos arriba.
+- **Seguimientos**: botones en cuadrícula de 2 columnas (Aceptar y crear orden a todo el ancho), sin recortes ni encimados.
+- **Panel**: columnas de ancho estándar (mín. 264 px) y barra de desplazamiento lateral visible.
+
 ## Novedades v44
 - **Columna Citas** del Panel: solo lista las citas de hoy (sin botones ni textos de ayuda). Una orden nueva en el día es, por definición, **sin cita**; las citas se programan desde la Agenda.
 - **Agenda por técnico**: línea de tiempo con el técnico en la primera columna y la hora de 08:00 am a 07:00 pm en saltos de 15 minutos. Se agenda tocando un horario libre; las citas aparecen como bloques por color (programada, llegó, no llegó) y la línea roja marca la hora actual.

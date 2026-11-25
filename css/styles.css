@@ -550,7 +550,7 @@ html.dark .mmenu{background:#162032;border-color:#334155}html.dark .mmenu .mi{co
 .dbody{overscroll-behavior-x:none}
 
 /* v43 · columna Citas, agenda por día, historial de visitas y 7 columnas */
-@media(min-width:700px){.kan{grid-template-columns:repeat(7,minmax(140px,1fr))}}
+@media(min-width:700px){.kan{grid-template-columns:repeat(7,minmax(264px,1fr))}}
 @media(max-width:699px){.tabs{display:flex;overflow-x:auto}.tabs .tab{flex:0 0 auto;min-width:86px}}
 .cita{background:#fff;border:1px solid var(--bd);border-left:4px solid #CA8A04;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:4px}
 .cita.llego{border-left-color:#15803D;opacity:.85}.cita.no{border-left-color:#94A3B8;opacity:.75}
@@ -590,7 +590,8 @@ html.dark .tl-b{background:#0c2d45;color:#bae6fd}html.dark .tl-b.llego{backgroun
 @media(prefers-reduced-motion:reduce){.tl{scroll-behavior:auto}}
 
 /* v45 · panel: scroll lateral sin barra, columnas/órdenes contraíbles, pin y alerta de orden parada; agenda: nombre del técnico */
-.kan{scrollbar-width:none;-ms-overflow-style:none}.kan::-webkit-scrollbar{display:none;width:0;height:0}
+/* v46: el Panel vuelve a mostrar su barra de desplazamiento lateral */
+.kan{scrollbar-width:thin;scrollbar-color:#94A3B8 #E2E8F0}.kan::-webkit-scrollbar{height:12px}.kan::-webkit-scrollbar-track{background:#E2E8F0}.kan::-webkit-scrollbar-thumb{background:#94A3B8;border-radius:6px;border:2px solid #E2E8F0}
 .kb{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:0;border:0;border-radius:4px;background:transparent;color:#64748B;cursor:pointer;flex:none}
 .kb:hover,.kb:focus-visible{background:#E2E8F0;color:#0F172A;outline:none}
 .kc{margin-left:auto;display:inline-flex;align-items:center;gap:2px}
@@ -675,3 +676,17 @@ html:has(body.lock){overflow:hidden}
   .k>.row.kh{padding-left:8px;padding-right:4px}
   .col>.ch{padding-left:8px;padding-right:4px;gap:4px}
 }
+
+/* ===== v46 · la orden se desplaza completa (datos + pestañas + contenido); Seguimientos sin encimarse ===== */
+.dr{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;--drh:56px;--dtb:44px;scroll-padding-top:calc(var(--drh) + var(--dtb))}
+.dr>.drh,.dr>.dhead,.dr>.dtabs,.dr>.dft{flex:none}
+.dr>.drh{position:sticky;top:0;z-index:9}
+.dr>.dtabs{position:sticky;top:var(--drh);z-index:8}
+.dr>.dbody{flex:1 0 auto;overflow:visible}
+.dr>.dft{position:sticky;bottom:0;z-index:7}
+.dr .q2h,.dr .sbar{top:calc(var(--drh) + var(--dtb))}
+html.dark .kan{scrollbar-color:#475569 #1e293b}html.dark .kan::-webkit-scrollbar-track{background:#1e293b}html.dark .kan::-webkit-scrollbar-thumb{background:#475569;border-color:#1e293b}
+.sga{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.sga .btn{min-width:0;white-space:normal;line-height:1.15;padding:6px 8px;text-align:center}
+.sga .sgp{grid-column:1/-1}
+.sgg .card{min-width:0;overflow-wrap:anywhere}
