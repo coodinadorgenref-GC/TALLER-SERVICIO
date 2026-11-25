@@ -744,3 +744,8 @@ html.dark .pc-n input{background:#0f172a;border-color:#334155}html.dark .sw{bord
 .gf-row .f{margin:0}.gf-r{display:flex;gap:6px;align-items:center;font-size:13px;white-space:nowrap}.gf-b{display:flex;gap:4px}
 .gf-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:8px}
 @media(max-width:699px){.gf-row{grid-template-columns:minmax(0,1fr) auto}.gf-row .gf-n{grid-column:1/-1}.gf-row .gf-t{grid-column:1/-1}}
+
+/* ===== v47 · Panel: sin selección de texto y con "agarrar y arrastrar" ===== */
+.kan,.kan *{-webkit-user-select:none;user-select:none}
+.kan{cursor:grab}.kan .card,.kan button{cursor:pointer}.kan.pan{cursor:grabbing}.kan.pan *{cursor:grabbing!important}
+.gar-li{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:8px;text-align:left}
