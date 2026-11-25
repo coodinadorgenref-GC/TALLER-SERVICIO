@@ -15,7 +15,9 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
-## Novedades v47
+## Novedades v48
+- **Garantía ligada a la orden original**: al crear una garantía (pestaña Garantía, botón del encabezado o tipo **G Garantía** del menú de nueva orden, que ahora pide la orden de origen) se crea una orden con folio **G-xxxx** que copia de la original el Cliente y unidad y la Inspección (checklist, llantas, carrocería, accesorios y fotos ya subidas). La orden de garantía queda con **¿Es garantía? = Sí** (fijo) y la original con **No**; elegir Sí en una orden normal abre la creación de la garantía. La cotización de la garantía empieza vacía.
+- **Sonido**: tono de confirmación al mover una orden, botón de bocina en el encabezado que muestra si el sonido está activo o en silencio, y estado visible en Configuración › Notificaciones.
 - **Panel**: no se selecciona texto y se desplaza entre etapas con clic sostenido y arrastre (en espacios libres de las columnas y encabezados; las tarjetas siguen arrastrándose para cambiar de etapa).
 - **Orden con un solo scroll**: datos de la orden (hasta Técnico principal), pestañas y contenido se desplazan juntos; las pestañas quedan fijas arriba.
 - **Seguimientos**: botones sin recortes ni encimados.

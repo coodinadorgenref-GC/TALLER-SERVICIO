@@ -749,3 +749,14 @@ html.dark .pc-n input{background:#0f172a;border-color:#334155}html.dark .sw{bord
 .kan,.kan *{-webkit-user-select:none;user-select:none}
 .kan{cursor:grab}.kan .card,.kan button{cursor:pointer}.kan.pan{cursor:grabbing}.kan.pan *{cursor:grabbing!important}
 .gar-li{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:8px;text-align:left}
+
+/* ===== v48 · sonido visible, botón seleccionado, garantía y Configuración sin cortes ===== */
+.cfg-seg button[aria-pressed="true"],.cfg-seg button.on{background:var(--nv)!important;color:#fff!important;border-color:var(--nv)!important}
+.ib#sndb[hidden]{display:none}.ib#sndb.mut{color:#B91C1C}
+.gp-l{display:flex;flex-direction:column;gap:6px;max-height:42vh;overflow:auto}
+.gar-ban{border-left:4px solid #D97706;background:#FFFBEB}
+#modal .sh.cfg{height:min(740px,calc(100vh - 16px));height:min(740px,calc(100dvh - 16px - env(safe-area-inset-top,0px)))}
+#modal .sh.cfg>.sh-h{position:absolute;top:8px;right:12px;margin:0;padding:0;z-index:5;background:transparent;border:0}
+.cfg-top .h{padding-right:110px}
+#modal .sh.cfg{position:relative}
+.cfg-body{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));box-shadow:inset 0 -12px 10px -12px rgba(15,23,42,.28)}

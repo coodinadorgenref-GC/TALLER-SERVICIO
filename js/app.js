@@ -172,9 +172,9 @@ function puede(o,dest){normChk(o);const i=idx(o.etapa),j=idx(dest);if(j<i&&o.aut
 /* ---------- Avisos con sonido cuando cambia la etapa de una orden (también en las demás pantallas con la app abierta) ---------- */
 let AC=null,sndArmed=false;
 const unlockAudio=()=>{try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==='suspended')AC.resume()}catch{}};
-['click','keydown','touchstart'].forEach(ev=>addEventListener(ev,unlockAudio,{passive:true}));
+['pointerdown','click','keydown','touchstart'].forEach(ev=>addEventListener(ev,unlockAudio,{passive:true}));
 const sndOn=()=>UI().snd!==false;
-function beep(fin){if(!sndOn()||!AC||AC.state!=='running')return;const t=AC.currentTime,N=fin?[659,880,1175]:[784,988];
+function beep(fin){if(!sndOn())return;unlockAudio();if(!AC)return;if(AC.state!=='running'){try{AC.resume().then(()=>{if(AC.state==='running')beep(fin)}).catch(()=>{})}catch{}return}const t=AC.currentTime,N=fin?[659,880,1175]:[784,988];
   N.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain(),t0=t+i*.16;o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(.28,t0+.02);g.gain.exponentialRampToValueAtTime(.0001,t0+.3);o.connect(g);g.connect(AC.destination);o.start(t0);o.stop(t0+.32)});
   try{navigator.vibrate&&navigator.vibrate(90)}catch{}}
 function avisaCambios(L){if(!sndArmed||!L.length)return;const e=k=>(ETAPAS[idx(k)]||[0,k])[1];
@@ -184,7 +184,7 @@ const logH=(o,x)=>{(o.hist=o.hist||[]).push({t:Date.now(),u:(sesion&&(sesion.nom
 function mover(o,dest){const e=puede(o,dest);if(e)return toast(e);
   if(o.etapa==='recepcion'&&dest!=='recepcion'&&!o.firmas.entrega)return abrirFirma(u=>{o.firmas.entrega={d:u};touch(o);mover(o,dest)});
   if(dest==='entregado'){o.lav=true;if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}}
-  logH(o,'Etapa: '+ETAPAS[idx(dest)][1]);o.etapa=dest;touch(o);tab=dest;render();sync()}
+  logH(o,'Etapa: '+ETAPAS[idx(dest)][1]);o.etapa=dest;touch(o);tab=dest;render();beep(dest==='entregado');sync()}
 
 /* ---------- render ---------- */
 function render(){
@@ -222,14 +222,14 @@ const vinOk=o=>{const v=String(o.vin||'').toUpperCase().replace(/\s+/g,'');retur
 const vokH=o=>`<span class="vok${vinOk(o)?' on':''}" role="img" aria-label="Serie de 17 caracteres capturada" title="Serie de 17 caracteres capturada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>`;
 const ICN='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M5 6l6 6-6 6M12 6l6 6-6 6"/></svg>',ICD='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 const sm=(c,n,t)=>n?`<span class="sm ${c}" title="${t}">${n}</span>`:'';
-function drawer(o){const e=ETAPAS[idx(o.etapa)],nx=sig(o),nb=nx?puede(o,nx):'',cn=x=>o.chk.filter(c=>c.e===x).length,ln=x=>(o.llantas||[]).filter(l=>l.e===x).length,
+function drawer(o){if(o.tipo==='G'&&!o.gar)o.gar=true;const e=ETAPAS[idx(o.etapa)],nx=sig(o),nb=nx?puede(o,nx):'',cn=x=>o.chk.filter(c=>c.e===x).length,ln=x=>(o.llantas||[]).filter(l=>l.e===x).length,
   nd=(o.danos||[]).filter(d=>d.t!==REC).length,pa=o.lineas.filter(l=>l.st==='pend').length,au=o.lineas.filter(l=>l.st==='aut'||l.st==='gar').length;
   const T=[['u','Cliente y unidad',''],['ga','Garantía',o.tipo==='G'?sm('r',garFalta(o),'Pendientes del formato'):sm('a',garsDe(o).length,'Garantías ligadas')],['i','Inspección',sm('r',cn('ur'),'Urgentes')+sm('a',cn('px'),'Próximos')],['l','Llantas',sm('r',ln('ur'),'Urgentes')+sm('a',ln('px'),'Próximas')],['r','Carrocería',sm('n',nd,'Daños marcados')],['c','Cotización',sm('g',au,'Autorizados')+sm('a',pa,'Por autorizar')],['h','Historial','']];
   return`<div class="dov" data-a="cerrard"></div><aside class="dr" role="dialog" aria-modal="true" aria-label="Orden ${esc(o.folio)}">
   <header class="drh"><button class="btn sm" data-a="cerrard" aria-label="Volver al panel general">${IC.back}<span> Panel</span></button><span class="fol" style="font-size:18px">${esc(o.folio)}</span><span class="chip">${TIPOS[o.tipo]}</span><span class="chip" style="background:${e[2]};color:#fff">${e[1]}</span>${nx?`<span class="split"><button class="btn sm nxt" data-a="sig" data-f="${o.folio}" ${nb?'disabled':''} title="${esc(nb||'Siguiente etapa: '+ETAPAS[idx(nx)][1])}">Siguiente ${ICN}</button><button class="btn sm nxd" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}" aria-label="Mover a otra etapa" title="Mover a otra etapa">${ICD}</button></span>`:''}<span style="flex:1"></span>${adminReal()?`<button class="btn sm red" data-a="elim">Eliminar</button>`:''}<button class="btn sm" data-a="print" aria-label="Imprimir">${IC.pr}<span class="bt"> Imprimir</span></button>${nx?'':`<span class="mvw"><button class="btn sm" data-a="mvmenu" aria-haspopup="menu" aria-expanded="false" data-f="${o.folio}">Mover a… ${ICD}</button></span>`}</header>
   <div class="dscroll">${dhead(o)}
   <nav class="dtabs" role="tablist">${T.map(([k,n,c])=>`<button class="tab ${k===dt?'on':''}" role="tab" aria-selected="${k===dt}" data-a="dtab" data-k="${k}">${n} ${c}</button>`).join('')}</nav>
-  <div class="dbody">${dt==='u'?'':heroH(o)}${({u:tU,ga:tGa,i:tI,l:tL,r:tR,c:tC,h:tH}[dt]||tU)(o)}</div></div><footer class="dft">${foot(o)}</footer></aside>`}
+  <div class="dbody">${dt==='u'?'':heroH(o)}${({u:tU,ga:tGa,i:x=>garBan(x)+tI(x),l:tL,r:tR,c:tC,h:tH}[dt]||tU)(o)}</div></div><footer class="dft">${foot(o)}</footer></aside>`}
 // Encabezado compacto de la orden (solo computadora): cliente y unidad a la izquierda, datos de la orden al centro, equipo a la derecha.
 const fld=(n,l,p,v,x='')=>`<label class="f s${n}">${l}<input data-p="${p}" value="${esc(v)}" ${x}></label>`;
 function dhead(o){autoMarca(o);autoModelo(o);const rec=o.etapa==='recepcion',ro=(n,l,v)=>`<div class="f s${n}"><span>${l}</span><div class="ro">${v}</div></div>`;
@@ -505,6 +505,16 @@ const cpG=x=>JSON.parse(JSON.stringify(x));
 const garFmtDe=m=>{const g=S.garFmt||{},mk=mkG(m),pr=(g.marcas||{})[mk],f=pr||g.def||GAR_DEF;return{campos:f.campos||[],fotos:f.fotos||[],esp:!!pr}};
 const gFoto=(o,x)=>{const f=o.fotos&&o.fotos['gar_'+x.k];return f&&src(f)?f:null};
 function garFalta(o){const f=garFmtDe(o.marca),v=(o.garD&&o.garD.v)||{};return f.campos.filter(c=>c.r&&!String(v[c.k]==null?'':v[c.k]).trim()).length+f.fotos.filter(x=>x.r&&!gFoto(o,x)).length}
+const cpFt=x=>!x?null:typeof x==='object'?(x.u?{u:x.u}:null):(/^data:/.test(x)?null:x);
+const cpK=k=>{const n=cpG(k||{});n.f=cpFt(k&&k.f);const fx=((k&&k.fx)||[]).map(cpFt).filter(Boolean);if(fx.length)n.fx=fx;else delete n.fx;return n};
+// La orden de garantía copia de la original el Cliente y unidad y la Inspección (checklist, llantas, carrocería, accesorios y fotos ya subidas); la original queda sin garantía y la cotización de la garantía empieza vacía.
+function garCopia(o){const x={};['cliente','tel','email','dir','modelo','marca','anio','motor','vin','placas','km','fcompra','comb','trae','asesorRef'].forEach(k=>{if(o[k]!=null&&o[k]!=='')x[k]=o[k]});
+  x.ref=o.folio;x.gar=true;x.motivo='Garantía de la orden '+o.folio;
+  if(Array.isArray(o.inv))x.inv=cpG(o.inv);if(Array.isArray(o.adic))x.adic=cpG(o.adic);
+  if(Array.isArray(o.chk))x.chk=o.chk.map(cpK);if(Array.isArray(o.llantas))x.llantas=o.llantas.map(cpK);if(Array.isArray(o.danos))x.danos=o.danos.map(cpK);
+  x.fotos={};for(const k in (o.fotos||{})){const f=cpFt(o.fotos[k]);if(f)x.fotos[k]=typeof f==='object'?f:{u:f}}
+  x.garD={v:{frep:iso(),fvta:o.fcompra||'',kmr:o.km||''}};return x}
+const garBan=o=>o.tipo==='G'?`<div class="card gar-ban"><b>Orden de garantía${o.ref?' de '+esc(o.ref):''}</b><div class="mut">El Cliente y unidad y la Inspección se copiaron de la orden original. Ajusta lo que el cliente reportó y llena la pestaña Garantía.</div></div>`:'';
 const garsDe=o=>S.orders.filter(x=>x.tipo==='G'&&x.ref&&x.ref===o.folio);
 function tGaLista(o){const L=garsDe(o),f=garFmtDe(o.marca);
   return`<div class="card"><div class="row sp"><div><div class="h">Garantía</div><div class="mut">Si el cliente reporta una falla de este servicio, crea una orden de garantía ligada a <b>${esc(o.folio)}</b>: hereda al cliente y la unidad. Ahí se llena el formato de ${esc(mkG(o.marca)||'la marca')} y se levantan las evidencias.</div></div><button type="button" class="btn pri" data-a="clonq" data-f="${esc(o.folio)}">Crear orden de garantía</button></div>
@@ -519,6 +529,8 @@ function tGa(o){if(o.tipo!=='G')return tGaLista(o);const f=garFmtDe(o.marca),v=(
   <div class="card"><div class="h">Datos del reporte</div><div class="gar-g">${cp||'<div class="mut">Este formato no tiene campos.</div>'}</div></div>
   <div class="h" style="margin:4px 0 0">Evidencias</div><div class="gar-f">${ft||'<div class="mut">Este formato no pide fotos.</div>'}</div>
   <div class="row"><button type="button" class="btn" data-a="garimp">Imprimir formato de garantía</button></div>`}
+function gpPinta(q){const el=$('#gpl');if(!el)return;const n=String(q||'').toLowerCase().trim(),L=mine().filter(o=>o.tipo!=='G'&&(!n||[o.folio,o.cliente,o.placas,o.vin,o.modelo].join(' ').toLowerCase().includes(n))).sort((a,b)=>(b.fing||0)-(a.fing||0)).slice(0,8);
+  el.innerHTML=L.length?L.map(o=>`<button type="button" class="btn gar-li" data-a="clon" data-f="${esc(o.folio)}"><span class="fol">${esc(o.folio)}</span><span>${esc(o.cliente||'Sin cliente')} · ${esc([o.marca,o.modelo].filter(Boolean).join(' '))}</span></button>`).join(''):'<div class="mut">No hay órdenes con ese dato.</div>'}
 function garImp(o){const f=garFmtDe(o.marca),v=(o.garD&&o.garD.v)||{},s=datosAg(o.suc),
   fv=(c)=>{const x=v[c.k]==null?'':String(v[c.k]);return c.t==='f'&&x?esc(fechaMx(x)):c.t==='n'&&x?esc(fmtKm(x)):esc(x).replace(/\n/g,'<br>')},
   fo=f.fotos.map(x=>{const h=gFoto(o,x);return`<td style="width:33%;text-align:center;vertical-align:top"><b>${esc(x.n)}</b><br>${h?`<img src="${src(h)}" style="max-width:100%;max-height:150px">`:'<i>Sin foto</i>'}</td>`});
@@ -554,7 +566,7 @@ function cfgAsp(){const t=temaG();
   return`<div class="cfg-g">Aspecto</div><div class="mut">Elige cómo se ve el Taller en este dispositivo.</div>
 <div class="seg cfg-seg">${[['claro','Claro'],['oscuro','Oscuro'],['sistema','Igual que el sistema']].map(([k,n])=>`<button class="tema-op ${k===t?'on':''}" data-a="tema" data-tm="${k}" aria-pressed="${k===t}">${n}</button>`).join('')}</div>`}
 function cfgNot(){const so=sndOn();
-  return`<div class="cfg-g">Avisos con sonido</div><div class="mut">Suena un aviso cuando una orden cambia de etapa o entra una nueva desde otra pantalla con la app abierta. Puede tardar hasta 30 segundos en llegar. Esta opción es solo de este dispositivo.</div>
+  return`<div class="cfg-g">Avisos con sonido</div><div class="row"><span class="chip ${so?'g':'w'}">${so?'Sonido activado en este dispositivo':'Sonido en silencio en este dispositivo'}</span></div><div class="mut">Suena un aviso cuando una orden cambia de etapa o entra una nueva desde otra pantalla con la app abierta; al mover una orden tú mismo suena un tono de confirmación. Puede tardar hasta 30 segundos en llegar. Esta opción es solo de este dispositivo.</div>
 <div class="seg cfg-seg"><button class="${so?'on':''}" data-a="snd" data-v="1" aria-pressed="${so}">Sonido activado</button><button class="${so?'':'on'}" data-a="snd" data-v="0" aria-pressed="${!so}">Silencio</button></div>
 <div class="row"><button class="btn" data-a="sndtest">Probar sonido</button></div>`}
 function cfgColab(){const ag=S.suc;
@@ -604,13 +616,13 @@ const acts={
  elimok:()=>{if(!adminReal()||!D)return;const f=D;S.orders=S.orders.filter(o=>o.folio!==f);S.dirty=S.dirty.filter(x=>x!==f);(S.del=S.del||[]).push(f);D=null;save();$('#modal').innerHTML='';render();sync();toast('Orden eliminada')},
  lav:()=>{const o=O(D);o.lav=!o.lav;touch(o);renderDrawer()},
  agpick:()=>{if(!sesion||!multi(sesion.agencia))return;sheet('<div class="h">Agencia de trabajo</div><div class="mut">Elige la agencia en la que vas a trabajar.</div>'+permitidas(sesion.agencia).map(a=>`<button class="btn ${a===S.suc?'pri':''}" data-a="agset" data-k="${esc(a)}">${esc(a)}</button>`).join(''))},
- agset:d=>{S.suc=d.k;migrarLeg();aplicaEtapas();syncSoon(300);$('#modal').innerHTML='';D=null;render()},crear:d=>{$('#modal').innerHTML='';crear(d.t)},
+ agset:d=>{S.suc=d.k;migrarLeg();aplicaEtapas();syncSoon(300);$('#modal').innerHTML='';D=null;render()},crear:d=>{if(d.t==='G')return acts.garpick();$('#modal').innerHTML='';crear(d.t)},
  mv:d=>sheet('<div class="h">Mover a…</div>'+ETAPAS.map(([k,n])=>`<button class="btn ${O(d.f).etapa===k?'pri':''}" data-a="mvto" data-f="${d.f}" data-k="${k}">${n}</button>`).join('')),
  mvto:d=>{$('#modal').innerHTML='';document.querySelectorAll('.mmenu').forEach(m=>m.remove());mover(O(d.f),d.k)},
  mvmenu:(d,e)=>{const w=e.target.closest('.split,.mvw');if(!w)return;const abierto=!!w.querySelector('.mmenu');document.querySelectorAll('.mmenu').forEach(m=>m.remove());document.querySelectorAll('[data-a="mvmenu"]').forEach(x=>x.setAttribute('aria-expanded','false'));if(abierto)return;const o=O(d.f);if(!o)return;
   w.querySelector('[data-a="mvmenu"]').setAttribute('aria-expanded','true');
   w.insertAdjacentHTML('beforeend',`<div class="mmenu" role="menu" aria-label="Mover a"><div class="mh">Mover a…</div>${ETAPAS.map(([k,n,c])=>{const act=o.etapa===k,r=act?'':puede(o,k);return`<button type="button" role="menuitem" class="mi${act?' on':''}${r?' blk':''}" ${act?'disabled aria-current="true"':''} data-a="mvto" data-f="${o.folio}" data-k="${k}" ${r?`title="${esc(r)}"`:''}><i style="background:${c}"></i><span>${n}</span>${act?'<small>Etapa actual</small>':''}</button>`}).join('')}</div>`)},sig:d=>{const o=O(d.f);mover(o,sig(o))},
- gar:d=>{const o=O(D);o.gar=d.k==='1';touch(o);renderDrawer()},
+ gar:d=>{const o=O(D);if(!o)return;if(d.k==='1'){if(o.tipo==='G')return;return acts.clonq({f:o.folio})}if(o.tipo==='G')return toast('Una orden de garantía siempre es garantía','inf');o.gar=false;touch(o);renderDrawer()},
  inv:d=>{const o=O(D),x=o.inv[+d.n];x.p=!x.p;if(x.p&&!(x.c>0))x.c=1;touch(o);renderDrawer()},invall:()=>{const o=O(D);o.inv.forEach(x=>{x.p=true;if(!(x.c>0))x.c=1});touch(o);renderDrawer()},
  pfo:d=>{const i=+d.i;pfo.has(i)?pfo.delete(i):pfo.add(i)},dsel:d=>{ds=+d.i;renderDrawer()},ddel:d=>{const o=O(D);o.danos.splice(+d.i,1);ds=-1;touch(o);renderDrawer()},
  dmark:(d,e)=>{const o=O(D),r=e.target.closest('.mw').getBoundingClientRect();(o.danos=o.danos||[]).push({x:+((e.clientX-r.left)/r.width*100).toFixed(1),y:+((e.clientY-r.top)/r.height*100).toFixed(1),t:'Rayado',n:''});ds=o.danos.length-1;touch(o);renderDrawer()},
@@ -647,7 +659,7 @@ const acts={
  walisto:()=>{const o=O(D);o.listo=true;touch(o);wa(o.tel,`Hola ${o.cliente}, tu ${o.modelo} (${o.folio}) está lista para entrega en ${o.suc}. Total a pagar: ${money(tot(o).aut)}.`)},
  cr:()=>{const o=O(D);if(o.t.ini){o.t.acum=ms(o);o.t.ini=null}else o.t.ini=Date.now();touch(o);renderDrawer();renderMain()},
  fin:()=>{const o=O(D);o.t.acum=ms(o);o.t.ini=null;touch(o);renderDrawer();renderMain();toast('Tiempo real: '+hms(o.t.acum)+(est(o)?' · estándar '+est(o)+' min':''))},
- clon:d=>{const o=O(d.f);$('#modal').innerHTML='';crear('G',{cliente:o.cliente,tel:o.tel,email:o.email||'',dir:o.dir,modelo:o.modelo,marca:o.marca,anio:o.anio,motor:o.motor,vin:o.vin,placas:o.placas||'',km:o.km,fcompra:o.fcompra,ref:o.folio,gar:true,garD:{v:{frep:iso(),fvta:o.fcompra||'',kmr:o.km||''}}}).then(()=>{dt='ga';render()})},
+ clon:d=>{const o=O(d.f);if(!o)return;$('#modal').innerHTML='';const x=garCopia(o);if(o.tipo!=='G'&&o.gar){o.gar=false;touch(o)}crear('G',x).then(()=>{dt='ga';render()})},
  print:()=>imprimir(O(D)),
  sgwa:d=>{const o=O(d.f);wa(o.tel,d.k==='l'?`Hola ${o.cliente}, te escribimos de ${o.suc}. Quedó pendiente en tu ${o.modelo}: ${o.lineas[+d.i].desc}. ¿Lo programamos?`:`Hola ${o.cliente}, ya toca el siguiente servicio de tu ${o.modelo}${o.prox.km?' (a los '+fmtKm(o.prox.km)+' km)':''}. ¿Te agendamos una cita en ${o.suc}?`)},
  sgre:async d=>{const o=O(d.f),l=o.lineas[+d.i],v=await ask({t:'Nueva fecha de seguimiento',input:'Fecha',type:'date',def:l.seg||addD(15),ok:'Guardar'});if(v&&/^\d{4}-\d{2}-\d{2}$/.test(v)){l.seg=v;touch(o);renderMain()}},
@@ -678,10 +690,13 @@ const acts={
  gfown:()=>{if(!puedeRep()||!gfM)return;const g=(S.garFmt=S.garFmt||{def:null,marcas:{}});g.marcas=g.marcas||{};g.marcas[gfM]=cpG(g.def||GAR_DEF);gfSave()},
  gfrst:()=>{if(!puedeRep())return;const g=(S.garFmt=S.garFmt||{def:null,marcas:{}});if(gfM){delete(g.marcas||{})[gfM];gfM=''}else g.def=cpG(GAR_DEF);gfSave();toast('Listo','ok')},
  abrirga:d=>{acts.abrir(d);dt='ga';render()},
+ garpick:()=>{sheet(`<div class="h">Orden de garantía</div><div class="mut">¿De qué orden de trabajo viene la garantía? Se copian el cliente, la unidad y la inspección, y la orden queda con el folio G.</div><label class="f">Buscar orden<input id="gpq" placeholder="Folio, cliente, placas o serie" autocomplete="off"></label><div id="gpl" class="gp-l"></div><button class="btn" data-a="gpsin">Sin orden original</button>`);gpPinta('')},
+ gpsin:()=>{$('#modal').innerHTML='';crear('G',{garD:{v:{frep:iso()}}}).then(()=>{dt='ga';render()})},
  garimp:()=>{const o=D&&O(D);if(o)garImp(o)},
  clonq:d=>{const o=O(d.f);if(!o)return;sheet(`<div class="h">Crear orden de garantía</div><div class="mut">Se creará una orden de garantía con los datos del cliente y de la unidad, ligada a <b>${esc(o.folio)}</b>. Después llenas el formato de la marca (${esc(mkG(o.marca)||'sin marca')}) y levantas las evidencias.</div><button class="btn pri" data-a="clon" data-f="${esc(o.folio)}">Crear orden de garantía</button><button class="btn" data-a="cerrarx">Cancelar</button>`)},
  cfgt:d=>{cfgT=d.t;acts.cfg({reset:1})},
- snd:d=>{UI().snd=d.v==='1';save();unlockAudio();acts.cfg();if(sndOn())setTimeout(()=>beep(),80)},
+ sndtog:()=>{UI().snd=!sndOn();save();unlockAudio();pintaHd();toast(sndOn()?'Sonido activado':'Sonido en silencio','i');if(sndOn())setTimeout(()=>beep(),80)},
+ snd:d=>{UI().snd=d.v==='1';save();unlockAudio();pintaHd();acts.cfg();if(sndOn())setTimeout(()=>beep(),80)},
  sndtest:()=>{unlockAudio();setTimeout(()=>beep(),80)},
  etsw:d=>{etC=d.c;document.querySelectorAll('.sw-add .sw').forEach(b=>{const on=b.dataset.c===etC;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)})},
  etadd:()=>{if(!puedeRep()||!agE())return toast("Elige una agencia (botón de arriba) para personalizar sus columnas","inf");const n=($('#etn').value||'').trim().replace(/\s+/g,' '),a=$('#eta').value;
@@ -730,6 +745,7 @@ const traeVin=e=>{const t=e.target;if(!t||!t.dataset||t.dataset.p!=='vin'||!D)re
 document.addEventListener('focusin',traeVin);document.addEventListener('click',traeVin);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.dataset&&e.target.dataset.p==='vin'){e.preventDefault();if(MOTOS.vt)MOTOS.vt.t=0;traeVin(e)}});
 document.addEventListener('input',e=>{const t=e.target;
+  if(t.id==='gpq'){gpPinta(t.value);return}
   if(t.id==='gq'){q=t.value.trim();renderMain();return}
   const o=D&&O(D);if(!o)return;
   const mt=/^danos\.(\d+)\.t$/.exec(t.dataset.p||'');
@@ -871,7 +887,7 @@ async function syncCitas(){try{const rc=await api.taller({action:'listarCitas'})
 setInterval(sync,30000);setInterval(()=>{if(view!=='board')return;document.querySelectorAll('.card.k[data-f]').forEach(el=>{const o=O(el.dataset.f),ki=el.querySelector('.ki');if(!o||!ki)return;const a=ki.querySelector('.alr');if(a)a.remove();ki.insertAdjacentHTML('beforeend',alertaH(o,!el.classList.contains('cc')))})},30000);matchMedia('(min-width:700px)').addEventListener('change',()=>{if(view==='board')renderMain()});addEventListener('resize',ajustaKan);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v47 · 25-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v48 · 25-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
@@ -908,7 +924,9 @@ async function cargaCat(quiet){if(!sesion)return;
     save();if(!quiet)toast(S.inv.length+' productos cargados')}
   catch{if(!quiet)toast('Sin conexión al catálogo')}}
 function migrarLeg(){if(S.suc)S.orders.forEach(o=>{if(LEG.includes(o.suc)){o.suc=S.suc;touch(o)}});save()}
-function pintaHd(){const a=sesion?.agencia||'',el=$('#agn'),lg=$('#hlogo'),m=multi(a),vr=$('#vrep');if(vr)vr.hidden=!puedeRep();
+const ICSON='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>',ICMUT='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>';
+function pintaHd(){const a=sesion?.agencia||'',el=$('#agn'),lg=$('#hlogo'),m=multi(a),vr=$('#vrep'),sb=$('#sndb');if(vr)vr.hidden=!puedeRep();
+  if(sb){const on=sndOn();sb.hidden=!sesion;sb.innerHTML=on?ICSON:ICMUT;sb.classList.toggle('mut',!on);sb.setAttribute('aria-pressed',String(on));const t=on?'Sonido activado: toca para silenciar':'Sonido en silencio: toca para activar';sb.title=t;sb.setAttribute('aria-label',t)}
   if(el){el.hidden=!sesion;el.textContent=sesion?(S.suc||(m?'Elegir agencia':a)):'';el.className='agn'+(m?' pk':'');el.disabled=!m;if(m)el.dataset.a='agpick';else delete el.dataset.a}
   if(lg){const u=LOGO_BASE+logoDe(S.suc||a)+'.png';if(lg.getAttribute('src')!==u)lg.setAttribute('src',u)}}
 function aplicaAg(){if(!sesion)return;const a=sesion.agencia,p=permitidas(a);
