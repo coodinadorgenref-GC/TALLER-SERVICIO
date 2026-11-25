@@ -12,9 +12,9 @@ const cfgE=()=>{const k=agE();S.etapasAg=S.etapasAg||{};
   if(S.etapasCfg){if(k&&!S.etapasAg[k]){S.etapasAg[k]=S.etapasCfg;if(S.etapasPend===true)S.etapasPend={};pendE()[k]=true}delete S.etapasCfg;if(S.etapasPend===true)S.etapasPend={}}
   if(!k)return{ren:{},extra:[]};
   const c=S.etapasAg[k]=S.etapasAg[k]||{};c.ren=c.ren||{};c.extra=c.extra||[];return c};
-// Las 6 columnas base no se mueven ni se eliminan (solo se les puede cambiar el nombre); las personalizadas de cada agencia se colocan al inicio o después de la columna elegida (también después de Entregado).
+// Las 6 columnas base no se mueven ni se eliminan (solo se les puede cambiar el nombre); las personalizadas de cada agencia se colocan al inicio (después de Citas, que siempre es la primera) o después de la columna elegida, siempre antes de Entregado (que siempre es la última).
 function aplicaEtapas(){const c=cfgE(),L=ETAPAS_BASE.map(e=>[e[0],c.ren[e[0]]||e[1],e[2],e[3]]);
-  c.extra.forEach(x=>{const at=L.findIndex(e=>e[0]===x.a);let p=x.a==='^'?0:at<0?L.length:at+1;L.splice(p,0,[x.k,x.n,x.c||'#0369A1','Columna personalizada'])});
+  c.extra.forEach(x=>{const at=L.findIndex(e=>e[0]===x.a);let p=x.a==='^'?0:at<0?L.length-1:at+1;if(p>L.length-1)p=L.length-1;L.splice(p,0,[x.k,x.n,x.c||'#0369A1','Columna personalizada'])});
   ETAPAS.length=0;ETAPAS.push(...L)}
 aplicaEtapas();
 let sesion=null,tab='recepcion',view='board',D=null,dt='u',q='',ft='',agf={b:'',m:''},sug=[],keepSc=true,lastD=null,syncing=false,dragF=null;
@@ -486,20 +486,22 @@ let cfgT='g',etC=COLS_ET[0][0];
 const ini=n=>String(n||'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
 function etSave(){pendE()[agE()]=true;aplicaEtapas();save();render();acts.cfg();
   subeEtapas().then(r=>{if(r==='viejo')toast('Se guardó en este dispositivo. Actualiza el script del taller a la v14 para compartir las columnas con las demás pantallas.','inf');else if(r==='error')toast('Sin conexión: las columnas se compartirán al sincronizar','inf')})}
-function cfgGen(){const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'',t=temaG(),so=sndOn();
+function cfgGen(){const rol=sesion?(sesion.esAdmin?'Administrador':sesion.esGerente?'Gerente':sesion.esVendedor?'Vendedor':''):'';
   return`<div class="cfg-g">Perfil</div>
 <div class="cfg-c"><b>${esc(sesion?.nombre||sesion?.correo||'—')}</b><span class="mut">${esc(sesion?.correo||'')}${rol?' · '+rol:''}</span><span class="mut">Agencia: ${esc(S.suc||sesion?.agencia||'—')}</span></div>
-<div class="cfg-g">Aspecto</div><div class="mut">Elige cómo se ve el Taller.</div>
-<div class="seg">${[['claro','Claro'],['oscuro','Oscuro'],['sistema','Igual que el sistema']].map(([k,n])=>`<button class="tema-op ${k===t?'on':''}" data-a="tema" data-tm="${k}">${n}</button>`).join('')}</div>
-<div class="cfg-g">Avisos con sonido</div><div class="mut">Suena un aviso cuando una orden cambia de etapa o entra una nueva desde otra pantalla con la app abierta. Puede tardar hasta 30 segundos en llegar. Esta opción es solo de este dispositivo.</div>
-<div class="seg"><button class="${so?'on':''}" data-a="snd" data-v="1" aria-pressed="${so}">Sonido activado</button><button class="${so?'':'on'}" data-a="snd" data-v="0" aria-pressed="${!so}">Silencio</button></div>
-<button class="btn" data-a="sndtest">Probar sonido</button>
 <div class="cfg-g">Cuenta y versión</div>
 <div class="mut">Pendientes de sincronizar: ${S.dirty.length}</div><div class="mut">${S.inv.length?S.inv.length+' productos en el catálogo':'Sin catálogo cargado'}</div>
 <div class="mut">Identificador de versión</div><div class="ver">${esc(APP_BUILD)}</div>
 <button class="btn" data-a="catup">Actualizar catálogo</button>
 <button class="btn" data-a="recarga">Forzar recarga (limpiar caché de esta pestaña)</button>
 <button class="btn red" data-a="salir">Cerrar sesión</button>`}
+function cfgAsp(){const t=temaG();
+  return`<div class="cfg-g">Aspecto</div><div class="mut">Elige cómo se ve el Taller en este dispositivo.</div>
+<div class="seg cfg-seg">${[['claro','Claro'],['oscuro','Oscuro'],['sistema','Igual que el sistema']].map(([k,n])=>`<button class="tema-op ${k===t?'on':''}" data-a="tema" data-tm="${k}" aria-pressed="${k===t}">${n}</button>`).join('')}</div>`}
+function cfgNot(){const so=sndOn();
+  return`<div class="cfg-g">Avisos con sonido</div><div class="mut">Suena un aviso cuando una orden cambia de etapa o entra una nueva desde otra pantalla con la app abierta. Puede tardar hasta 30 segundos en llegar. Esta opción es solo de este dispositivo.</div>
+<div class="seg cfg-seg"><button class="${so?'on':''}" data-a="snd" data-v="1" aria-pressed="${so}">Sonido activado</button><button class="${so?'':'on'}" data-a="snd" data-v="0" aria-pressed="${!so}">Silencio</button></div>
+<div class="row"><button class="btn" data-a="sndtest">Probar sonido</button></div>`}
 function cfgColab(){const ag=S.suc;
   if(!ag)return`<div class="cl-nada"><b>Elige una agencia</b><br>Usa el botón de la agencia (arriba a la derecha) para administrar a sus colaboradores.</div>`;
   const tot=(S.colab||[]).filter(c=>agN(c.a)===agN(ag)).length;
@@ -511,8 +513,8 @@ function cfgColab(){const ag=S.suc;
 function cfgPanel(){if(!agE())return'<div class="h" style="margin:0">Panel de control</div><p class="mut">Elige una agencia (botón de arriba) para personalizar sus columnas.</p>';const c=cfgE(),ex=new Set(c.extra.map(x=>x.k));
   const filas=ETAPAS.map(([k,n,col],i)=>{const cu=ex.has(k),no=S.orders.filter(o=>o.etapa===k).length,cn=no+' orden'+(no===1?'':'es');
     return`<div class="pc-row"><span class="pc-dot" style="background:${col}" aria-hidden="true"></span><label class="pc-n"><span class="sr">Nombre de la columna ${i+1}</span><input data-etren="${esc(k)}" value="${esc(n)}" maxlength="24" autocomplete="off"></label><span class="chip ${cu?'w':'n'}">${cu?'Personalizada':'Fija'}</span>${cu?`<span class="pc-sw" role="group" aria-label="Color de ${esc(n)}">${COLS_ET.map(([h,nm])=>`<button type="button" class="sw${h===col?' on':''}" style="background:${h}" data-a="etcol" data-k="${esc(k)}" data-c="${h}" aria-label="${nm}" aria-pressed="${h===col}"></button>`).join('')}</span><span class="pc-fx mut">${cn}</span><button type="button" class="btn sm dng" data-a="etdel" data-k="${esc(k)}" aria-label="Eliminar la columna ${esc(n)}">Eliminar</button>`:`<span class="pc-fx mut">Posición y color fijos · ${cn}</span>`}</div>`}).join('');
-  const opts='<option value="^">Al inicio (antes de la primera)</option>'+ETAPAS.map(([k,n])=>`<option value="${esc(k)}">Después de ${esc(n)}</option>`).join('');
-  return`<div class="cl-top"><div><div class="h" style="margin:0">Panel de control</div><p class="mut" style="margin:2px 0 0">Columnas del panel de trabajos de <b>${esc(S.suc||'—')}</b>: cada agencia arma su propio flujo. Las 6 originales no se pueden mover ni eliminar, pero sí cambiarles el nombre; las nuevas van al inicio o después de la columna que elijas. Los cambios se aplican en todas las pantallas de esta agencia al sincronizar.</p></div>${pendE()[agE()]?'<span class="chip w">Pendiente de sincronizar</span>':'<span class="chip g">Sincronizado</span>'}</div>
+  const opts='<option value="^">Al inicio (después de Citas)</option>'+ETAPAS.filter(e=>e[0]!=='entregado').map(([k,n])=>`<option value="${esc(k)}">Después de ${esc(n)}</option>`).join('');
+  return`<div class="cl-top"><div><div class="h" style="margin:0">Panel de control</div><p class="mut" style="margin:2px 0 0">Columnas del panel de trabajos de <b>${esc(S.suc||'—')}</b>: cada agencia arma su propio flujo. Las 6 originales no se pueden mover ni eliminar, pero sí cambiarles el nombre; Citas siempre es la primera y Entregado la última; las nuevas van entre ambas, donde elijas. Los cambios se aplican en todas las pantallas de esta agencia al sincronizar.</p></div>${pendE()[agE()]?'<span class="chip w">Pendiente de sincronizar</span>':'<span class="chip g">Sincronizado</span>'}</div>
 <section class="cl-card" aria-label="Columnas del panel"><div class="cl-h"><span>Columnas del panel</span><span class="chip n">${ETAPAS.length}</span></div><div class="pc-list">${filas}</div></section>
 <section class="cl-card" aria-label="Agregar una columna"><div class="cl-h"><span>Agregar una columna</span></div><div class="cl-f"><label class="f cl-fn">Nombre de la columna<input id="etn" maxlength="24" autocomplete="off" placeholder="Ej. Esperando refacciones"></label><label class="f">Colocar<select id="eta">${opts}</select></label></div><div class="pc-add"><span class="mut" id="etcl">Color</span><span class="pc-sw sw-add" role="group" aria-labelledby="etcl">${COLS_ET.map(([h,nm])=>`<button type="button" class="sw${h===etC?' on':''}" style="background:${h}" data-a="etsw" data-c="${h}" aria-label="${nm}" aria-pressed="${h===etC}"></button>`).join('')}</span><button type="button" class="btn pri" data-a="etadd">Agregar columna</button></div></section>`}
 const acts={
@@ -609,8 +611,8 @@ const acts={
   try{const r=await api.taller({action:'guardarColaborador',agencia:S.suc,puesto:d.pu,nombre:d.nm,activo:false});
    if(!r||!r.success){toast('No se pudo dar de baja: '+((r&&r.message)||'sin respuesta'),'err');return}
    S.colab=(S.colab||[]).filter(c=>!(c.p===d.pu&&agN(c.a)===agN(S.suc)&&agN(c.n)===agN(d.nm)));save();acts.cfg();toast('Colaborador dado de baja','ok')}catch{toast('Sin conexión: no se pudo dar de baja','err')}},
- cfg:()=>{const rp=puedeRep();if(!rp)cfgT='g';const T=[['g','General'],['c','Colaboradores'],['p','Panel de control']];
-  sheet(`<div class="h">Configuración</div>${rp?`<div class="cfg-tabs" role="tablist" aria-label="Secciones de configuración">${T.map(([k,n])=>`<button type="button" class="cfg-tab" role="tab" aria-selected="${k===cfgT}" data-a="cfgt" data-t="${k}">${n}</button>`).join('')}</div>`:''}${cfgT==='c'?cfgColab():cfgT==='p'?cfgPanel():cfgGen()}`,rp?'wide':'')},
+ cfg:()=>{const rp=puedeRep();if(!rp&&(cfgT==='c'||cfgT==='p'))cfgT='g';const T=[['g','General'],['a','Aspecto'],['n','Notificaciones']].concat(rp?[['c','Colaboradores'],['p','Panel de control']]:[]),B={c:cfgColab,p:cfgPanel,a:cfgAsp,n:cfgNot}[cfgT]||cfgGen;
+  sheet(`<div class="cfg-top"><div class="h">Configuración</div><div class="cfg-tabs" role="tablist" aria-label="Secciones de configuración">${T.map(([k,n])=>`<button type="button" class="cfg-tab" role="tab" aria-selected="${k===cfgT}" data-a="cfgt" data-t="${k}">${n}</button>`).join('')}</div></div><div class="cfg-body" role="tabpanel">${B()}</div>`,'cfg')},
  cfgt:d=>{cfgT=d.t;acts.cfg()},
  snd:d=>{UI().snd=d.v==='1';save();unlockAudio();acts.cfg();if(sndOn())setTimeout(()=>beep(),80)},
  sndtest:()=>{unlockAudio();setTimeout(()=>beep(),80)},
