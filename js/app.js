@@ -259,7 +259,7 @@ function dhead(o){autoMarca(o);autoModelo(o);const rec=o.etapa==='recepcion',ro=
   <datalist id="marcas">${MARCAS.map(m=>`<option value="${m}">`).join('')}</datalist>${dlColab('ass','ASESOR DE SERVICIO',o)}${dlColab('asr','ASESOR DE REFACCIONES',o)}${dlColab('mecs','MECANICO',o)}</section>`}
 function foot(o){const n=sig(o),b=n?puede(o,n):'';
   if(n&&!b)return'';
-  return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}${n?'':`<div class="row"><button class="btn" data-a="clonq" data-f="${o.folio}">Crear orden de garantía</button></div>`}`}
+  return`${b?`<div class="chip w" style="align-self:flex-start">${IC.at} ${b}</div>`:''}`}
 
 const gfotos=o=>{const n=nRecep(o);return`<div class="card"><div class="row sp"><div class="h">Carrocería</div><span class="chip ${n?'g':'w'}">${n?n+(n>1?' fotos':' foto')+' de ingreso':'Faltan fotos de ingreso'}</span></div>${danosH(o)}</div>${o.tipo==='G'?'':carCard(o)}${vidH(o)}`};
 const nuevoH=o=>`<div class="f s1"><span>¿Vehículo nuevo?${o.nuevo?' <small>(la fecha de compra es obligatoria)</small>':''}</span><div class="seg" style="max-width:240px"><button type="button" class="${o.nuevo?'s-ok':''}" data-a="nuevo" data-k="1" aria-pressed="${!!o.nuevo}">Sí</button><button type="button" class="${!o.nuevo?'s-nr':''}" data-a="nuevo" data-k="0" aria-pressed="${!o.nuevo}">No</button></div></div>`;
@@ -928,7 +928,7 @@ async function syncCitas(){try{const rc=await api.taller({action:'listarCitas'})
 setInterval(sync,30000);setInterval(()=>{if(view!=='board')return;document.querySelectorAll('.card.k[data-f]').forEach(el=>{const o=O(el.dataset.f),ki=el.querySelector('.ki');if(!o||!ki)return;const a=ki.querySelector('.alr');if(a)a.remove();ki.insertAdjacentHTML('beforeend',alertaH(o,!el.classList.contains('cc')))})},30000);matchMedia('(min-width:700px)').addEventListener('change',()=>{if(view==='board')renderMain()});addEventListener('resize',ajustaKan);setInterval(()=>{pintaSyn();if(pendDr&&!escribiendo()){pendDr=false;renderDrawer()}},2000);addEventListener('online',sync);document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* ---------- sesión, tema y mantenimiento (estilo REPORTEADOR) ---------- */
-const SK='taller_sesion',APP_BUILD='Taller Carabela · v53 · 26-11-26';
+const SK='taller_sesion',APP_BUILD='Taller Carabela · v54 · 26-11-26';
 const leerSes=()=>{for(const st of [sessionStorage,localStorage]){try{const s=JSON.parse(st.getItem(SK));if(s&&s.token&&s.agencia&&(s.esAdmin||s.esVendedor||s.esGerente)&&!(s.duracionSesionMs&&Date.now()-s.loginTime>s.duracionSesionMs))return s}catch{}}return null};
 const borrarSes=()=>{try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch{}};
 const pintaLogin=()=>{$('#login').style.display=sesion?'none':'flex'};
