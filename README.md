@@ -15,6 +15,10 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v53
+- **Videos desde la cámara**: el botón de cámara de cada punto (inspección, llantas, daños, fotos de ingreso y de garantía) ahora ofrece Tomar foto, Elegir de la galería, **Grabar video** y **Subir video**. El video queda ligado a ese punto (chip con ▶ para verlo y ✕ para quitarlo); los de fotos sueltas se listan en "Videos de la orden".
+- **Carrocería**: la firma del cliente al recibir la unidad usa el mismo formato que la Firma de autorización de la cotización (estado Firmada/Pendiente, imagen, nombre, fecha y botón *Recabar firma en el taller*).
+
 ## Novedades v52
 - **F2 en Cliente (propietario)**: tecla F2 o botón *Buscar cliente · F2* para buscar por nombre, teléfono, modelo, placas o VIN (órdenes del taller + base de motos). Al elegir se completan cliente, teléfono, correo, dirección y datos de la moto; si el cliente tiene varios modelos, se elige el de la orden.
 - **SKU de mano de obra**: Agregar concepto › Mano de obra pide buscar el SKU; el concepto queda precargado (solo lectura) y se agrega un recuadro de *Descripción manual*. Sigue existiendo la captura manual sin SKU.

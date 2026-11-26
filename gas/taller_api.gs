@@ -117,7 +117,7 @@ function aplicar_(o, u) {
   Object.keys(u).forEach(function (k) {
     var p = k.split('.'), a = p[0], b = p[1];
     if (a === 'fotos' && o.fotos[b]) o.fotos[b] = { u: u[k] };
-    else if (a === 'firmas' && o.firmas[b]) o.firmas[b] = { n: o.firmas[b].n, u: u[k] };
+    else if (a === 'firmas' && o.firmas[b]) o.firmas[b] = { n: o.firmas[b].n, t: o.firmas[b].t, u: u[k] };
     else if (a === 'chk' && o.chk[b]) o.chk[b].f = u[k];
     else if (a === 'chkx' && o.chk[b] && o.chk[b].fx) o.chk[b].fx[p[2]] = u[k];
     else if (a === 'll' && o.llantas && o.llantas[b]) o.llantas[b].f = u[k];
