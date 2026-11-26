@@ -15,6 +15,11 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v51
+- **Garantías (control interno)**: la orden de garantía ya no pide la firma del cliente al salir de Recepción, no lleva aviso legal ni autorización, y los conceptos no tienen estado de autorización ni se cobran (se muestra el costo de refacciones solo como control interno). Para pasar a Cotización y etapas siguientes es obligatorio registrar al menos una refacción.
+- **Solo para la agencia**: una garantía no se puede enviar por WhatsApp ni copiar enlace, y el Apps Script (`verOrden`, `fotoCliente`, `autorizarCliente`) rechaza cualquier enlace de cliente de una orden tipo G. Pegar `gas/taller_api.gs` y publicar nueva versión.
+- **Configuración › Colaboradores en tabla**: columnas Colaborador, Puesto, Estado y Acciones (Editar / Dar de baja), filtros por puesto y, al final de la tabla, la fila **Dar de alta a un colaborador** con el mismo estilo que Agregar concepto de Cotización. En celular cada fila pasa a tarjeta.
+
 ## Novedades v50
 - **Folio con prefijo de agencia** en todas las órdenes: `BCN-SP-0001` (agencia-tipo-consecutivo). Cada agencia lleva su propio consecutivo por tipo. Prefijos: BAJAJ CANCUN BCN, BAJAJ TIZIMIN BTZ, BAJAJ VALLADOLID BVA, CARABELA V1 CV1, CAUCEL VENTO CAU, PISTE VENTO PVE, SUZUKI TIZIMIN STZ, SUZUKI VALLADOLID SVA, TICUL VENTO TIC, TIZIMIN VENTO TVE, UMAN VENTO UMA, PISTE MUEBLES PMU (`PREF_AG` en `js/data.js`). Las órdenes anteriores conservan su folio.
 - **Técnico principal**: solo administrador, gerente y jefe de taller lo eligen (en cualquier etapa); el resto lo ve sin editar.

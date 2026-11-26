@@ -394,6 +394,7 @@ function urls_(a) { return (a || []).map(url_).filter(function (x) { return x; }
 // Solo viaja lo que el cliente necesita ver: sin teléfono, dirección, inventario ni datos internos.
 function verOrden_(folio, tok) {
   var o = buscar_(String(folio || ''));
+  if (o && o.tipo === 'G') return { success: false, message: 'Esta orden no está disponible' };
   if (!valida_(o, tok)) return { success: false, message: 'Enlace inválido o vencido' };
   var fotos = {};
   Object.keys(o.fotos || {}).forEach(function (k) { var u = o.fotos[k] && url_(o.fotos[k].u); if (u) fotos[k] = { u: u }; });
@@ -411,12 +412,14 @@ function verOrden_(folio, tok) {
 // Foto del enlace: solo si el archivo pertenece a esa orden.
 function fotoCliente_(folio, tok, id) {
   var o = buscar_(String(folio || ''));
+  if (o && o.tipo === 'G') return { success: false, message: 'Esta orden no está disponible' };
   if (!valida_(o, tok)) return { success: false, message: 'Enlace inválido o vencido' };
   if (JSON.stringify(o).indexOf(String(id)) < 0) return { success: false, message: 'Foto no encontrada' };
   return foto_(id);
 }
 function autorizarCliente_(b) {
   var o = buscar_(String(b.folio || ''));
+  if (o && o.tipo === 'G') return { success: false, message: 'Esta orden no está disponible' };
   if (!valida_(o, b.tok)) return { success: false, message: 'Enlace inválido o vencido' };
   if (o.etapa === 'entregado') return { success: false, message: 'Esta orden ya fue entregada' };
   var nombre = String(b.nombre || '').replace(/\s+/g, ' ').trim().slice(0, 80);
