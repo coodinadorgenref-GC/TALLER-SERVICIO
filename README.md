@@ -15,6 +15,18 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v52
+- **F2 en Cliente (propietario)**: tecla F2 o botón *Buscar cliente · F2* para buscar por nombre, teléfono, modelo, placas o VIN (órdenes del taller + base de motos). Al elegir se completan cliente, teléfono, correo, dirección y datos de la moto; si el cliente tiene varios modelos, se elige el de la orden.
+- **SKU de mano de obra**: Agregar concepto › Mano de obra pide buscar el SKU; el concepto queda precargado (solo lectura) y se agrega un recuadro de *Descripción manual*. Sigue existiendo la captura manual sin SKU.
+- **Vehículo nuevo**: selector Sí/No; si es nuevo, la Fecha de compra es obligatoria para salir de Recepción y queda registrada en la orden.
+- **Promesa de entrega** con fecha y hora obligatorias para salir de Recepción.
+- **Carrocería**: firma del cliente al recibir la unidad, para recabarla en el taller (no aplica a garantías).
+- **Reporte**: la sección *Mano de obra y tarifa* solo la ve y edita el administrador.
+- **Entregadas**: al terminar el día salen de la columna Entregado (la orden no se elimina). Se consultan en la barra de búsqueda, que también muestra el historial de la misma moto (mismo VIN).
+- **Videos** en todas las órdenes (incluidas garantías): se suben directo a Drive con calidad original, hasta 1 GB, en trozos. Requiere Apps Script v16.
+- **Citas**: botones Recibido, Reprogramar cita y Cancelar cita (con motivo obligatorio y opción de reprogramar). Una cita capturada solo la edita el administrador; los demás pueden recibirla, reprogramarla o cancelarla.
+- **Apps Script v16**: pegar `gas/taller_api.gs`, autorizar de nuevo (UrlFetchApp) y publicar nueva versión.
+
 ## Novedades v51
 - **Garantías (control interno)**: la orden de garantía ya no pide la firma del cliente al salir de Recepción, no lleva aviso legal ni autorización, y los conceptos no tienen estado de autorización ni se cobran (se muestra el costo de refacciones solo como control interno). Para pasar a Cotización y etapas siguientes es obligatorio registrar al menos una refacción.
 - **Solo para la agencia**: una garantía no se puede enviar por WhatsApp ni copiar enlace, y el Apps Script (`verOrden`, `fotoCliente`, `autorizarCliente`) rechaza cualquier enlace de cliente de una orden tipo G. Pegar `gas/taller_api.gs` y publicar nueva versión.

@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v15 (folio con prefijo de agencia: acción siguienteFolio con pref; editarColaborador y puesto JEFE DE TALLER; v14: formatos de garantía por marca: clave garantia_fmt; columnas personalizadas del panel por agencia: claves etapas_cfg|AGENCIA en CONFIG_TALLER; v13: citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v16 (búsqueda libre de motos para F2; videos por sesión reanudable de Drive; motivo y reprogramación de citas; v15: folio con prefijo de agencia: acción siguienteFolio con pref; editarColaborador y puesto JEFE DE TALLER; v14: formatos de garantía por marca: clave garantia_fmt; columnas personalizadas del panel por agencia: claves etapas_cfg|AGENCIA en CONFIG_TALLER; v13: citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -55,6 +55,8 @@ function doPost(e) {
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     if (b.action === 'siguienteFolio') return out_({ success: true, folio: siguienteFolio_(b.tipo, b.pref) });
+    if (b.action === 'iniciarVideo') return out_(iniciarVideo_(b));
+    if (b.action === 'finalizarVideo') return out_(finalizarVideo_(b));
     if (b.action === 'guardarOrden') return out_(guardarOrden_(b.orden));
     if (b.action === 'listarOrdenes') return out_({ success: true, ordenes: listar_() });
     if (b.action === 'listarCitas') return out_({ success: true, citas: listarCitas_() });
@@ -125,6 +127,34 @@ function aplicar_(o, u) {
     else if (a === 'lineas' && o.lineas[b]) o.lineas[b].f = u[k];
   });
 }
+// v16: videos. La app sube el archivo directo a Drive en trozos con una sesión reanudable que abre este script (se manda el origen de la app para el CORS).
+// Requiere autorizar de nuevo el script (UrlFetchApp: script.external_request) al publicar la nueva versión.
+function iniciarVideo_(b) {
+  var folio = String(b.folio || ''), tam = Number(b.tam) || 0, origen = String(b.origen || '');
+  if (!/^[A-Z0-9]{2,5}-[A-Z]{1,2}-\d{4}L?$|^[A-Z]{1,2}-\d{4}L?$/.test(folio)) return { success: false, message: 'Folio inválido' };
+  if (!/^https?:\/\/[\w.\-]+(:\d+)?$/.test(origen)) return { success: false, message: 'Origen inválido' };
+  if (tam <= 0 || tam > 1073741824) return { success: false, message: 'Tamaño de video no válido (máximo 1 GB)' };
+  var tipo = /^video\/[\w.+\-]+$/.test(String(b.tipo || '')) ? String(b.tipo) : 'video/mp4';
+  var nombre = 'video-' + Utilities.formatDate(new Date(), 'America/Merida', 'yyyyMMdd-HHmmss') + '-' + String(b.nombre || '').replace(/[^\w.\- ]/g, '').slice(0, 60);
+  var r = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true', {
+    method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': tipo, 'X-Upload-Content-Length': String(tam), Origin: origen },
+    payload: JSON.stringify({ name: nombre, parents: [carpeta_(folio).getId()], mimeType: tipo })
+  });
+  if (r.getResponseCode() !== 200) return { success: false, message: 'Drive rechazó el video (' + r.getResponseCode() + ')' };
+  var h = r.getAllHeaders(), url = h['Location'] || h['location'];
+  return url ? { success: true, url: url } : { success: false, message: 'Drive no entregó la sesión de carga' };
+}
+function finalizarVideo_(b) {
+  var folio = String(b.folio || ''), f;
+  try { f = DriveApp.getFileById(String(b.id || '')); } catch (e) { return { success: false, message: 'Archivo no encontrado' }; }
+  if (!/^video\//.test(f.getMimeType())) return { success: false, message: 'El archivo no es un video' };
+  var dentro = false, ps = f.getParents(), cid = carpeta_(folio).getId();
+  while (ps.hasNext()) if (ps.next().getId() === cid) dentro = true;
+  if (!dentro) return { success: false, message: 'El video no pertenece a esta orden' };
+  f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return { success: true, id: f.getId(), u: 'https://drive.google.com/file/d/' + f.getId() + '/view' };
+}
 function guardarOrden_(o) {
   // Si el cliente autorizó desde el enlace mientras el taller tenía la orden abierta, no se pierde su autorización.
   var prev = buscar_(o.folio);
@@ -168,6 +198,7 @@ function guardarCita_(c) {
   var t = function (v, n) { return String(v === null || v === undefined ? '' : v).slice(0, n || 200); };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(t(c.f, 10)) || !/^\d{2}:\d{2}$/.test(t(c.t, 5))) return { success: false, message: 'Fecha u hora inválida' };
   var cita = { id: c.id, suc: t(c.suc, 60), f: t(c.f, 10), t: t(c.t, 5), b: t(c.b, 3), tipo: t(c.tipo, 4), cliente: t(c.cliente, 120), tel: t(c.tel, 30), modelo: t(c.modelo, 120), marca: t(c.marca, 60), anio: t(c.anio, 4), email: t(c.email, 120), vin: t(c.vin, 25).toUpperCase(), mec: t(c.mec, 80), dur: Math.min(480, Math.max(15, Number(c.dur) || 60)), nota: t(c.nota, 500),
+    mot: t(c.mot, 120), mnota: t(c.mnota, 200), rep: Number(c.rep) || 0, hist: (Array.isArray(c.hist) ? c.hist : []).slice(-10).map(function (h) { return { f: t(h.f, 10), t: t(h.t, 5), m: t(h.m, 120), u: t(h.u, 80), ts: Number(h.ts) || 0 }; }),
     est: ['prog', 'llego', 'no', 'cancel'].indexOf(c.est) >= 0 ? c.est : 'prog', folio: t(c.folio, 30), por: t(c.por, 80), cre: Number(c.cre) || Date.now(), upd: Number(c.upd) || Date.now() };
   var s = sheet_('CITAS_TALLER'), v = s.getDataRange().getValues(), fila = -1;
   for (var i = 1; i < v.length; i++) if (v[i][0] === cita.id) { fila = i; break; }
@@ -301,6 +332,17 @@ function buscarVin_(vin) {
 }
 // Busca por teléfono (10 dígitos) o por placas. Devuelve hasta 8 motos, la venta más reciente primero.
 function buscarMotos_(campo, q) {
+  if (campo === 'texto') {   // v16: búsqueda libre por nombre, teléfono, modelo, placas o VIN (todas las palabras deben aparecer)
+    var qs = String(q || '').toLowerCase().replace(/\s+/g, ' ').trim(); if (qs.length < 3) return { success: true, motos: [] };
+    var ws = qs.split(' '), s0 = sheet_('MOTOS_TALLER'), n0 = s0.getLastRow(); if (n0 < 2) return { success: true, motos: [] };
+    var vv = s0.getRange(2, 1, n0 - 1, H.MOTOS_TALLER.length).getValues(), ix = ['vin', 'cliente', 'tel', 'marca', 'modelo', 'placas'].map(function (k) { return H.MOTOS_TALLER.indexOf(k); }), hits = [];
+    for (var i = 0; i < vv.length && hits.length < 80; i++) {
+      var h = ix.map(function (j) { return String(vv[i][j]); }).join(' ').toLowerCase();
+      if (ws.every(function (w) { return h.indexOf(w) >= 0; })) hits.push(motoObj_(vv[i]));
+    }
+    hits.sort(function (x, y) { return String(y.fecha_venta).localeCompare(String(x.fecha_venta)); });
+    return { success: true, motos: hits.slice(0, 40) };
+  }
   var col = campo === 'placas' ? H.MOTOS_TALLER.indexOf('placas') + 1 : campo === 'tel' ? H.MOTOS_TALLER.indexOf('tel') + 1 : 0;
   if (!col) return { success: false, message: 'Campo inválido' };
   q = campo === 'tel' ? nTel_(q) : nPlacas_(q);
