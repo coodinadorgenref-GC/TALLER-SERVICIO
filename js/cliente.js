@@ -136,7 +136,7 @@
     return sec('ins', 'Inspección de tu moto', resumen, filas + okz + llan + ace, true);
   }
   function carroceria(o) {
-    const d = o.danos || [], ing = ingreso(o), danos = d.map((m, i) => ({ m, i })).filter(x => x.m.t !== REC);
+    const d = o.danos || [], ing = ingreso(o), danos = d.map((m, i) => ({ m, i })).filter(x => x.m.t !== REC && !PTS_EV.includes(x.m.t));
     if (!ing.length && !danos.length) return '';
     return sec('car', 'Carrocería y fotos de ingreso', danos.length ? danos.length + ' detalle' + (danos.length > 1 ? 's' : '') : '', `
       ${ing.length ? `<div class="sub">Así llegó tu moto</div><div class="gal">${ing.map((u, j) => foto(u, 'Foto de ingreso ' + (j + 1), '')).join('')}</div>` : ''}

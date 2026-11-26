@@ -417,7 +417,7 @@ function autorizarCliente_(b) {
   o.firmas = o.firmas || {};
   o.firmas.aut = { n: nombre, u: subir_(o.folio, 'firma-autoriza', 'data:image/png;base64,' + m[1]) };
   o.auth = { t: Date.now(), n: nombre, d: hecho };
-  if (['recepcion', 'taller', 'cotizacion', 'diagnostico'].indexOf(o.etapa) >= 0) {   // el cliente ya decidió: la orden pasa sola a la columna Autorizado
+  if (['recepcion', 'taller', 'garantia', 'cotizacion', 'diagnostico'].indexOf(o.etapa) >= 0) {   // el cliente ya decidió: la orden pasa sola a la columna Autorizado
     o.etapa = 'autorizado';
     (o.hist = o.hist || []).push({ t: Date.now(), u: nombre, x: 'Etapa: Autorizado (el cliente autorizó desde el enlace)' });
   }
@@ -428,7 +428,7 @@ function autorizarCliente_(b) {
 // Aplica a la orden que llega del taller la autorización que ya está guardada en el servidor.
 function mezclaAuth_(o, prev) {
   o.auth = prev.auth;
-  if (prev.etapa === 'autorizado' && ['recepcion', 'taller', 'cotizacion', 'diagnostico'].indexOf(o.etapa) >= 0) o.etapa = 'autorizado';
+  if (prev.etapa === 'autorizado' && ['recepcion', 'taller', 'garantia', 'cotizacion', 'diagnostico'].indexOf(o.etapa) >= 0) o.etapa = 'autorizado';
   o.firmas = o.firmas || {};
   if (prev.firmas && prev.firmas.aut && !(o.firmas.aut && o.firmas.aut.d)) o.firmas.aut = prev.firmas.aut;
   (prev.auth.d || []).forEach(function (d) {

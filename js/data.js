@@ -1,4 +1,5 @@
-const ETAPAS=[['recepcion','Recepción','#475569','Motos de nuevo ingreso'],['taller','Taller','#B45309','Técnico asignado'],['cotizacion','Cotización','#1E40AF','Presupuesto y adicionales'],['autorizado','Autorizado','#0F766E','Cliente autoriza o rechaza'],['lavado','Lavado','#7C3AED','Se lava antes de entregar'],['entregado','Entregado','#15803D','Lavada y entregada']];
+const ETAPAS=[['recepcion','Recepción','#475569','Motos de nuevo ingreso'],['taller','Taller','#B45309','Técnico asignado'],['garantia','Garantía','#C2410C','Órdenes de garantía'],['cotizacion','Cotización','#1E40AF','Presupuesto y adicionales'],['autorizado','Autorizado','#0F766E','Cliente autoriza o rechaza'],['lavado','Lavado','#7C3AED','Se lava antes de entregar'],['entregado','Entregado','#15803D','Lavada y entregada']];
+const PTS_EV=['Número de serie (VIN)','Tablero con kilometraje'];   // puntos de evidencia (no son daños): se copian a la orden de garantía
 const ETMIG={diagnostico:'taller',reparacion:'autorizado'};   // nombres de etapa anteriores
 // Fotos generales de la moto al recibirla: [clave, nombre, obligatoria]
 const FOTOS_GRAL=[['g_tablero','Tablero / km',0],['g_izq','Lado izquierdo',1],['g_trasera','Trasera',1],['g_der','Lado derecho',1],['g_frente','Frente',1]];

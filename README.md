@@ -15,6 +15,14 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v49
+- **Configuración › Garantías sin cortes**: el contenido de Configuración ahora se desplaza completo (una regla de estilo le quitaba el scroll y se cortaban las secciones largas).
+- **Pestaña Garantía solo cuando aplica**: si la orden dice ¿Es garantía? **No**, no aparece la pestaña Garantía; con **Sí** (y en toda orden G) sí aparece.
+- **Puntos identificados**: nuevas opciones **Número de serie (VIN)** y **Tablero con kilometraje**. No cuentan como daños, se copian al crear la orden de garantía y sirven como foto de ese formato si no se sube otra.
+- **Columna Garantía en el Panel** (después de Taller): ahí viven las órdenes de garantía; las órdenes normales no pasan por ella.
+- **Técnico en la garantía**: al crearla sin orden original se elige el técnico; si se copia desde una orden de trabajo se respeta el técnico que tenía asignado (si no tenía, se pide).
+- **Apps Script**: `gas/taller_api.gs` incluye la columna `garantia` al mover sola la orden a Autorizado cuando el cliente autoriza; pegar y publicar nueva versión.
+
 ## Novedades v48
 - **Garantía ligada a la orden original**: al crear una garantía (pestaña Garantía, botón del encabezado o tipo **G Garantía** del menú de nueva orden, que ahora pide la orden de origen) se crea una orden con folio **G-xxxx** que copia de la original el Cliente y unidad y la Inspección (checklist, llantas, carrocería, accesorios y fotos ya subidas). La orden de garantía queda con **¿Es garantía? = Sí** (fijo) y la original con **No**; elegir Sí en una orden normal abre la creación de la garantía. La cotización de la garantía empieza vacía.
 - **Sonido**: tono de confirmación al mover una orden, botón de bocina en el encabezado que muestra si el sonido está activo o en silencio, y estado visible en Configuración › Notificaciones.
