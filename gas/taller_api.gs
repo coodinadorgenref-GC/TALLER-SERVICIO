@@ -1,5 +1,5 @@
 /**
- * API del taller (Google Apps Script) — v14 (formatos de garantía por marca: clave garantia_fmt; columnas personalizadas del panel por agencia: claves etapas_cfg|AGENCIA en CONFIG_TALLER; v13: citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
+ * API del taller (Google Apps Script) — v15 (folio con prefijo de agencia: acción siguienteFolio con pref; editarColaborador y puesto JEFE DE TALLER; v14: formatos de garantía por marca: clave garantia_fmt; columnas personalizadas del panel por agencia: claves etapas_cfg|AGENCIA en CONFIG_TALLER; v13: citas con correo, VIN, marca, año, técnico y duración; v12: citas de la Agenda: hojas CITAS_TALLER, acciones listarCitas / guardarCita; v11: la orden pasa a la columna Autorizado cuando el cliente autoriza; v10: garantías: lo que acepta el cliente queda en Garantía; v9: modeloVin: modelo probable de la moto a partir del prefijo del VIN, leído de MOTOS_TALLER; v8: colaboradores por agencia COLABORADORES_TALLER: listarColaboradores / guardarColaborador / importarColaboradores; v7: base de motos MOTOS_TALLER: buscarVin / buscarMotos / importarMotos y registro automático desde cada orden; v6: enlace de visto bueno para el cliente: verOrden / autorizarCliente / fotoCliente con token por orden; v5: tarifa de mano de obra por agencia en CONFIG_TALLER; v4: foto por número de daño en Carrocería, proxy de fotos de Drive para PC).
  * Pega este archivo en tu proyecto, ejecuta setup() una vez y publica:
  * Implementar > Nueva implementación (o Administrar > Editar > Nueva versión)
  * Tipo: Aplicación web · Ejecutar como: Yo · Quién tiene acceso: Cualquier persona.
@@ -54,7 +54,7 @@ function doPost(e) {
   }
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    if (b.action === 'siguienteFolio') return out_({ success: true, folio: siguienteFolio_(b.tipo) });
+    if (b.action === 'siguienteFolio') return out_({ success: true, folio: siguienteFolio_(b.tipo, b.pref) });
     if (b.action === 'guardarOrden') return out_(guardarOrden_(b.orden));
     if (b.action === 'listarOrdenes') return out_({ success: true, ordenes: listar_() });
     if (b.action === 'listarCitas') return out_({ success: true, citas: listarCitas_() });
@@ -66,6 +66,7 @@ function doPost(e) {
     if (b.action === 'importarMotos') return out_(importarMotos_(b.filas));
     if (b.action === 'listarColaboradores') return out_(listarColaboradores_());
     if (b.action === 'guardarColaborador') return out_(guardarColaborador_(b.agencia, b.puesto, b.nombre, b.activo !== false));
+    if (b.action === 'editarColaborador') return out_(editarColaborador_(b.agencia, b.puesto, b.nombre, b.nuevoPuesto, b.nuevoNombre));
     if (b.action === 'importarColaboradores') return out_(importarColaboradores_(b.filas));
     return out_({ success: false, message: 'Acción desconocida' });
   } catch (err) { return out_({ success: false, message: String(err) }); }
@@ -82,11 +83,14 @@ function foto_(id) {
   var bl = f.getBlob();
   return { success: true, d: 'data:' + bl.getContentType() + ';base64,' + Utilities.base64Encode(bl.getBytes()) };
 }
-function siguienteFolio_(tipo) {
+// v15: folio con prefijo de agencia: BCN-SP-0001. Consecutivo propio por agencia y tipo (sin prefijo = formato anterior SP-0001).
+function siguienteFolio_(tipo, pref) {
   if (!/^(SC|SP|SB|SM|SR|G|SD)$/.test(tipo)) throw new Error('Tipo inválido');
-  var p = PropertiesService.getScriptProperties(), k = 'seq_' + tipo;
+  pref = String(pref || '').toUpperCase();
+  if (pref && !/^[A-Z0-9]{2,4}$/.test(pref)) throw new Error('Prefijo inválido');
+  var p = PropertiesService.getScriptProperties(), k = 'seq_' + (pref ? pref + '_' : '') + tipo;
   var n = Number(p.getProperty(k) || 0) + 1; p.setProperty(k, String(n));
-  return tipo + '-' + ('0000' + n).slice(-4);
+  return (pref ? pref + '-' : '') + tipo + '-' + ('0000' + n).slice(-4);
 }
 function carpeta_(folio) {
   var it = DriveApp.getFoldersByName('TALLER_FOTOS');
@@ -210,7 +214,7 @@ function guardarConfig_(k, v) {
 }
 
 // ---------- Colaboradores (COLABORADORES_TALLER) ----------
-var PUESTOS_COL = ['ASESOR DE SERVICIO', 'ASESOR DE REFACCIONES', 'MECANICO'];
+var PUESTOS_COL = ['JEFE DE TALLER', 'ASESOR DE SERVICIO', 'ASESOR DE REFACCIONES', 'MECANICO'];
 function colNorm_(v) { return String(v === null || v === undefined ? '' : v).replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 80); }
 function listarColaboradores_() {
   var out = [];
@@ -233,6 +237,22 @@ function guardarColaborador_(agencia, puesto, nombre, activo) {
   if (activo) s.appendRow([a, p, n, 'SI', new Date()]);
   return { success: true };
 }
+// v15: cambia el nombre y/o el puesto de un colaborador. Las órdenes viejas conservan el nombre con el que se capturaron.
+function editarColaborador_(agencia, puesto, nombre, nuevoPuesto, nuevoNombre) {
+  var a = colNorm_(agencia), p = colNorm_(puesto), n = colNorm_(nombre), np = colNorm_(nuevoPuesto), nn = colNorm_(nuevoNombre);
+  if (!a || PUESTOS_COL.indexOf(p) < 0 || PUESTOS_COL.indexOf(np) < 0 || n.length < 3 || nn.length < 3) return { success: false, message: 'Datos de colaborador inválidos' };
+  var s = sheet_('COLABORADORES_TALLER'), v = s.getDataRange().getValues(), fila = -1;
+  for (var i = 1; i < v.length; i++) {
+    if (colNorm_(v[i][0]) !== a) continue;
+    var ci = colNorm_(v[i][1]), cn = colNorm_(v[i][2]);
+    if (ci === p && cn === n) fila = i;
+    else if (ci === np && cn === nn && colNorm_(v[i][3]) !== 'NO') return { success: false, message: 'Ya existe ese colaborador en la agencia' };
+  }
+  if (fila < 0) return { success: false, message: 'Colaborador no encontrado' };
+  s.getRange(fila + 1, 2, 1, 4).setValues([[np, nn, 'SI', new Date()]]);
+  return { success: true };
+}
+
 // Carga masiva (CSV con AGENCIA, PUESTO, NOMBRE). No duplica: reactiva a quien estaba dado de baja.
 function importarColaboradores_(filas) {
   var s = sheet_('COLABORADORES_TALLER'), v = s.getDataRange().getValues(), idx = {}, nuevas = [], nue = 0, rea = 0, omi = 0;

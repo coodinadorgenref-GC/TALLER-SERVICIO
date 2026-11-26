@@ -5,9 +5,12 @@ const ETMIG={diagnostico:'taller',reparacion:'autorizado'};   // nombres de etap
 const FOTOS_GRAL=[['g_tablero','Tablero / km',0],['g_izq','Lado izquierdo',1],['g_trasera','Trasera',1],['g_der','Lado derecho',1],['g_frente','Frente',1]];
 // Agencias (cuenta → columna AGENCIA de Usuarios_Autorizados) y su logo
 const AGENCIAS_TALLER=['BAJAJ CANCUN','BAJAJ TIZIMIN','BAJAJ VALLADOLID','CARABELA V1','CAUCEL VENTO','PISTE VENTO','SUZUKI TIZIMIN','SUZUKI VALLADOLID','TICUL VENTO','TIZIMIN VENTO','UMAN VENTO','PISTE MUEBLES'];
+// Prefijo de agencia en el folio de toda orden de trabajo: BCN-SP-0001 (agencia-tipo-consecutivo). Cada agencia lleva su propio consecutivo por tipo.
+const PREF_AG={'BAJAJ CANCUN':'BCN','BAJAJ TIZIMIN':'BTZ','BAJAJ VALLADOLID':'BVA','CARABELA V1':'CV1','CAUCEL VENTO':'CAU','PISTE VENTO':'PVE','SUZUKI TIZIMIN':'STZ','SUZUKI VALLADOLID':'SVA','TICUL VENTO':'TIC','TIZIMIN VENTO':'TVE','UMAN VENTO':'UMA','PISTE MUEBLES':'PMU'};
+const prefAg=a=>{a=String(a||'').replace(/\s+/g,' ').trim().toUpperCase();if(PREF_AG[a])return PREF_AG[a];const w=a.replace(/[^A-Z0-9 ]/g,'').split(' ').filter(Boolean);return(w.length>1?w.map(x=>x[0]).join(''):a.replace(/[^A-Z0-9]/g,'')).slice(0,3)||'GEN'};
 const ZONA_AG={'UMAN VENTO':'MERIDA','CAUCEL VENTO':'MERIDA','TICUL VENTO':'MERIDA'};   // las demás son de VALLADOLID
 // Puestos de colaboradores que alimentan las sugerencias de la orden: [clave, plural, singular, campo de la orden]
-const PUESTOS=[['ASESOR DE SERVICIO','Asesores de servicio','Asesor de servicio','asesor'],['ASESOR DE REFACCIONES','Asesores de refacciones','Asesor de refacciones','asesorRef'],['MECANICO','Técnicos','Técnico','mec']];
+const PUESTOS=[['JEFE DE TALLER','Jefes de taller','Jefe de taller','jefe'],['ASESOR DE SERVICIO','Asesores de servicio','Asesor de servicio','asesor'],['ASESOR DE REFACCIONES','Asesores de refacciones','Asesor de refacciones','asesorRef'],['MECANICO','Técnicos','Técnico','mec']];
 const LEG=['Valladolid','Tizimín','Kantunilkin'];   // sucursales de la versión anterior
 const LOGO_BASE='https://coodinadorgenref-gc.github.io/CATALOGO-DE-INVENTARIO/logo-';
 const multi=a=>a==='TODAS'||/^ZONA /.test(a||'');

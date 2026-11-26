@@ -15,6 +15,13 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v50
+- **Folio con prefijo de agencia** en todas las órdenes: `BCN-SP-0001` (agencia-tipo-consecutivo). Cada agencia lleva su propio consecutivo por tipo. Prefijos: BAJAJ CANCUN BCN, BAJAJ TIZIMIN BTZ, BAJAJ VALLADOLID BVA, CARABELA V1 CV1, CAUCEL VENTO CAU, PISTE VENTO PVE, SUZUKI TIZIMIN STZ, SUZUKI VALLADOLID SVA, TICUL VENTO TIC, TIZIMIN VENTO TVE, UMAN VENTO UMA, PISTE MUEBLES PMU (`PREF_AG` en `js/data.js`). Las órdenes anteriores conservan su folio.
+- **Técnico principal**: solo administrador, gerente y jefe de taller lo eligen (en cualquier etapa); el resto lo ve sin editar.
+- **Jefe de taller**: nuevo puesto en Configuración › Colaboradores; la cuenta cuyo nombre coincide con un jefe de taller de su agencia puede asignar técnico.
+- **Configuración › Colaboradores**: botón **Editar** en cada colaborador (cambiar nombre y tipo de cuenta/puesto) y alta renovada.
+- **Apps Script v15**: pegar `gas/taller_api.gs` y publicar nueva versión (`siguienteFolio` con prefijo, `editarColaborador`, puesto JEFE DE TALLER).
+
 ## Novedades v49
 - **Configuración › Garantías sin cortes**: el contenido de Configuración ahora se desplaza completo (una regla de estilo le quitaba el scroll y se cortaban las secciones largas).
 - **Pestaña Garantía solo cuando aplica**: si la orden dice ¿Es garantía? **No**, no aparece la pestaña Garantía; con **Sí** (y en toda orden G) sí aparece.

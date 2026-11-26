@@ -764,3 +764,11 @@ html.dark .pc-n input{background:#0f172a;border-color:#334155}html.dark .sw{bord
 /* ===== v49 · Configuración: el cuerpo se desplaza (antes #modal .sh>*{flex-shrink:0} lo dejaba crecer y se cortaba) ===== */
 #modal .sh.cfg>.cfg-body{flex:1 1 0;min-height:0;overflow-y:auto}
 #modal .sh.cfg>.cfg-top{flex:none}
+
+/* v50 · Colaboradores: editar y alta */
+.cl-row .btn.sm{min-width:44px;gap:6px}
+.cl-row{flex-wrap:wrap}
+.cl-ed{display:flex;gap:14px;align-items:flex-start;margin:12px 0 4px}.cl-edf{flex:1;display:grid;gap:10px;min-width:0}
+.cl-av.lg{width:52px;height:52px;font-size:18px}
+@media(max-width:480px){.cl-ed{flex-direction:column}.cl-row .btn.sm{flex:1}}
+@media(prefers-reduced-motion:no-preference){.cl-row{transition:background .15s}.cl-row:hover{background:rgba(21,75,148,.04)}}
