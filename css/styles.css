@@ -805,3 +805,7 @@ html.dark .f2g{border-color:#334155}html.dark .req{color:#fca5a5}
 .vgal{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.vgi{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--bd);border-radius:22px;padding:2px 4px 2px 12px;min-height:44px;background:#fff}.vgi a{color:var(--nv);font-weight:600;text-decoration:none;display:inline-flex;gap:6px;align-items:center}.vgi small{color:#64748B;font-weight:400}.vgx{position:static;width:36px;height:36px}
 .vidbar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:90;background:#243447;color:#fff;padding:10px 16px;border-radius:24px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:92vw}
 html.dark .vgi{background:#162032;border-color:#334155}html.dark .vgi a{color:#93c5fd}
+
+/* v55 · llantas parejas */
+.llr{align-items:start!important}.llr .llp{align-self:center}.llr .cqs{align-self:end}.llr .medch{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:-2px}
+.llr>label.f{margin:0}

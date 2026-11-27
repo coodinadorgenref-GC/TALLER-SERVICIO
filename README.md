@@ -15,6 +15,14 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v55
+- **Llantas**: las medidas sugeridas pasan a una fila propia para que Medida, Desgaste, PSI y los botones de estado queden alineados.
+- **Cita recibida**: al dar *Recibido* la orden se abre en modo Cita, solo con las pestañas *Cliente y unidad* y *Carrocería*, y se queda en la columna Citas. *Siguiente* (a Recepción) exige Accesorios y documentos, fotos de ingreso en Carrocería y Daños y detalles (o confirmar que no trae accesorios / no tiene daños); al pasar a Recepción se habilitan Inspección, Llantas, Cotización e Historial.
+- **Solo administradores** pueden dar de alta colaboradores (editar y dar de baja siguen para admin y gerente).
+- **Cotización rechazada**: siempre pide Motivo del rechazo, Dar seguimiento el y ¿El cliente desea reagendar?; no se avanza con rechazos incompletos.
+- **Próximo servicio** (fecha y kilometraje) obligatorio antes de pasar a Lavado (no aplica a garantías).
+- **Citas**: no se puede agendar ni reprogramar a una hora que ya pasó hoy (eso es una orden de trabajo sin cita). Las citas en *Llegó* de órdenes eliminadas ya no aparecen, al eliminar una orden se cierra su cita y el administrador puede eliminar cualquier cita.
+
 ## Novedades v53
 - **Videos desde la cámara**: el botón de cámara de cada punto (inspección, llantas, daños, fotos de ingreso y de garantía) ahora ofrece Tomar foto, Elegir de la galería, **Grabar video** y **Subir video**. El video queda ligado a ese punto (chip con ▶ para verlo y ✕ para quitarlo); los de fotos sueltas se listan en "Videos de la orden".
 - **Carrocería**: la firma del cliente al recibir la unidad usa el mismo formato que la Firma de autorización de la cotización (estado Firmada/Pendiente, imagen, nombre, fecha y botón *Recabar firma en el taller*).
