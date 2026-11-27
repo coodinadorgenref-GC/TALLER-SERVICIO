@@ -30,7 +30,7 @@ function imprimir(o){
     <tr class="o_th"><th>NO</th><th>DESCRIPCION</th><th>CANT</th><th>NO</th><th>DESCRIPCION</th><th>CANT</th></tr>${filasInv}</table>
     <div class="o_bar">CONDICIONES EN LAS QUE SE RECIBE LA UNIDAD</div>
     <div class="o_rg o_l3">${esc(o.cond||'')}${danos?(o.cond?'<br>':'')+'<span class="o_sm9">DAÑOS: '+danos+'</span>':''}</div>
-    <table class="o_tp"><tr><td class="o_tl" rowspan="1">TRABAJO<br>SOLICITADO</td>${Object.entries(TIPOS).map(([k,v])=>`<td class="${k===o.tipo?'o_sel':''}">${k}.<br>${esc(v.toUpperCase().replace('SERVICIO DE ','SERV. ').replace('SERVICIO ','SERV. '))}${k===o.tipo?'<br><b>[X]</b>':''}</td>`).join('')}</tr></table>
+    <table class="o_tp"><tr><td class="o_tl" rowspan="1">TRABAJO<br>SOLICITADO</td>${Object.entries(TIPOS).map(([k,v])=>`<td class="${k===o.tipo?'o_sel':''}">${k}.<br>${esc(v.toUpperCase().replace('SERVICIO DE ','SERV. ').replace('SERVICIO ','SERV. '))}${k===o.tipo?'<span class="o_tacha">X</span>':''}</td>`).join('')}</tr></table>
     <div class="o_rg o_l4">${esc(o.motivo||'')}</div>
     <div class="o_bar">DIAGNÓSTICO DEL TÉCNICO</div>
     <div class="o_rg o_l5">${esc(o.diag||'')}${tec?(o.diag?'<br>':'')+'<span class="o_sm9">CONDICIÓN TÉCNICA: '+esc(tec)+'</span>':''}</div>

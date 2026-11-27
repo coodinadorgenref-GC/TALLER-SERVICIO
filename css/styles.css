@@ -850,7 +850,7 @@ html,body{background:#fff!important}#print{background:#fff}
 #print .o_fo{width:100%;table-layout:fixed;border-collapse:collapse;font:8.5px/1.15 Arial,Helvetica,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 #print .o_fo td,#print .o_fo th{border:1px solid #BFBFBF;padding:1px 4px;vertical-align:middle}
 #print .o_fo .o_hd td{border-color:#7F7F7F;padding:3px 4px}
-#print .o_fo .o_lgo img{height:26px;display:block;margin:0 auto}
+#print .o_fo .o_lgo img{width:auto;height:auto;max-width:96%;max-height:30px;display:block;margin:0 auto}
 #print .o_fo .o_cen{text-align:center;font-weight:700;font-size:8px;line-height:1.25}#print .o_fo .o_t1{font-size:11px}
 #print .o_fo .o_lgo2{text-align:center;position:relative;padding-top:2px}#print .o_fo .o_lgo2 img{height:30px;display:block;margin:2px auto 0}
 #print .o_fo .o_folio{text-align:right;font-size:9px;line-height:1.1}#print .o_fo .o_folio b{font-size:12px}
@@ -873,7 +873,7 @@ html,body{background:#fff!important}#print{background:#fff}
 #print .o_fo .o_sm9{font-size:7.5px;line-height:9px}
 #print .o_fo table.o_tp td{border:1px solid #BFBFBF;border-width:1px 0 1px 1px;text-align:center;font-size:7px;line-height:1.1;padding:2px 1px;height:26px}
 #print .o_fo table.o_tp td.o_tl{text-align:left;font-weight:700;font-size:7.5px;width:12%;padding-left:4px}
-#print .o_fo table.o_tp td.o_sel{background:#D9D9D9}
+#print .o_fo table.o_tp td.o_sel{background:#D9D9D9;position:relative}#print .o_fo .o_tacha{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);font:400 30px/1 Arial;text-align:center;opacity:.55}
 #print .o_fo table.o_fi td{border:0;padding:0 8px;text-align:center}
 #print .o_fo .o_fs{height:42px;display:flex;align-items:flex-end;justify-content:center}
 #print .o_fo .o_fl{border-top:2px solid #000;font-weight:700;font-size:7px;padding-top:1px;margin-top:1px}

@@ -15,6 +15,10 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v58
+- Impresión: el logo ya no se corta y el tipo de orden elegido lleva una tacha (X) además del recuadro sombreado.
+- Carrocería: se quitó *La moto no tiene daños ni detalles*; las fotos de ingreso (punto Recepción) son obligatorias y ya no se pide marcar o confirmar daños.
+
 ## Novedades v57
 - **Vista en lista** (como Superservice Triage): junto a *Nueva orden* hay dos botones, cuadros (etapas de izquierda a derecha) y lista (etapas de arriba hacia abajo). La elección se recuerda. **Al buscar, los resultados siempre salen en lista**, así las órdenes entregadas ya no quedan dentro de la columna Entregado.
 - Se quitó el aviso de órdenes entregadas de días anteriores del panel.
