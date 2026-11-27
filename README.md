@@ -15,6 +15,11 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v57
+- **Vista en lista** (como Superservice Triage): junto a *Nueva orden* hay dos botones, cuadros (etapas de izquierda a derecha) y lista (etapas de arriba hacia abajo). La elección se recuerda. **Al buscar, los resultados siempre salen en lista**, así las órdenes entregadas ya no quedan dentro de la columna Entregado.
+- Se quitó el aviso de órdenes entregadas de días anteriores del panel.
+- **Impresión idéntica al formato Word de la agencia**: encabezado con logos, datos del cliente y unidad, inventario de 32 puntos en dos columnas, ¿Es garantía?, relojes y 4 vistas de la moto (con los daños numerados), condiciones de recepción, trabajo solicitado, diagnóstico del técnico, firmas, presupuesto y firmas finales. El **folio** va arriba a la derecha y la **firma de recepción** del cliente sale sobre su línea.
+
 ## Novedades v55
 - **Llantas**: las medidas sugeridas pasan a una fila propia para que Medida, Desgaste, PSI y los botones de estado queden alineados.
 - **Cita recibida**: al dar *Recibido* la orden se abre en modo Cita, solo con las pestañas *Cliente y unidad* y *Carrocería*, y se queda en la columna Citas. *Siguiente* (a Recepción) exige Accesorios y documentos, fotos de ingreso en Carrocería y Daños y detalles (o confirmar que no trae accesorios / no tiene daños); al pasar a Recepción se habilitan Inspección, Llantas, Cotización e Historial.
