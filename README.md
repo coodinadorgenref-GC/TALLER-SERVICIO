@@ -15,6 +15,10 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v57
+- **El Taller se integra al API principal.** Ya no existe un Apps Script aparte: las acciones del Taller viven en `apps-script/Taller_api.js` (repositorio privado) y se llaman por el Worker con la sesión del usuario. Solo las cuentas de personal (admin, gerente o vendedor) pueden usarlas; el enlace del cliente sigue sin sesión y se protege con el token de cada orden.
+- Los datos no cambian de lugar: mismo Spreadsheet y misma carpeta de fotos. Se retira `gas/taller_api.gs` de este repositorio público.
+
 ## Novedades v55
 - **Llantas**: las medidas sugeridas pasan a una fila propia para que Medida, Desgaste, PSI y los botones de estado queden alineados.
 - **Cita recibida**: al dar *Recibido* la orden se abre en modo Cita, solo con las pestañas *Cliente y unidad* y *Carrocería*, y se queda en la columna Citas. *Siguiente* (a Recepción) exige Accesorios y documentos, fotos de ingreso en Carrocería y Daños y detalles (o confirmar que no trae accesorios / no tiene daños); al pasar a Recepción se habilitan Inspección, Llantas, Cotización e Historial.
