@@ -15,9 +15,18 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
-## Novedades v57
+## Novedades v59
 - **El Taller se integra al API principal.** Ya no existe un Apps Script aparte: las acciones del Taller viven en `apps-script/Taller_api.js` (repositorio privado) y se llaman por el Worker con la sesión del usuario. Solo las cuentas de personal (admin, gerente o vendedor) pueden usarlas; el enlace del cliente sigue sin sesión y se protege con el token de cada orden.
 - Los datos no cambian de lugar: mismo Spreadsheet y misma carpeta de fotos. Se retira `gas/taller_api.gs` de este repositorio público.
+
+## Novedades v58
+- Impresión: el logo ya no se corta y el tipo de orden elegido lleva una tacha (X) además del recuadro sombreado.
+- Carrocería: se quitó *La moto no tiene daños ni detalles*; las fotos de ingreso (punto Recepción) son obligatorias y ya no se pide marcar o confirmar daños.
+
+## Novedades v57
+- **Vista en lista** (como Superservice Triage): junto a *Nueva orden* hay dos botones, cuadros (etapas de izquierda a derecha) y lista (etapas de arriba hacia abajo). La elección se recuerda. **Al buscar, los resultados siempre salen en lista**, así las órdenes entregadas ya no quedan dentro de la columna Entregado.
+- Se quitó el aviso de órdenes entregadas de días anteriores del panel.
+- **Impresión idéntica al formato Word de la agencia**: encabezado con logos, datos del cliente y unidad, inventario de 32 puntos en dos columnas, ¿Es garantía?, relojes y 4 vistas de la moto (con los daños numerados), condiciones de recepción, trabajo solicitado, diagnóstico del técnico, firmas, presupuesto y firmas finales. El **folio** va arriba a la derecha y la **firma de recepción** del cliente sale sobre su línea.
 
 ## Novedades v55
 - **Llantas**: las medidas sugeridas pasan a una fila propia para que Medida, Desgaste, PSI y los botones de estado queden alineados.
