@@ -15,6 +15,10 @@ Estática (GitHub Pages) + Google Apps Script (`gas/taller_api.gs`) + Drive para
 4. **Autorizado**: el cliente autoriza o rechaza los conceptos.
 5. **Entregado**: trabajos terminados, moto lavada y firma del cliente.
 
+## Novedades v59
+- **El Taller se integra al API principal.** Ya no existe un Apps Script aparte: las acciones del Taller viven en `apps-script/Taller_api.js` (repositorio privado) y se llaman por el Worker con la sesión del usuario. Solo las cuentas de personal (admin, gerente o vendedor) pueden usarlas; el enlace del cliente sigue sin sesión y se protege con el token de cada orden.
+- Los datos no cambian de lugar: mismo Spreadsheet y misma carpeta de fotos. Se retira `gas/taller_api.gs` de este repositorio público.
+
 ## Novedades v58
 - Impresión: el logo ya no se corta y el tipo de orden elegido lleva una tacha (X) además del recuadro sombreado.
 - Carrocería: se quitó *La moto no tiene daños ni detalles*; las fotos de ingreso (punto Recepción) son obligatorias y ya no se pide marcar o confirmar daños.
